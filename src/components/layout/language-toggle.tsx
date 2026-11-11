@@ -15,6 +15,7 @@
 
 import { useLang } from '@/lib/hooks';
 import { cn } from '@/lib/utils';
+import { LANG_COOKIE, LANG_COOKIE_MAX_AGE } from '@/lib/locale-cookie';
 import type { Lang } from '@/lib/format';
 
 export interface LanguageToggleProps {
@@ -33,6 +34,25 @@ export function LanguageToggle({
 }: LanguageToggleProps) {
   const { lang, setLang } = useLang();
 
+  /**
+   * Persist the choice server-side as well as in the store.
+   *
+   * The store is what makes the switch instant and survives a refresh; the
+   * cookie is what lets a server component know the language before the first
+   * paint. `samesite=lax` matches the session cookie policy in
+   * `prompts/security.md` section 4 and still sends on top-level navigation.
+   *
+   * `document.cookie` is written directly rather than through `cookies()`:
+   * this is a client component, and a server action for a one-line preference
+   * would cost a round trip on every toggle.
+   */
+  const choose = (value: Lang) => {
+    setLang(value);
+    if (typeof document !== 'undefined') {
+      document.cookie = `${LANG_COOKIE}=${value}; path=/; max-age=${LANG_COOKIE_MAX_AGE}; samesite=lax`;
+    }
+  };
+
   return (
     <span
       className={cn('lang', className)}
@@ -44,7 +64,7 @@ export function LanguageToggle({
         <button
           key={option.value}
           type="button"
-          onClick={() => setLang(option.value)}
+          onClick={() => choose(option.value)}
           className={cn(lang === option.value && 'on')}
           aria-pressed={lang === option.value}
           lang={option.value}
