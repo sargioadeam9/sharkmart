@@ -205,6 +205,38 @@ Build Phase 5 — the product detail page at `/product/[slug]`, which every card
 
 ---
 
+## 2026-11-11 23:35 · SSR pass — storefront content is now server-rendered
+
+**Problem**
+The homepage and all 14 category pages shipped an empty skeleton to the server. Measured before: `/` was 31 KB with 5 `৳` characters, 0 product cards and `aria-busy="true"`; `/category/fashion` was 32 KB with 0 cards, no breadcrumb and no Bangla. Cause: the page components were client-side and fetched in `useEffect`, so the prerender never had data. It looked fine in a browser after hydration, which is why nobody caught it.
+
+**Fix**
+- `src/lib/category-data.ts` (new) — `loadCategoryData(slug)` extracted out of `CategoryPage`, server-safe (no `'use client'`).
+- `src/app/(shop)/page.tsx` — server component, `await getHomepage()`, passes `initialData` down.
+- `src/app/(shop)/category/[slug]/page.tsx` — loads `loadCategoryData` on the server and passes `initialData`. Wrapped in `try/catch` so a data failure degrades to the client fetch instead of a 500.
+- `HomePage` / `CategoryPage` — accept `initialData`, seed state from it, skip the fetch. They stay client components because the language toggle and carousels need it; the point is that they no longer *start* empty.
+- `CategoryListing` is wrapped in `<Suspense>` inside `CategoryPage`. It calls `useSearchParams()`, which cannot run during prerender and was failing the build with `useSearchParams() should be wrapped in a suspense boundary`. Scoping the boundary to the listing keeps the hero, breadcrumb and all three product rails server-rendered.
+- `revalidate = 300` on both routes (ISR).
+
+**Verified**
+- `npx tsc --noEmit` → PASS.
+- `npm run build` → green. `/` static, all 14 category routes prerendered as ● SSG.
+- `npm run start` + curl:
+  - `/` → **492 KB, 227 `৳`, 222 product cards and links, 16 `<h2>`, `aria-busy` 0**
+  - `/category/fashion` → **96 KB, 70 `৳`, 60 product links, breadcrumb + `<h1>Fashion</h1>`**
+- Every route returned 200 while the server was up.
+
+**Known follow-ups**
+1. **The homepage HTML is 492 KB — too heavy.** Main cause: `RecentlyViewed` receives `data.catalog` (the entire catalog) and it gets serialized into the RSC payload. Pass only the ids or a small lookup map, and consider trimming items per rail.
+2. **The listing grid still hydrates client-side** (the Suspense fallback is what lands in the HTML). To SSR the grid too, move filters off `useSearchParams`: read `searchParams` in the route, pass the query string down, and seed local state from it.
+3. **Bangla is not server-rendered.** Language lives only in localStorage (`ui-store`), so SSR is always English. This needs a cookie plus a routing decision — `/bn` prefix, or cookie + `router.refresh()`. Owner decision, not a code detail.
+4. `src/app/components.css.bak` deleted in this commit.
+
+**Next step**
+- Phase 5 (product detail). Build it server-rendered from the start using the same `initialData` pattern, and do not hand whole collections to client components.
+
+---
+
 ## 2026-11-11 19:30 · Incident: dev-server collision + encoding damage
 
 **What broke**

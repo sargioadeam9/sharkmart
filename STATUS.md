@@ -266,6 +266,8 @@ Facts settled. Do not reopen without the owner's word.
 | D13 | The seed and the mock layer read the **same** `data/reference-catalog.json` | 2026-11-11 | Makes flipping `USE_MOCK` safe: fixtures and database are the same catalog |
 | D14 | MySQL is MariaDB 10.4 (XAMPP), not MySQL 8 | 2026-11-11 | What the machine has. Prisma's `mysql` provider supports it; no schema feature here needs 8-only syntax |
 | D15 | Product images are emoji-on-tint SVG placeholders | 2026-11-11 | The reference has no photography — it renders emoji on a category-tinted tile. Placeholders keep parity honest instead of faking photos |
+| D16 | Storefront routes load data on the **server** and pass it to the client page component as `initialData` | 2026-11-11 | Before this, `/` and all 14 category pages shipped an empty skeleton (31 KB, 0 product cards) and the crawler saw nothing. Measured after: `/` 492 KB / 222 product cards, `/category/fashion` 96 KB / 60 product links. Client components stay client for the language toggle and carousels — they just no longer *start* empty |
+| D17 | `CategoryListing` sits inside a `<Suspense>` boundary | 2026-11-11 | It calls `useSearchParams()`, which cannot run during prerender; without the boundary `next build` fails with "useSearchParams() should be wrapped in a suspense boundary". Scoping it to the listing keeps the hero, breadcrumb and three product rails server-rendered |
 
 ---
 

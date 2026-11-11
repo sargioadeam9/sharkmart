@@ -19,13 +19,16 @@
  * Unknown slug: the route calls `notFound()` before this renders, so this
  * component can assume a valid category. The guard below is a belt-and-braces
  * for a category record that exists in `CATEGORIES` but has no DTO.
+ *
+ * SSR: the route loads `CategoryData` on the server and passes it as
+ * `initialData`, so the first HTML response already contains the hero, the
+ * rails and the product grid. Before this, the server emitted a skeleton and
+ * the crawler saw an empty page.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { BrandDto, CategoryDto, ProductDto } from '@/types/catalog';
-import { getCategory, listBrands } from '@/lib/api/categories';
-import { listProducts } from '@/lib/api/products';
+import { loadCategoryData, type CategoryData } from '@/lib/category-data';
 import { useLang } from '@/lib/hooks';
 import { EmptyState } from '@/components/shared/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -39,12 +42,12 @@ import { CategoryListing } from './category-listing';
 
 export interface CategoryPageProps {
   slug: string;
-}
-
-interface CategoryData {
-  category: CategoryDto;
-  products: ProductDto[];
-  brands: BrandDto[];
+  /**
+   * Loaded during the server render by the route. When present the page paints
+   * real content in the first HTML response instead of a skeleton, which is
+   * what makes these fourteen pages indexable.
+   */
+  initialData?: CategoryData;
 }
 
 /**
@@ -61,67 +64,34 @@ type FetchState =
   | { slug: string; status: 'failed' }
   | { slug: string; status: 'ready'; data: CategoryData };
 
-export function CategoryPage({ slug }: CategoryPageProps) {
+export function CategoryPage({ slug, initialData }: CategoryPageProps) {
   const { t, tu } = useLang();
 
-  const [state, setState] = useState<FetchState>({ slug, status: 'loading' });
+  const [state, setState] = useState<FetchState>(() =>
+    initialData
+      ? { slug, status: 'ready', data: initialData }
+      : { slug, status: 'loading' },
+  );
+
+  /**
+   * The slug whose data arrived from the server. Consumed once, so a later
+   * slug change (client navigation) still triggers a fetch.
+   */
+  const seeded = useRef<string | null>(initialData ? slug : null);
 
   useEffect(() => {
+    if (seeded.current === slug) {
+      seeded.current = null;
+      return;
+    }
+
     let cancelled = false;
     const forSlug = slug;
 
-    Promise.all([
-      getCategory(forSlug),
-      listProducts({ category: forSlug, limit: 200 }),
-      listBrands(),
-    ])
-      .then(([categoryResponse, productsResponse, brandsResponse]) => {
+    loadCategoryData(forSlug)
+      .then((data) => {
         if (cancelled) return;
-
-        const products = productsResponse.data;
-
-        // The authoritative brand records, keyed by slug. The product DTO only
-        // carries a `BrandRef` (id/slug/names/colour), which has no
-        // `isOwnBrand`, so the flag has to come from the brand list — not from
-        // a hardcoded `false`. That hardcode made every brand render as a `.bt`
-        // tile; the reference renders the house brand as a `.bt` tile and
-        // partners as `.ex` chips (oshoppingbd.html L700).
-        const brandRecords = new Map(brandsResponse.data.map((b) => [b.slug, b]));
-
-        // Brands are derived from the products actually in this category, not
-        // from the whole catalog. The reference does the same
-        // (`[...new Set(ps.map(p => p.b))]`), which is why its filter list
-        // never offers a brand with zero results.
-        const seen = new Map<string, BrandDto>();
-        for (const product of products) {
-          const brand = product.brand;
-          if (!brand || seen.has(brand.slug)) continue;
-
-          const record = brandRecords.get(brand.slug);
-          seen.set(brand.slug, {
-            id: brand.id,
-            slug: brand.slug,
-            nameEn: brand.nameEn,
-            nameBn: brand.nameBn,
-            logo: record?.logo ?? null,
-            taglineEn: record?.taglineEn ?? null,
-            taglineBn: record?.taglineBn ?? null,
-            color: brand.color,
-            isOwnBrand: record?.isOwnBrand ?? false,
-            sortOrder: seen.size,
-            productCount: products.filter((p) => p.brand?.slug === brand.slug).length,
-          });
-        }
-
-        setState({
-          slug: forSlug,
-          status: 'ready',
-          data: {
-            category: categoryResponse.data,
-            products,
-            brands: [...seen.values()].sort((a, b) => a.nameEn.localeCompare(b.nameEn)),
-          },
-        });
+        setState({ slug: forSlug, status: 'ready', data });
       })
       .catch(() => {
         if (cancelled) return;
@@ -220,12 +190,35 @@ export function CategoryPage({ slug }: CategoryPageProps) {
       <ProductRail title={t('best')} products={rails.topRated} />
 
       {/* ── listing ───────────────────────────────────────────────────── */}
-      <CategoryListing
-        products={products}
-        brands={brands}
-        accent={accent}
-        tint={tint}
-      />
+      {/*
+        The listing reads the active filters from `useSearchParams`, which
+        cannot run while the page is being prerendered. Without this boundary
+        the whole route bails out of static generation and `next build` fails
+        with "useSearchParams() should be wrapped in a suspense boundary".
+
+        Scoping the boundary to the listing keeps the hero, the breadcrumb and
+        all three product rails server-rendered — that is where the crawlable
+        product content lives — while the filterable grid hydrates on the
+        client.
+      */}
+      <Suspense
+        fallback={
+          <div className="wrap" aria-busy="true">
+            <div className="cat-grid">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-[320px] w-full" />
+              ))}
+            </div>
+          </div>
+        }
+      >
+        <CategoryListing
+          products={products}
+          brands={brands}
+          accent={accent}
+          tint={tint}
+        />
+      </Suspense>
     </div>
   );
 }

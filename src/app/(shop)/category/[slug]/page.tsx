@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { CATEGORIES, getCategory } from '@/lib/categories';
 import { BRAND } from '@/lib/brand';
+import { loadCategoryData, type CategoryData } from '@/lib/category-data';
 import { CategoryPage } from '@/components/category/category-page';
 
 /**
@@ -16,7 +17,14 @@ import { CategoryPage } from '@/components/category/category-page';
  * `generateStaticParams` prerenders all fourteen at build time. That is the
  * whole point of a volume phase: the build proves every slug resolves, and a
  * typo in the category list fails `npm run build` rather than shipping a 404.
+ *
+ * The page also loads its data here, on the server, and hands it to the client
+ * component as `initialData`. That is what puts the hero, the rails and the
+ * product grid into the first HTML response — without it the server emitted a
+ * skeleton and the crawler saw an empty page.
  */
+
+export const revalidate = 300;
 
 export function generateStaticParams(): { slug: string }[] {
   return CATEGORIES.map((category) => ({ slug: category.id }));
@@ -58,5 +66,17 @@ export default async function Page({
     notFound();
   }
 
-  return <CategoryPage slug={slug} />;
+  /**
+   * A data failure must not take the page down: if the load throws (API down,
+   * bad payload) we render without `initialData` and the client component falls
+   * back to its own fetch, which shows the error state instead of a 500.
+   */
+  let initialData: CategoryData | undefined;
+  try {
+    initialData = await loadCategoryData(slug);
+  } catch {
+    initialData = undefined;
+  }
+
+  return <CategoryPage slug={slug} initialData={initialData} />;
 }

@@ -39,13 +39,26 @@ import { PromoBanners } from '@/components/home/promo-banners';
 import { RecentlyViewed } from '@/components/home/recently-viewed';
 import { Newsletter } from '@/components/home/newsletter';
 
-export function HomePage() {
+export interface HomePageProps {
+  /**
+   * Loaded by the route on the server. When present the homepage paints every
+   * section in the first HTML response instead of an empty skeleton, which is
+   * what makes the page indexable and keeps LCP honest.
+   */
+  initialData?: HomepageAggregate;
+}
+
+export function HomePage({ initialData }: HomePageProps) {
   const { t, tu } = useLang();
 
-  const [data, setData] = useState<HomepageAggregate | null>(null);
+  const [data, setData] = useState<HomepageAggregate | null>(initialData ?? null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
+    // The server already handed us the payload — do not refetch, and do not
+    // paint the skeleton we were trying to get rid of.
+    if (initialData) return;
+
     let cancelled = false;
 
     getHomepage()
@@ -61,7 +74,7 @@ export function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialData]);
 
   if (failed) {
     return (
