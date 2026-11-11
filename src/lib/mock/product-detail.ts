@@ -1,4 +1,7 @@
 /**
+ * MOCK ONLY — these reviews are generated, not real customer data. They must
+ * never reach production; the API replaces them.
+ *
  * Product detail fixtures — variant axes, reviews, specs.
  *
  * Split out of `src/lib/mock/index.ts` because the detail page needs a lot more
@@ -300,6 +303,13 @@ const REVIEW_DATES = [
   '2026-09-02',
 ];
 
+/**
+ * MOCK ONLY — these reviews are generated, not real customer data. They must
+ * never reach production; the API replaces them.
+ *
+ * Builds the review sample for a product from `REVIEW_POOL`, keyed by a stable
+ * seed. Nothing here is a real customer's words, so nothing here may ship.
+ */
 function buildReviews(product: ProductDto, seed: number): ReviewDto[] {
   if (product.reviewCount <= 0) return [];
 

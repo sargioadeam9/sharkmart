@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { CATEGORIES, getCategory } from '@/lib/categories';
 import { BRAND } from '@/lib/brand';
+import { ApiClientError } from '@/lib/api/client';
 import { loadCategoryData, type CategoryData } from '@/lib/category-data';
 import { CategoryPage } from '@/components/category/category-page';
 
@@ -70,11 +71,15 @@ export default async function Page({
    * A data failure must not take the page down: if the load throws (API down,
    * bad payload) we render without `initialData` and the client component falls
    * back to its own fetch, which shows the error state instead of a 500.
+   *
+   * A 404 is different: the category genuinely does not exist, so it is a real
+   * 404 rather than a page that will fill in later.
    */
   let initialData: CategoryData | undefined;
   try {
     initialData = await loadCategoryData(slug);
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiClientError && error.status === 404) notFound();
     initialData = undefined;
   }
 

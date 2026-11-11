@@ -12,8 +12,26 @@ import type {
   ProductDto,
   ProductListQuery,
 } from '@/types/catalog';
-import { resolve } from './client';
-import { mockGetProduct, mockGetProductDetail, mockListProducts } from '@/lib/mock';
+import { ApiClientError, resolve } from './client';
+import {
+  mockGetProduct,
+  mockGetProductDetail,
+  mockListProductSlugs,
+  mockListProducts,
+} from '@/lib/mock';
+
+/**
+ * The mock layer has to fail the way the wire fails, or the route cannot tell
+ * "this product does not exist" (404, render the 404 boundary) from "the API is
+ * down" (rethrow, keep the last good ISR page). A bare `Error` collapses both
+ * into one and the page 404s on a five-second blip.
+ */
+function notFoundError(slug: string): ApiClientError {
+  return new ApiClientError(
+    { code: 'NOT_FOUND', message: `Product not found: ${slug}` },
+    404,
+  );
+}
 
 function toQueryString(query: ProductListQuery): string {
   const params = new URLSearchParams();
@@ -35,10 +53,23 @@ export function getProduct(slug: string): Promise<ApiSuccess<ProductDto>> {
   return resolve(`/products/${encodeURIComponent(slug)}`, () => {
     const product = mockGetProduct(slug);
     if (!product) {
-      throw new Error(`Product not found: ${slug}`);
+      throw notFoundError(slug);
     }
     return { success: true as const, data: product };
   });
+}
+
+/**
+ * Every product slug, for `generateStaticParams`.
+ *
+ * Bounded at 200 — the same cap `loadProductPageData` and `loadCategoryData`
+ * already use for their catalog reads, and comfortably above the current
+ * catalog. A catalog that outgrows it does not break: the slugs past the bound
+ * are simply not prerendered and fall through to ISR on first request. Raising
+ * the bound is a build-time cost decision, not a correctness one.
+ */
+export function listProductSlugs(): Promise<ApiSuccess<string[]>> {
+  return resolve('/products/slugs?limit=200', () => mockListProductSlugs(200));
 }
 
 /**
@@ -52,7 +83,7 @@ export function getProductDetail(
   return resolve(`/products/${encodeURIComponent(slug)}/detail`, () => {
     const product = mockGetProductDetail(slug);
     if (!product) {
-      throw new Error(`Product not found: ${slug}`);
+      throw notFoundError(slug);
     }
     return { success: true as const, data: product };
   });

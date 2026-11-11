@@ -311,6 +311,23 @@ export function mockGetProduct(slug: string): ProductDto | undefined {
 }
 
 /**
+ * Slug list for `generateStaticParams`.
+ *
+ * Mirrors the future `GET /products/slugs?limit=` endpoint: a bounded slice of
+ * the catalog's slugs, in catalog order so the prerender list is stable between
+ * builds. `limit` is applied here rather than ignored, so the mock and the real
+ * endpoint answer the same question the same way.
+ */
+export function mockListProductSlugs(limit = 200): ApiSuccess<string[]> {
+  const slugs = MOCK_PRODUCTS.slice(0, limit).map((p) => p.slug);
+  return {
+    success: true,
+    data: slugs,
+    meta: { page: 1, limit, total: MOCK_PRODUCTS.length },
+  };
+}
+
+/**
  * Detail-page fixture: the base product plus variant axes, reviews, specs and
  * the category colours the gallery backdrop needs.
  *
