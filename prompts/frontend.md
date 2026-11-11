@@ -848,9 +848,9 @@ Full implementation guide: `prompts/security.md`.
 
 ### Authentication
 - Auth tokens stored in **HttpOnly cookies** (not localStorage)
-- Cookies set with `Secure`, `SameSite=Strict` flags
+- Cookies set with `Secure`, `SameSite=Lax` flags (`Lax`, not `Strict` — the payment gateway returns the buyer with a top-level cross-site GET, and `Strict` would drop the cookie on that navigation)
 - Token refresh handled transparently by API middleware
-- The client never reads or writes the token; it only relies on the server having set it. The flag values are a server decision, and `prompts/security.md` section 4 supersedes `SameSite=Strict` with `Lax` so the external payment return still carries the session.
+- The client never reads or writes the token; it only relies on the server having set it. The full flag set and the reasoning live in `prompts/security.md` section 4 — that table is the authority.
 
 ### CSRF Protection
 - Include CSRF tokens on all form submissions and state-changing requests
