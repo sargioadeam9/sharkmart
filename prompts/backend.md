@@ -1340,6 +1340,10 @@ model EmailTemplate {
 | 14 | **Audit Trail**     | Log all admin actions: who (userId), what (action + entity), when (timestamp), from where (IP address).          |
 | 15 | **Backup**          | Automated daily database backup. Configurable retention period (default: 30 days).                               |
 | 16 | **Error Handling**  | Never expose stack traces in production. Return structured error responses with error codes.                     |
+| 17 | **Password Reset**  | Single-use token, TTL 30 minutes max, store only a hash of it. A successful reset invalidates every existing session for that user. |
+| 18 | **Refresh Rotation** | Rotate the refresh token on every use. Detect reuse of an old token and revoke the whole token family. Keep the revocation list server-side (Redis), never in the client. |
+| 19 | **Mass Assignment** | Never spread a request body into Prisma. Every endpoint declares an explicit field allowlist, and Zod schemas use `.strict()` so unknown keys are rejected. |
+| 20 | **Request Size Limits** | JSON bodies capped at 1 MB. Multipart capped per file (image 5 MB, video 50 MB) and per request. Reject oversized payloads before parsing. |
 
 ---
 

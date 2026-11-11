@@ -31,6 +31,7 @@ Deep detail lives in `prompts/`. This file is the map and the law.
 2. prompts/masterbuild.md       ← find the phase you are on, read its prompt block
 3. prompts/frontend.md          ← if your phase touches UI
    prompts/backend.md           ← if your phase touches API/DB/admin
+   prompts/security.md          ← if your phase touches auth/orders/admin/payments
 4. STATUS.md                    ← what is actually done (trust this over your assumptions)
 5. HANDOFF.md                   ← what the last agent learned the hard way
 6. git log --oneline -20        ← what changed recently and why
@@ -360,7 +361,8 @@ Verified facts that have already tripped someone. Read once, save hours.
 ├── prompts/
 │   ├── masterbuild.md         ← phase plan + per-phase master prompts
 │   ├── frontend.md            ← storefront build law
-│   └── backend.md             ← API/DB/admin build law
+│   ├── backend.md             ← API/DB/admin build law
+│   └── security.md            ← security implementation guide (phases 6, 8, 9, 12)
 ├── Logo/                      ← brand assets
 ├── src/                       ← Next.js app (Phase 0 creates)
 └── server/                    ← API + Prisma (Phase 0 creates)

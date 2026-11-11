@@ -23,7 +23,7 @@
 13. [Performance Requirements](#13-performance-requirements)
 14. [SEO Requirements](#14-seo-requirements)
 15. [Analytics Integration](#15-analytics-integration)
-16. [Security (Frontend Side)](#16-security-frontend-side)
+16. [Client-Side Hardening (never authorization)](#16-client-side-hardening-never-authorization)
 17. [File Structure Convention](#17-file-structure-convention)
 18. [Multi-Agent Handoff Rules](#18-multi-agent-handoff-rules)
 19. [Agent Working Style & Philosophy](#19-agent-working-style--philosophy)
@@ -830,31 +830,53 @@ Track these standard events:
 
 ---
 
-## 16. Security (Frontend Side)
+## 16. Client-Side Hardening (never authorization)
+
+> [!CAUTION]
+> The browser never authorizes anything. Hiding a button is UX, not access
+> control. Every permission check, ownership check, price calculation and
+> stock decision happens on the server. If a client-side guard is the only
+> thing stopping an action, the feature is broken.
+
+Full implementation guide: `prompts/security.md`.
 
 ### Environment Variables
 - **Never** expose API keys, secrets, or internal URLs in client-side code
 - Only `NEXT_PUBLIC_` prefixed variables are accessible in the browser
 - Server-only secrets go in `.env.local` without the `NEXT_PUBLIC_` prefix
+- The server owns every secret; the client receives only values already safe to publish.
 
 ### Authentication
 - Auth tokens stored in **HttpOnly cookies** (not localStorage)
 - Cookies set with `Secure`, `SameSite=Strict` flags
 - Token refresh handled transparently by API middleware
+- The client never reads or writes the token; it only relies on the server having set it. The flag values are a server decision, and `prompts/security.md` section 4 supersedes `SameSite=Strict` with `Lax` so the external payment return still carries the session.
 
 ### CSRF Protection
 - Include CSRF tokens on all form submissions and state-changing requests
 - Token provided by the backend, included as a hidden field or header
+- The server issues and verifies the token; the client only echoes what it was given.
 
 ### XSS Prevention
 - Sanitize all user-generated content before rendering
 - Use React's built-in JSX escaping (don't use `dangerouslySetInnerHTML` unless absolutely necessary, and sanitize with DOMPurify if you must)
 - Validate and sanitize search queries, form inputs, URL parameters
+- The server sanitizes on write and is the authority on what is stored; client escaping is defence in depth, not the control.
 
 ### Content Security Policy
 - Configure CSP headers in `next.config.js` or middleware
 - Restrict script sources, style sources, image sources
 - Report CSP violations to a logging endpoint
+- The server sends the policy; the client cannot weaken or override it.
+
+### What belongs on each side
+
+| Do this in the browser | Never do this in the browser |
+| --- | --- |
+| Render state the server sent | Decide whether the user may act |
+| Validate input for fast feedback | Treat that validation as security |
+| Show/hide UI by permission flag | Treat hiding as enforcement |
+| Compute a display total | Send a total the server trusts |
 
 ---
 

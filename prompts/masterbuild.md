@@ -481,7 +481,8 @@ READ FIRST:
 1. AGENTS.md section 7 (security floor)
 2. prompts/backend.md: API Design (public endpoints), Cost Optimization Rules,
    File Structure
-3. The contract section of prompts/masterbuild.md (envelope, poisha, bilingual)
+3. prompts/security.md sections 3, 7, 11 (rate limiting, validation, leaks)
+4. The contract section of prompts/masterbuild.md (envelope, poisha, bilingual)
 
 BUILD under /api/v1:
 GET /products          filter (category, brand, price, rating, inStock,
@@ -598,9 +599,10 @@ the checkout flow. Real money and real stock move here.
 
 READ FIRST:
 1. AGENTS.md section 7 (security floor) - every item applies
-2. prompts/backend.md: Security Implementation Checklist, Payment Gateway
+2. prompts/security.md in full - this phase is the reason it exists
+3. prompts/backend.md: Security Implementation Checklist, Payment Gateway
    Integration, Courier Integration, and the Order/OrderItem/ShippingAddress models
-3. prompts/frontend.md section 6.8
+4. prompts/frontend.md section 6.8
 
 BUILD (backend):
 POST /auth/register|login|refresh|logout|forgot-password|reset-password
@@ -676,6 +678,7 @@ READ FIRST:
 3. admin panel.html: .sidebar, .topbar, .page, .card, .kpi, .pipeline, .chart,
    .table-wrap, .badge, .overlay/.modal/.drawer, .cal, .toast, .bottom-nav
 4. prompts/backend.md section "Admin Panel Pages (18 Modules)" for scope
+5. prompts/security.md sections 6, 12, 14 (authorization, logging, admin hardening)
 
 BUILD:
 Admin shell: 264px sidebar with grouped nav (Dashboard; Sell: Orders, POS,
@@ -861,9 +864,10 @@ READ FIRST:
 DO, in this order:
 1 Run the full suite. Record every failure before fixing anything.
 2 Security pass: walk prompts/backend.md "Security Implementation Checklist"
-  item by item. Attempt IDOR on orders/addresses/reviews, price tampering at
-  checkout, coupon abuse, upload of a .php renamed to .jpg, XSS in a review and
-  in a product description, CSRF on a state-changing form, rate-limit bypass.
+  item by item, with prompts/security.md section 16 alongside it. Attempt IDOR
+  on orders/addresses/reviews, price tampering at checkout, coupon abuse, upload
+  of a .php renamed to .jpg, XSS in a review and in a product description, CSRF
+  on a state-changing form, rate-limit bypass.
 3 Concurrency: last-unit checkout race, duplicate submit, double-click add to
   cart, two tabs editing the same cart.
 4 Data edges: 0 products in a category, 0 reviews, 1-character search, 200-char
