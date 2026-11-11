@@ -1,0 +1,1143 @@
+/* ==========================================================================
+   SharkMart component layer
+
+   Ported from oshoppingbd.html so the storefront is visually indistinguishable
+   from the reference. Values are copied, not rounded — see AGENTS.md §4.
+
+   Why raw CSS and not Tailwind utilities: the reference encodes its look in
+   long, exact shorthand (radial-gradient stops, inset shadows, clamp() type
+   scales, keyframes). Rewriting those as arbitrary-value utilities would
+   either round something or bury the value in a 200-character className. The
+   class names below are the reference's own, so a diff against the frozen HTML
+   is a one-line grep.
+
+   Colours are NOT hardcoded here: the bridge block below maps the reference's
+   short variable names onto the Phase 0 tokens in globals.css. Change a token,
+   every component follows.
+   ========================================================================== */
+
+:root {
+  /* Reference variable name -> SharkMart token. oshoppingbd.html :root (L12) */
+  --red: var(--color-shop-red);
+  --red-d: var(--color-shop-red-dark);
+  --pink: var(--color-shop-pink);
+  --navy: var(--color-shop-navy);
+  --bg: var(--color-shop-bg);
+  --line: var(--color-shop-line);
+  --muted: var(--color-shop-muted);
+  --ok: var(--color-shop-ok);
+  --r: var(--radius-shop);
+  --sh: var(--shadow-shop);
+  --sh2: var(--shadow-shop-lg);
+  --gap: 16px;
+
+  /* Non-token values the reference uses inline. Kept here, named, once. */
+  --star-on: #f5a623;
+  --star-off: #d9dde6;
+  --price-old: #98a2b8;
+  --low-stock: #c27a00;
+}
+
+/* ─────────────────────────────── Buttons ─────────────────────────────── */
+/* oshoppingbd.html L111-115, L371-373 */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 13px 26px;
+  border-radius: 99px;
+  font-weight: 700;
+  font-size: 15px;
+  transition: 0.2s;
+  background: #fff;
+  color: var(--navy);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.btn.red {
+  background: var(--red);
+  color: #fff;
+}
+
+.btn.red:hover {
+  background: var(--red-d);
+}
+
+.btn.line {
+  background: transparent;
+  border: 2px solid var(--red);
+  color: var(--red);
+}
+
+.btn.addl {
+  background: #fff;
+  border: 2px solid var(--red);
+  color: var(--navy);
+}
+
+.btn.addl:hover {
+  background: var(--pink);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* A loading button is disabled for interaction but must not look faded — the
+   spinner is the state, and at 50% opacity it reads as "unavailable". */
+.btn.ld:disabled,
+.btn.ok:disabled {
+  opacity: 1;
+  cursor: progress;
+}
+
+/* Loading: label goes transparent, spinner takes its place. */
+.btn.ld {
+  pointer-events: none;
+  color: transparent;
+  position: relative;
+}
+
+.btn.ld::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: sm-spin 0.6s linear infinite;
+}
+
+.btn.line.ld::after,
+.btn.addl.ld::after {
+  border-color: var(--pink);
+  border-top-color: var(--red);
+}
+
+/* Success: the reference's .btn-add.ok, generalised. */
+.btn.ok {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
+}
+
+/* Add-to-cart — oshoppingbd.html L204-211 */
+.btn-add {
+  margin-top: auto;
+  padding: 9px 12px;
+  border-radius: 11px;
+  border: 1.5px solid rgba(197, 31, 75, 0.55);
+  background: #fff;
+  color: var(--navy);
+  font-weight: 700;
+  font-size: 13.5px;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  position: relative;
+}
+
+.btn-add:hover {
+  background: var(--pink);
+  border-color: var(--red);
+}
+
+.btn-add:active {
+  transform: scale(0.97);
+}
+
+.btn-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f4f4f6;
+  border-color: #ddd;
+}
+
+.btn-add.ld {
+  pointer-events: none;
+  color: transparent;
+}
+
+.btn-add.ld::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid var(--pink);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: sm-spin 0.6s linear infinite;
+}
+
+.btn-add.ok {
+  background: var(--ok);
+  border-color: var(--ok);
+  color: #fff;
+}
+
+@keyframes sm-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ──────────────────────────── Product card ───────────────────────────── */
+/* oshoppingbd.html L180-212 */
+
+.pc {
+  background: #fff;
+  border-radius: 18px;
+  position: relative;
+  box-shadow: var(--sh);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: 0.25s;
+  border: 1px solid transparent;
+}
+
+.pc:hover {
+  box-shadow: var(--sh2);
+  transform: translateY(-3px);
+  border-color: var(--pink);
+}
+
+.pc-img {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1 / 1;
+  background: radial-gradient(circle at 50% 42%, #fff 0 28%, var(--t) 29% 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.pc-img .emo {
+  font-size: clamp(56px, 6vw, 84px);
+  transition: transform 0.35s;
+  filter: drop-shadow(0 10px 10px rgba(37, 56, 88, 0.18));
+}
+
+.pc-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.35s;
+}
+
+.pc:hover .emo,
+.pc:hover .pc-img img {
+  transform: scale(1.12) rotate(-4deg);
+}
+
+.badge {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  background: var(--red);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 99px;
+  z-index: 2;
+}
+
+.oos {
+  position: absolute;
+  inset: auto 0 0 0;
+  background: rgba(37, 56, 88, 0.82);
+  color: #fff;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px;
+  z-index: 2;
+}
+
+.wish {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  color: #b8c0d0;
+  transition: 0.2s;
+  z-index: 2;
+}
+
+.wish:hover {
+  color: var(--red);
+  transform: scale(1.12);
+}
+
+.wish.on {
+  color: var(--red);
+  background: var(--pink);
+}
+
+.pc-b {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.pc-brand {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.pc-n {
+  font-weight: 600;
+  font-size: 14.5px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+}
+
+.pc-n:hover {
+  color: var(--red);
+}
+
+.pc-r {
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.pc-p {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pc-p b {
+  font-size: 17px;
+  color: var(--red);
+  font-weight: 800;
+}
+
+.pc-p s {
+  font-size: 12.5px;
+  color: var(--price-old);
+}
+
+.pc-s {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ok);
+}
+
+.pc-s.low {
+  color: var(--low-stock);
+}
+
+.pc-s.out {
+  color: var(--red);
+}
+
+.pc-b .btn-add {
+  margin-top: 8px;
+}
+
+/* Sold progress — flash sale variant, oshoppingbd.html L175-177 */
+.sold {
+  height: 7px;
+  border-radius: 9px;
+  background: #f0e3e7;
+  margin: 8px 0 2px;
+  overflow: hidden;
+}
+
+.sold i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--star-on), var(--red));
+  border-radius: 9px;
+}
+
+.sold-t {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ──────────────────────────── Star rating ────────────────────────────── */
+/* oshoppingbd.html L198 — gradient fill, no image assets */
+
+.stars {
+  background: linear-gradient(
+    90deg,
+    var(--star-on) var(--r),
+    var(--star-off) var(--r)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: 1px;
+  font-size: 13px;
+}
+
+/* ─────────────────────────── Category card ───────────────────────────── */
+/* oshoppingbd.html L215-219 */
+
+.cc {
+  display: block;
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px 10px 16px;
+  text-align: center;
+  box-shadow: var(--sh);
+  border-bottom: 4px solid var(--a);
+  transition: 0.25s;
+  height: 100%;
+}
+
+.cc:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--sh2);
+}
+
+.cc .ci {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  background: var(--t);
+  display: grid;
+  place-items: center;
+  font-size: 36px;
+  box-shadow: inset 0 0 0 3px #fff, 0 0 0 2px var(--a);
+}
+
+.cc b {
+  font-size: 13.5px;
+  line-height: 1.25;
+  display: block;
+}
+
+.cc small {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+/* ───────────────────────────── Brand tile ────────────────────────────── */
+/* oshoppingbd.html L156-161 */
+
+.bt {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px 14px;
+  text-align: center;
+  box-shadow: var(--sh);
+  border: 2px solid transparent;
+  transition: 0.25s;
+  display: block;
+  height: 100%;
+}
+
+.bt:hover {
+  transform: translateY(-4px);
+  border-color: var(--bc);
+  box-shadow: var(--sh2);
+}
+
+.bt .lg {
+  height: 62px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: #fff;
+  background: var(--bc);
+  margin-bottom: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bt .lg::after {
+  content: '';
+  position: absolute;
+  right: -18px;
+  top: -18px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.bt b {
+  display: block;
+  font-size: 14px;
+}
+
+.bt small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+/* ────────────────────────────── Carousel ─────────────────────────────── */
+/* oshoppingbd.html L139-153 */
+
+.car {
+  position: relative;
+  --w: calc((100% - var(--gap) * (var(--per) - 1)) / var(--per));
+}
+
+.car-track {
+  display: flex;
+  gap: var(--gap);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 6px 2px 14px;
+  margin: -6px -2px -14px;
+  cursor: grab;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+
+.car-track::-webkit-scrollbar {
+  display: none;
+}
+
+.car-track.drag {
+  cursor: grabbing;
+  user-select: none;
+  scroll-snap-type: none;
+}
+
+.car-track.drag a {
+  pointer-events: none;
+}
+
+.car-track > * {
+  flex: 0 0 var(--w);
+  scroll-snap-align: start;
+}
+
+.per-prod {
+  --per: 5;
+}
+.per-brand {
+  --per: 6;
+}
+.per-cat {
+  --per: 7;
+}
+.per-ext {
+  --per: 7;
+}
+
+.car.per-mini .car-track > * {
+  flex: 0 0 148px;
+}
+
+.car-btn {
+  position: absolute;
+  top: 42%;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--sh2);
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  z-index: 4;
+  transition: 0.2s;
+  color: var(--navy);
+}
+
+.car-btn:hover {
+  background: var(--red);
+  color: #fff;
+}
+
+.car-btn.prev {
+  left: -14px;
+}
+.car-btn.next {
+  right: -14px;
+}
+
+/* Set by the component when the track does not overflow. */
+.car.noscroll .car-btn {
+  display: none;
+}
+
+.car.per-mini .car-btn {
+  width: 30px;
+  height: 30px;
+  font-size: 17px;
+  top: 38%;
+}
+
+.car.per-mini .car-btn.prev {
+  left: -6px;
+}
+.car.per-mini .car-btn.next {
+  right: -6px;
+}
+
+/* ─────────────────────────── Search + suggest ────────────────────────── */
+/* oshoppingbd.html L50-62 */
+
+.search {
+  flex: 1;
+  position: relative;
+  max-width: 640px;
+}
+
+.search form {
+  display: flex;
+  border: 2px solid var(--pink);
+  border-radius: 99px;
+  background: #fff;
+  overflow: hidden;
+  transition: 0.2s;
+}
+
+.search form:focus-within {
+  border-color: var(--red);
+  box-shadow: 0 0 0 4px rgba(197, 31, 75, 0.1);
+}
+
+.search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  padding: 12px 18px;
+  font: inherit;
+  font-size: 14.5px;
+  min-width: 0;
+  background: transparent;
+  color: var(--navy);
+}
+
+.search button.go {
+  background: var(--red);
+  color: #fff;
+  padding: 0 22px;
+  font-weight: 700;
+  transition: 0.2s;
+}
+
+.search button.go:hover {
+  background: var(--red-d);
+}
+
+.sug {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 8px);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: var(--sh2);
+  padding: 8px;
+  display: none;
+  z-index: 70;
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.sug.open {
+  display: block;
+}
+
+.sug h6 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 8px 10px 4px;
+}
+
+.sug a,
+.sug button.sug-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  width: 100%;
+  text-align: left;
+}
+
+.sug a:hover,
+.sug a:focus,
+.sug button.sug-row:hover,
+.sug button.sug-row:focus {
+  background: var(--pink);
+}
+
+.sug .th {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  flex: none;
+}
+
+.sug small {
+  color: var(--muted);
+  margin-left: auto;
+  font-weight: 600;
+}
+
+/* ─────────────────────────────── Toast ───────────────────────────────── */
+/* oshoppingbd.html L452-454 */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 30px;
+  transform: translate(-50%, 40px);
+  background: var(--navy);
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 99px;
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 200;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.3s;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  box-shadow: var(--sh2);
+  max-width: 92vw;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.toast i {
+  font-style: normal;
+  background: var(--ok);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  flex: none;
+}
+
+/* ─────────────────────────────── Modal ───────────────────────────────── */
+/* oshoppingbd.html L425-430 */
+
+.mo {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.mo .bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 27, 46, 0.65);
+}
+
+.mo .cd2 {
+  position: relative;
+  background: #fff;
+  border-radius: 24px;
+  max-width: 860px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: auto;
+  padding: 26px;
+  animation: sm-pp 0.3s;
+}
+
+@keyframes sm-pp {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+.mo .cd2 .x {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 3;
+}
+
+/* ───────────────────────────── Mobile sheet ──────────────────────────── */
+/* oshoppingbd.html L512-517 */
+
+.msheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  z-index: 125;
+  border-radius: 24px 24px 0 0;
+  transform: translateY(105%);
+  transition: transform 0.35s;
+  max-height: 82vh;
+  overflow: auto;
+  padding: 18px 16px 28px;
+  box-shadow: 0 -8px 30px rgba(37, 56, 88, 0.18);
+}
+
+.msheet.open {
+  transform: none;
+}
+
+.msheet h3 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+/* ───────────────────────────────  Chips  ─────────────────────────────── */
+/* oshoppingbd.html L306-307 */
+
+.chip {
+  padding: 8px 16px;
+  border-radius: 99px;
+  background: #fff;
+  border: 1.5px solid var(--a, var(--line));
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: 0.15s;
+}
+
+.chip:hover,
+.chip.on {
+  background: var(--a, var(--red));
+  color: var(--navy);
+}
+
+/* ─────────────────────────── Quantity stepper ────────────────────────── */
+/* oshoppingbd.html L269-273, bump keyframe L69 */
+
+.qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid var(--line);
+  border-radius: 99px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.qty button {
+  width: 30px;
+  height: 30px;
+  font-size: 17px;
+  font-weight: 700;
+  transition: 0.15s;
+}
+
+.qty button:hover:not(:disabled) {
+  background: var(--pink);
+  color: var(--red);
+}
+
+.qty button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.qty span {
+  min-width: 30px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.qty span.pop {
+  animation: sm-bump 0.4s;
+}
+
+@keyframes sm-bump {
+  30% {
+    transform: scale(1.5);
+  }
+  60% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ───────────────────────────── Empty state ───────────────────────────── */
+/* oshoppingbd.html L293-294 */
+
+.empty {
+  text-align: center;
+  padding: 50px 10px;
+  color: var(--muted);
+}
+
+.empty .e {
+  font-size: 64px;
+}
+
+.empty h3 {
+  color: var(--navy);
+  font-size: 18px;
+  margin: 8px 0 6px;
+}
+
+/* ───────────────────────────── Mini card ─────────────────────────────── */
+/* oshoppingbd.html L280-286 */
+
+.mini {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  height: 100%;
+}
+
+.mini .im {
+  aspect-ratio: 1.35;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  position: relative;
+  overflow: hidden;
+}
+
+.mini b.n {
+  font-size: 12.5px;
+  line-height: 1.25;
+  font-weight: 600;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.5em;
+}
+
+.mini .pr {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--red);
+}
+
+.mini .pr s {
+  font-size: 11px;
+  color: var(--price-old);
+  font-weight: 500;
+  margin-left: 4px;
+}
+
+.mini .btn-add {
+  padding: 6px;
+  font-size: 12px;
+  border-radius: 9px;
+}
+
+/* ────────────────────────────── Skeletons ────────────────────────────── */
+/* No skeleton exists in the reference — this is ours, built from tokens so it
+   sits on the same page background without inventing a new colour. */
+
+.sk {
+  background: linear-gradient(
+    90deg,
+    var(--line) 0%,
+    #f6f1f3 50%,
+    var(--line) 100%
+  );
+  background-size: 200% 100%;
+  animation: sm-shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes sm-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.sk-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--sh);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.sk-card .sk-img {
+  aspect-ratio: 1 / 1;
+  border-radius: 0;
+}
+
+.sk-card .sk-b {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sk-tile {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--sh);
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.sk-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 0;
+}
+
+/* ───────────────────────────── Responsive ────────────────────────────── */
+/* oshoppingbd.html L458, L486-492 */
+
+@media (max-width: 1200px) {
+  .per-prod {
+    --per: 4;
+  }
+  .per-brand {
+    --per: 5;
+  }
+  .per-cat {
+    --per: 6;
+  }
+  .per-ext {
+    --per: 5;
+  }
+}
+
+@media (max-width: 1024px) {
+  .per-prod {
+    --per: 3.4;
+  }
+  .per-brand {
+    --per: 4;
+  }
+  .per-cat {
+    --per: 5;
+  }
+  .per-ext {
+    --per: 4;
+  }
+}
+
+@media (max-width: 760px) {
+  .per-prod {
+    --per: 2.15;
+  }
+  .per-brand {
+    --per: 3.2;
+  }
+  .per-cat {
+    --per: 3.3;
+  }
+  .per-ext {
+    --per: 3.2;
+  }
+
+  .car-btn {
+    display: none !important;
+  }
+
+  .car-track {
+    margin-right: -14px;
+    padding-right: 14px;
+  }
+
+  .pc-b {
+    padding: 10px;
+  }
+  .pc-n {
+    font-size: 13.5px;
+  }
+  .pc-p b {
+    font-size: 15.5px;
+  }
+
+  .cc {
+    padding: 14px 6px 12px;
+  }
+  .cc .ci {
+    width: 60px;
+    height: 60px;
+    font-size: 29px;
+  }
+  .cc b {
+    font-size: 12px;
+  }
+
+  .bt {
+    padding: 12px 8px;
+  }
+  .bt .lg {
+    height: 48px;
+    font-size: 14px;
+  }
+  .bt small {
+    display: none;
+  }
+
+  .toast {
+    bottom: 84px;
+  }
+
+  .msheet {
+    max-height: 88vh;
+  }
+}
