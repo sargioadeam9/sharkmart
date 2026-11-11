@@ -1,0 +1,648 @@
+/* ==========================================================================
+   home.css — Phase 3 homepage sections.
+
+   Ported from oshoppingbd.html:
+     L101-136  .hero .h-track .h-sl .h-ar .h-dots .trust .sec .sh
+     L144-176  .per-* .car-btn .bt .ex .flash .cd .fl-h .sold
+     L215-237  .cc .pb .nlw
+     L458-500  responsive blocks
+
+   Rules that are already global and NOT repeated here:
+     .btn / .btn.red / .btn.line   — components.css (Phase 1)
+     .car / .car-track / .car-btn  — components.css (Phase 1)
+     .pc / .cc / .bt               — components.css (Phase 1)
+
+   Only what the homepage needs and nothing else. No new tokens: every colour
+   below is a var() from globals.css @theme, matching the reference exactly.
+   ========================================================================== */
+
+/* ── hero ───────────────────────────────────────────── oshoppingbd L101-115 ── */
+.hero {
+  position: relative;
+  border-radius: 22px;
+  overflow: hidden;
+  margin-top: 18px;
+  background: var(--pink);
+  /* Reserve the slide height so the LCP image cannot shift the page. */
+  min-height: 380px;
+}
+
+.h-track {
+  display: flex;
+  transition: transform 0.7s cubic-bezier(0.6, 0.05, 0.2, 1);
+  will-change: transform;
+}
+
+.h-sl {
+  flex: 0 0 100%;
+  min-height: 380px;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: center;
+  padding: 0 64px;
+  gap: 20px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.h-sl::before {
+  content: '';
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  right: -120px;
+  top: -140px;
+}
+
+.h-sl::after {
+  content: '';
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  right: 240px;
+  bottom: -160px;
+}
+
+.h-sl .tx {
+  position: relative;
+  z-index: 2;
+}
+
+.h-sl .tg {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 5px 14px;
+  border-radius: 99px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.h-sl h2 {
+  font-size: clamp(30px, 4.2vw, 54px);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+/* Landmine #6: Bangla headings need the taller line-height. */
+body.bn .h-sl h2 {
+  line-height: 1.25;
+}
+
+.h-sl p {
+  font-size: 17px;
+  opacity: 0.92;
+  margin-bottom: 24px;
+  max-width: 460px;
+}
+
+.h-sl .art {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  font-size: clamp(70px, 9vw, 128px);
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.25));
+}
+
+.h-sl .art span:nth-child(2) {
+  transform: translateY(-22px) scale(1.15);
+}
+
+.h-ar {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--navy);
+  font-size: 22px;
+  display: grid;
+  place-items: center;
+  z-index: 5;
+  box-shadow: var(--sh);
+  transition: 0.2s;
+}
+
+.h-ar:hover {
+  background: #fff;
+  transform: translateY(-50%) scale(1.08);
+}
+
+.h-ar.p {
+  left: 14px;
+}
+
+.h-ar.n {
+  right: 14px;
+}
+
+.h-dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 14px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  z-index: 5;
+}
+
+.h-dots button {
+  width: 9px;
+  height: 9px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.55);
+  transition: 0.3s;
+}
+
+.h-dots button.on {
+  width: 28px;
+  background: #fff;
+}
+
+/* ── trust badges ───────────────────────────────────── oshoppingbd L116-120 ── */
+.trust {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 18px 0 6px;
+}
+
+.trust div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border-radius: var(--r);
+  padding: 14px 16px;
+  box-shadow: var(--sh);
+}
+
+.trust .ti {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--pink);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  flex: none;
+}
+
+.trust b {
+  display: block;
+  font-size: 14px;
+}
+
+.trust small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* ── section shell + header ─────────────────────────── oshoppingbd L122-136 ── */
+.sec {
+  margin-top: 44px;
+}
+
+.sh {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.sh h2 {
+  font-size: clamp(21px, 2.4vw, 28px);
+  letter-spacing: -0.02em;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sh h2::before {
+  content: '';
+  width: 6px;
+  height: 26px;
+  border-radius: 4px;
+  background: var(--red);
+  flex: none;
+}
+
+.sh p {
+  color: var(--muted);
+  font-size: 14px;
+  margin-top: 2px;
+}
+
+.sh a.va {
+  color: var(--red);
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.sh a.va:hover {
+  text-decoration: underline;
+}
+
+/* ── external brand tiles ───────────────────────────── oshoppingbd L162-163 ── */
+.ex {
+  background: #fff;
+  border-radius: 16px;
+  padding: 0 10px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  box-shadow: var(--sh);
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: 0.03em;
+  color: #51607c;
+  border: 2px solid transparent;
+  transition: 0.2s;
+  width: 100%;
+}
+
+.ex:hover {
+  border-color: var(--pink);
+  color: var(--red);
+  transform: translateY(-3px);
+}
+
+/* ── flash sale ─────────────────────────────────────── oshoppingbd L165-176 ── */
+.flash {
+  background: linear-gradient(120deg, var(--red), #e0476e);
+  border-radius: 24px;
+  padding: 26px 26px 30px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+
+.flash::before {
+  content: '⚡';
+  position: absolute;
+  right: -10px;
+  top: -40px;
+  font-size: 200px;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.flash .sh h2 {
+  color: #fff;
+}
+
+.flash .sh h2::before {
+  background: #fff;
+}
+
+.flash .sh a.va {
+  color: #fff;
+}
+
+.fl-h {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* Countdown — tabular figures so the digits do not jitter as they tick. */
+.cd {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 700;
+}
+
+.cd span {
+  background: #fff;
+  color: var(--red);
+  border-radius: 10px;
+  min-width: 46px;
+  text-align: center;
+  padding: 5px 6px;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cd span small {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cd i {
+  font-style: normal;
+  font-size: 20px;
+}
+
+.sold {
+  height: 7px;
+  border-radius: 9px;
+  background: #f0e3e7;
+  margin: 8px 0 2px;
+  overflow: hidden;
+}
+
+.sold i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #f5a623, var(--red));
+  border-radius: 9px;
+}
+
+.sold-t {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ── promo banners ──────────────────────────────────── oshoppingbd L222-228 ── */
+.pb {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.pb a {
+  border-radius: 22px;
+  padding: 26px;
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background: var(--t);
+  border: 2px solid var(--a);
+  transition: 0.25s;
+}
+
+.pb a:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--sh2);
+}
+
+.pb a .big {
+  position: absolute;
+  right: 10px;
+  bottom: -10px;
+  font-size: 110px;
+  opacity: 0.9;
+  filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.12));
+  pointer-events: none;
+}
+
+.pb small {
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--navy);
+  opacity: 0.7;
+}
+
+.pb h3 {
+  font-size: 24px;
+  line-height: 1.15;
+  margin: 6px 0 12px;
+  max-width: 70%;
+  letter-spacing: -0.01em;
+}
+
+.pb span.cta {
+  background: var(--navy);
+  color: #fff;
+  padding: 7px 16px;
+  border-radius: 99px;
+  font-size: 13px;
+  font-weight: 700;
+  width: max-content;
+}
+
+/* ── newsletter ─────────────────────────────────────── oshoppingbd L231-236 ── */
+.nlw {
+  background: var(--navy);
+  color: #fff;
+  border-radius: 26px;
+  padding: 42px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 26px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.nlw::after {
+  content: '✉️';
+  position: absolute;
+  right: 30px;
+  top: -30px;
+  font-size: 180px;
+  opacity: 0.07;
+  pointer-events: none;
+}
+
+.nlw h2 {
+  font-size: 30px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+
+.nlw p {
+  opacity: 0.8;
+  margin-top: 8px;
+}
+
+.nlw form {
+  display: flex;
+  gap: 8px;
+  background: #fff;
+  border-radius: 99px;
+  padding: 5px;
+  position: relative;
+  z-index: 2;
+}
+
+.nlw input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  padding: 0 16px;
+  font: inherit;
+  background: transparent;
+  color: var(--navy);
+  min-width: 0;
+}
+
+/* Inline validation — the reference has none; a bad address must say so. */
+.nlw .err {
+  grid-column: 2;
+  color: #ffd2dc;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: -14px;
+  padding-left: 18px;
+}
+
+.nlw .ok {
+  grid-column: 2;
+  color: #b8f0d4;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: -14px;
+  padding-left: 18px;
+}
+
+/* ── responsive ─────────────────────────────────────── oshoppingbd L458-500 ── */
+@media (max-width: 1200px) {
+  .per-prod {
+    --per: 4;
+  }
+  .per-brand {
+    --per: 5;
+  }
+  .per-cat {
+    --per: 6;
+  }
+  .per-ext {
+    --per: 5;
+  }
+}
+
+@media (max-width: 1024px) {
+  .per-prod {
+    --per: 3.4;
+  }
+  .per-brand {
+    --per: 4;
+  }
+  .per-cat {
+    --per: 5;
+  }
+  .per-ext {
+    --per: 4;
+  }
+}
+
+@media (max-width: 820px) {
+  .trust {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .pb {
+    grid-template-columns: 1fr;
+  }
+  .nlw {
+    grid-template-columns: 1fr;
+    padding: 28px;
+  }
+  .nlw .err,
+  .nlw .ok {
+    grid-column: 1;
+    margin-top: -10px;
+  }
+}
+
+@media (max-width: 760px) {
+  .hero {
+    border-radius: 18px;
+    margin-top: 12px;
+    min-height: 300px;
+  }
+  .h-track {
+    /* Swipe is handled by touch scrolling on the track at this width. */
+    transition: transform 0.5s cubic-bezier(0.6, 0.05, 0.2, 1);
+  }
+  .h-sl {
+    grid-template-columns: 1fr;
+    padding: 26px 22px 44px;
+    min-height: 300px;
+    gap: 0;
+    text-align: left;
+  }
+  .h-sl .art {
+    position: absolute;
+    right: 6px;
+    bottom: 30px;
+    font-size: 68px;
+    opacity: 0.95;
+    z-index: 1;
+  }
+  .h-sl .art span:nth-child(n + 3) {
+    display: none;
+  }
+  .h-sl .tx {
+    max-width: 68%;
+  }
+  .h-sl p {
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .h-sl .btn {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  .h-ar {
+    display: none;
+  }
+  .sec {
+    margin-top: 32px;
+  }
+  .per-prod {
+    --per: 2.15;
+  }
+  .per-brand {
+    --per: 3.2;
+  }
+  .per-cat {
+    --per: 3.3;
+  }
+  .per-ext {
+    --per: 3.2;
+  }
+  .flash {
+    padding: 18px 14px 20px;
+    border-radius: 18px;
+  }
+  .cd span {
+    min-width: 38px;
+    font-size: 16px;
+  }
+  .nlw {
+    padding: 24px 20px;
+    border-radius: 20px;
+  }
+  .nlw h2 {
+    font-size: 24px;
+  }
+}
+
+/* Reduced motion: the slider still changes slide, it just does not glide. */
+@media (prefers-reduced-motion: reduce) {
+  .h-track {
+    transition: none;
+  }
+}
