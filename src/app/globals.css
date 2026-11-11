@@ -1,0 +1,192 @@
+@import 'tailwindcss';
+@import './components.css';
+@import './shell.css';
+@import './home.css';
+
+/* ==========================================================================
+   SharkMart design tokens
+
+   TWO separate token sets, on purpose. The storefront and the admin panel are
+   different design systems in the reference files. Never merge them.
+
+     Storefront : oshoppingbd.html  :root        (line 12)
+     Admin      : admin panel.html  :root        (lines 21-30)
+     Admin dark : admin panel.html  [data-theme=dark]  (line 257)
+
+   Namespacing: shop-* for the storefront, admin-* for the panel.
+   ========================================================================== */
+
+@theme {
+  /* ---------------------------- Storefront ---------------------------- */
+  --color-shop-red: #c51f4b;
+  --color-shop-red-dark: #a3163c;
+  --color-shop-pink: #f7dce4;
+  --color-shop-navy: #253858;
+  --color-shop-bg: #fbf8f9;
+  --color-shop-line: #eee5e8;
+  --color-shop-muted: #667590;
+  --color-shop-ok: #1f8a5b;
+
+  --radius-shop: 14px;
+  --shadow-shop: 0 6px 24px rgba(37, 56, 88, 0.08);
+  --shadow-shop-lg: 0 14px 40px rgba(37, 56, 88, 0.16);
+
+  /* ------------------------------- Admin ------------------------------ */
+  --color-admin-brand: #c8143c;
+  --color-admin-brand-600: #a80f31;
+  --color-admin-brand-50: #fdf0f3;
+  --color-admin-brand-100: #f9d9e1;
+
+  --color-admin-navy: #16223d;
+  --color-admin-navy-2: #24365f;
+  --color-admin-navy-3: #3d5486;
+
+  --color-admin-bg: #f6f7fa;
+  --color-admin-card: #ffffff;
+  --color-admin-line: #e8eaf0;
+  --color-admin-line-2: #f0f1f5;
+
+  --color-admin-text: #1a2238;
+  --color-admin-muted: #6b7490;
+  --color-admin-faint: #9aa2b8;
+
+  --color-admin-ok: #12805c;
+  --color-admin-ok-bg: #e3f6ee;
+  --color-admin-warn: #a15c00;
+  --color-admin-warn-bg: #fff2dc;
+  --color-admin-bad: #c8143c;
+  --color-admin-bad-bg: #fdeaee;
+  --color-admin-info: #2b5fd9;
+  --color-admin-info-bg: #e8effd;
+  --color-admin-mute-bg: #eef0f5;
+
+  --radius-admin-lg: 20px;
+  --radius-admin-md: 14px;
+  --radius-admin-sm: 10px;
+  --shadow-admin: 0 1px 2px rgba(22, 34, 61, 0.04),
+    0 8px 24px -12px rgba(22, 34, 61, 0.1);
+
+  /* ---------------------------- Typography ---------------------------- */
+  --font-sans: 'Plus Jakarta Sans', 'Hind Siliguri', system-ui, sans-serif;
+  --font-bangla: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* --------------------------- Breakpoints ---------------------------- */
+  /* Overrides Tailwind defaults to match the reference media queries. */
+  --breakpoint-sm: 760px;
+  --breakpoint-md: 820px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-2xl: 1320px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-shop-bg);
+    color: var(--color-shop-navy);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Bangla mode: swap the stack and give headings more room.
+     Bangla glyphs are wider and taller than Latin — see AGENTS.md landmine #6. */
+  body.bn {
+    font-family: var(--font-bangla);
+  }
+
+  body.bn h1,
+  body.bn h2,
+  body.bn h3 {
+    line-height: 1.25;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button {
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border: 0;
+    background: none;
+  }
+
+  img,
+  svg {
+    display: block;
+    max-width: 100%;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-shop-red);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation: none !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Page container — reference: .wrap { max-width:1320px; padding:0 20px } */
+  .wrap {
+    margin-inline: auto;
+    max-width: 1320px;
+    padding-inline: 20px;
+  }
+
+  @media (max-width: 760px) {
+    .wrap {
+      padding-inline: 14px;
+    }
+  }
+
+  /* Skip link — reference: .skip */
+  .skip-link {
+    position: absolute;
+    left: -999px;
+    top: 8px;
+    z-index: 999;
+    background: var(--color-shop-red);
+    color: #fff;
+    padding: 8px 14px;
+    border-radius: 8px;
+  }
+
+  .skip-link:focus {
+    left: 8px;
+  }
+
+  /* Screen-reader only — reference: .sr */
+  .sr-only-focusable {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}
