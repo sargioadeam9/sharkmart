@@ -44,3 +44,7 @@ server/node_modules/
 server/dist/
 server/uploads/
 server/.env
+
+# local secrets
+gh-token.txt
+*.token
