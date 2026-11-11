@@ -17,6 +17,7 @@ import rawCatalog from '../../../data/reference-catalog.json';
 import type {
   BrandDto,
   CategoryDto,
+  ProductDetailDto,
   ProductDto,
   ProductListQuery,
   ProductBadge,
@@ -25,6 +26,7 @@ import type {
 } from '@/types/catalog';
 import type { ApiMeta, ApiSuccess } from '@/types/api';
 import { FREE_DELIVERY_THRESHOLD_POISHA } from '@/lib/commerce';
+import { buildProductDetail } from './product-detail';
 
 // ─── Raw reference shape ──────────────────────────────────────────────────
 
@@ -306,6 +308,25 @@ export function mockListProducts(
 
 export function mockGetProduct(slug: string): ProductDto | undefined {
   return MOCK_PRODUCTS.find((p) => p.slug === slug);
+}
+
+/**
+ * Detail-page fixture: the base product plus variant axes, reviews, specs and
+ * the category colours the gallery backdrop needs.
+ *
+ * Returns `undefined` for an unknown slug so the caller can 404 rather than
+ * render a half-empty page.
+ */
+export function mockGetProductDetail(slug: string): ProductDetailDto | undefined {
+  const product = mockGetProduct(slug);
+  if (!product) return undefined;
+
+  const category = categoryBySlug.get(product.category.slug);
+  return buildProductDetail(
+    product,
+    category?.lightTintColor ?? '#F4E9DD',
+    category?.accentColor ?? '#C51F4B',
+  );
 }
 
 export function mockListCategories(): ApiSuccess<CategoryDto[]> {

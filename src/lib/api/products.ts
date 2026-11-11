@@ -7,9 +7,13 @@
  */
 
 import type { ApiSuccess } from '@/types/api';
-import type { ProductDto, ProductListQuery } from '@/types/catalog';
+import type {
+  ProductDetailDto,
+  ProductDto,
+  ProductListQuery,
+} from '@/types/catalog';
 import { resolve } from './client';
-import { mockGetProduct, mockListProducts } from '@/lib/mock';
+import { mockGetProduct, mockGetProductDetail, mockListProducts } from '@/lib/mock';
 
 function toQueryString(query: ProductListQuery): string {
   const params = new URLSearchParams();
@@ -30,6 +34,23 @@ export function listProducts(
 export function getProduct(slug: string): Promise<ApiSuccess<ProductDto>> {
   return resolve(`/products/${encodeURIComponent(slug)}`, () => {
     const product = mockGetProduct(slug);
+    if (!product) {
+      throw new Error(`Product not found: ${slug}`);
+    }
+    return { success: true as const, data: product };
+  });
+}
+
+/**
+ * The detail endpoint. Separate from `getProduct` because it carries variant
+ * groups, reviews and specs that the list endpoint does not — Phase 6 will
+ * serve it at `/products/:slug/detail`.
+ */
+export function getProductDetail(
+  slug: string,
+): Promise<ApiSuccess<ProductDetailDto>> {
+  return resolve(`/products/${encodeURIComponent(slug)}/detail`, () => {
+    const product = mockGetProductDetail(slug);
     if (!product) {
       throw new Error(`Product not found: ${slug}`);
     }

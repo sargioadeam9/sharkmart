@@ -1,0 +1,917 @@
+/* ==========================================================================
+   Product detail page — ported 1:1 from oshoppingbd.html
+
+   Source blocks, in the reference's order:
+     .pp .gal .thumbs .gm .vid          L~ (product layout + gallery)
+     .pi .meta .price .stk .vg .vo      (info block + variant selector)
+     .acts .sq .box .dl .cp .pol        (actions, utility, delivery, offers)
+     .tabs .spec .faq                   (tabbed content)
+     .rv .bars .rl .rv-c .av .vb        (reviews)
+     .fbt                               (frequently bought together)
+
+   Values are copied, never approximated. The only additions are the sticky
+   mobile action bar (the reference has no equivalent — it relies on the
+   floating cart button) and the lightbox, which the reference renders through
+   its generic `.mo` modal; here it gets its own `.pdlb` block so it can trap
+   focus without dragging the modal component in.
+   ========================================================================== */
+
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+
+.pp {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 40px;
+  margin-top: 10px;
+}
+
+.gal {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 14px;
+  align-self: start;
+  position: sticky;
+  top: 150px;
+}
+
+.thumbs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.thumbs button {
+  width: 78px;
+  height: 78px;
+  border-radius: 14px;
+  border: 2px solid var(--color-shop-line);
+  display: grid;
+  place-items: center;
+  font-size: 36px;
+  background: #fff;
+  transition: 0.15s;
+  position: relative;
+  overflow: hidden;
+}
+
+.thumbs button.on,
+.thumbs button:hover {
+  border-color: var(--color-shop-red);
+}
+
+.gm {
+  border-radius: 24px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  cursor: zoom-in;
+  box-shadow: var(--shadow-shop);
+  background: #fff;
+}
+
+.gm .z {
+  font-size: clamp(150px, 20vw, 270px);
+  transition: transform 0.25s;
+  filter: drop-shadow(0 22px 20px rgba(37, 56, 88, 0.22));
+  will-change: transform;
+}
+
+.gm .tools {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  gap: 8px;
+  z-index: 2;
+}
+
+.gm .tools button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--shadow-shop);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.gm .tools button:hover {
+  background: var(--color-shop-pink);
+}
+
+.gm .lbl {
+  position: absolute;
+  left: 14px;
+  bottom: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.vid {
+  margin-top: 14px;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #111b2e;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  cursor: pointer;
+  transition: 0.2s;
+  width: 100%;
+  text-align: left;
+}
+
+.vid:hover {
+  background: #1b2a47;
+}
+
+.vid .pl {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--color-shop-red);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  padding-left: 3px;
+  flex: none;
+}
+
+.vid small {
+  opacity: 0.7;
+  display: block;
+  font-size: 12.5px;
+}
+
+/* ── Info block ─────────────────────────────────────────────────────────── */
+
+.pi .br {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-shop-red);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.pi h1 {
+  font-size: clamp(24px, 2.8vw, 34px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  margin: 4px 0 8px;
+}
+
+body.bn .pi h1 {
+  line-height: 1.35;
+}
+
+.meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 13.5px;
+  color: var(--color-shop-muted);
+  align-items: center;
+}
+
+.meta .sku {
+  background: #fff;
+  border: 1px solid var(--color-shop-line);
+  border-radius: 8px;
+  padding: 2px 10px;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 16px 0 4px;
+  flex-wrap: wrap;
+}
+
+.price b {
+  font-size: 34px;
+  color: var(--color-shop-red);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.price s {
+  color: #98a2b8;
+  font-size: 18px;
+}
+
+.price em {
+  font-style: normal;
+  background: var(--color-shop-red);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 3px 11px;
+  border-radius: 99px;
+}
+
+.stk {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-shop-ok);
+}
+
+.stk::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.stk.low {
+  color: #c27a00;
+}
+
+.stk.out {
+  color: var(--color-shop-red);
+}
+
+/* ── Variant selector ───────────────────────────────────────────────────── */
+
+.vg {
+  margin: 18px 0;
+}
+
+.vg h5 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.vg h5 span {
+  color: var(--color-shop-muted);
+  font-weight: 500;
+}
+
+.vo {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vo button {
+  min-width: 52px;
+  padding: 9px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--color-shop-line);
+  background: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  transition: 0.15s;
+  position: relative;
+}
+
+.vo button:hover {
+  border-color: var(--color-shop-navy);
+}
+
+.vo button.on {
+  border-color: var(--color-shop-red);
+  background: var(--color-shop-pink);
+  color: var(--color-shop-red);
+}
+
+.vo button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: line-through;
+  background: #f3f3f6;
+}
+
+.vo.col button {
+  width: 40px;
+  height: 40px;
+  min-width: 0;
+  padding: 0;
+  border-radius: 50%;
+  border-width: 3px;
+  box-shadow: inset 0 0 0 3px #fff;
+}
+
+.vo.col button.on {
+  border-color: var(--color-shop-red);
+}
+
+/* ── Actions ────────────────────────────────────────────────────────────── */
+
+.acts {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.acts .qty {
+  margin: 0;
+  border-width: 2px;
+}
+
+.acts .qty button {
+  width: 42px;
+  height: 44px;
+}
+
+.acts .btn {
+  flex: 1;
+  min-width: 150px;
+  padding: 14px 20px;
+}
+
+.sq {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sq button {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 99px;
+  border: 1.5px solid var(--color-shop-line);
+  background: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: 0.15s;
+}
+
+.sq button:hover {
+  background: var(--color-shop-pink);
+  border-color: var(--color-shop-red);
+}
+
+.sq button.on {
+  color: var(--color-shop-red);
+}
+
+.box {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  margin-top: 16px;
+  box-shadow: var(--shadow-shop);
+}
+
+.box h4 {
+  font-size: 15px;
+  margin-bottom: 10px;
+}
+
+.dl {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dl .res {
+  flex: 1 1 100%;
+  font-size: 13.5px;
+  color: #3d4d6b;
+  background: var(--color-shop-bg);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.cp {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cp button {
+  border: 1.5px dashed var(--color-shop-red);
+  color: var(--color-shop-red);
+  background: #fff7f9;
+  padding: 5px 12px;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+}
+
+.cp button small {
+  color: var(--color-shop-navy);
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+.pol {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.pol div {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  text-align: center;
+  font-size: 12.5px;
+  box-shadow: var(--shadow-shop);
+}
+
+.pol i {
+  font-style: normal;
+  font-size: 22px;
+  display: block;
+}
+
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
+
+.tabs {
+  margin-top: 44px;
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: var(--shadow-shop);
+  overflow: hidden;
+}
+
+.tabs .tl {
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--color-shop-line);
+  scrollbar-width: none;
+  padding: 0 10px;
+}
+
+.tabs .tl::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs .tl button {
+  padding: 16px 18px;
+  font-weight: 700;
+  font-size: 14.5px;
+  color: var(--color-shop-muted);
+  white-space: nowrap;
+  border-bottom: 3px solid transparent;
+  transition: 0.15s;
+}
+
+.tabs .tl button.on {
+  color: var(--color-shop-red);
+  border-color: var(--color-shop-red);
+}
+
+.tabs .tc {
+  padding: 26px 30px;
+  font-size: 15px;
+  color: #3d4d6b;
+  line-height: 1.7;
+}
+
+.tabs .tc ul {
+  list-style: disc;
+  padding-left: 22px;
+}
+
+.tabs .tc li {
+  margin: 4px 0;
+}
+
+.spec {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  border: 1px solid var(--color-shop-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.spec > * {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-shop-line);
+  font-size: 14px;
+}
+
+.spec > b {
+  background: var(--color-shop-bg);
+}
+
+.spec > *:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.faq details {
+  border: 1px solid var(--color-shop-line);
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+
+.faq summary {
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── Reviews ────────────────────────────────────────────────────────────── */
+
+.rv {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 34px;
+}
+
+.rv .sum {
+  text-align: center;
+}
+
+.rv .sum .big {
+  font-size: 56px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.bars {
+  margin-top: 14px;
+  text-align: left;
+}
+
+.bars button {
+  display: grid;
+  grid-template-columns: 28px 1fr 38px;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  font-size: 13px;
+  margin: 6px 0;
+  border-radius: 6px;
+}
+
+.bars button:hover b {
+  background: #f5c3d0;
+}
+
+.bars b {
+  height: 9px;
+  background: #f0e6e9;
+  border-radius: 9px;
+  overflow: hidden;
+  display: block;
+}
+
+.bars b i {
+  display: block;
+  height: 100%;
+  background: #f5a623;
+  border-radius: 9px;
+}
+
+.rl {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rv-c {
+  border: 1px solid var(--color-shop-line);
+  border-radius: 16px;
+  padding: 16px 18px;
+}
+
+.rv-c .t {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.av {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-shop-pink);
+  color: var(--color-shop-red);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.vb {
+  font-size: 11.5px;
+  background: #e3f5ec;
+  color: var(--color-shop-ok);
+  padding: 2px 9px;
+  border-radius: 99px;
+  font-weight: 700;
+}
+
+.rv-c .ft {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--color-shop-muted);
+}
+
+.rv-c .ft button:hover {
+  color: var(--color-shop-red);
+}
+
+/* ── Frequently bought together ─────────────────────────────────────────── */
+
+.fbt {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  background: #fff;
+  border-radius: 20px;
+  padding: 18px;
+  box-shadow: var(--shadow-shop);
+}
+
+.fbt .it {
+  width: 110px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.fbt .it .im {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 48px;
+  margin-bottom: 4px;
+}
+
+.fbt .pl {
+  font-size: 26px;
+  color: var(--color-shop-muted);
+  font-weight: 300;
+}
+
+.fbt .sm {
+  margin-left: auto;
+  text-align: right;
+}
+
+.fbt .sm b {
+  font-size: 24px;
+  color: var(--color-shop-red);
+  display: block;
+}
+
+/* ── Lightbox ───────────────────────────────────────────────────────────── */
+
+.pdlb {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  background: rgba(10, 16, 30, 0.94);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.pdlb .stage {
+  font-size: min(60vw, 340px);
+  filter: drop-shadow(0 30px 30px rgba(0, 0, 0, 0.4));
+  position: relative;
+  text-align: center;
+  line-height: 1;
+}
+
+.pdlb .nav {
+  position: absolute;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 26px;
+  z-index: 3;
+  transform: translateY(-50%);
+}
+
+.pdlb .nav.p {
+  left: 20px;
+}
+
+.pdlb .nav.n {
+  right: 20px;
+}
+
+.pdlb .close {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  z-index: 3;
+  background: #fff;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  font-size: 22px;
+}
+
+.pdlb .count {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+/* ── Sticky mobile action bar ───────────────────────────────────────────── */
+
+.pdbar {
+  display: none;
+}
+
+/* ── Responsive — reference breakpoints 1024 / 820 / 760 ────────────────── */
+
+@media (max-width: 1024px) {
+  .pp {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .gal {
+    position: static;
+  }
+
+  .rv {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .spec {
+    grid-template-columns: 140px 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .pp {
+    gap: 18px;
+  }
+
+  .gal {
+    grid-template-columns: 1fr;
+  }
+
+  /* Thumbnails move below the main image and scroll horizontally, so the
+     gallery keeps its square hero on a 360px screen. */
+  .thumbs {
+    flex-direction: row;
+    order: 2;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .thumbs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .thumbs button {
+    width: 62px;
+    height: 62px;
+    flex: none;
+    font-size: 28px;
+  }
+
+  .gm {
+    border-radius: 18px;
+  }
+
+  .price b {
+    font-size: 28px;
+  }
+
+  .acts .btn {
+    min-width: 0;
+  }
+
+  .pol {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .pol div {
+    padding: 10px 6px;
+    font-size: 11.5px;
+  }
+
+  .tabs .tc {
+    padding: 18px 16px;
+  }
+
+  .spec {
+    grid-template-columns: 110px 1fr;
+  }
+
+  .spec > * {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .fbt {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .fbt .it {
+    width: 84px;
+    font-size: 12px;
+  }
+
+  .fbt .it .im {
+    font-size: 36px;
+  }
+
+  .fbt .sm {
+    margin-left: 0;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .fbt .sm b {
+    font-size: 20px;
+  }
+
+  /* The sticky bar sits above the bottom nav (which is 62px tall in shell.css)
+     and only appears once the inline actions have scrolled away. */
+  .pdbar {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 62px;
+    z-index: 70;
+    gap: 10px;
+    align-items: center;
+    padding: 10px 14px;
+    background: #fff;
+    border-top: 1px solid var(--color-shop-line);
+    box-shadow: 0 -6px 20px rgba(37, 56, 88, 0.1);
+    transform: translateY(120%);
+    transition: transform 0.22s ease;
+  }
+
+  .pdbar.show {
+    transform: translateY(0);
+  }
+
+  .pdbar .p {
+    font-weight: 800;
+    color: var(--color-shop-red);
+    font-size: 17px;
+    white-space: nowrap;
+  }
+
+  .pdbar .btn {
+    flex: 1;
+    padding: 11px 14px;
+    font-size: 14px;
+  }
+
+  .pdlb .nav {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+
+  .pdlb .nav.p {
+    left: 10px;
+  }
+
+  .pdlb .nav.n {
+    right: 10px;
+  }
+}
+
+/* Reduced motion: the lightbox and gallery transitions are decorative. */
+@media (prefers-reduced-motion: reduce) {
+  .gm .z,
+  .pdbar {
+    transition: none;
+  }
+}

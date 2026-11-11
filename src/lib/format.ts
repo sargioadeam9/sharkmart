@@ -23,17 +23,23 @@ export function formatNumber(value: number, lang: Lang = 'en'): string {
 }
 
 /**
- * ৳1,890 — from poisha. Shows decimals only when the amount is not a whole taka.
- * Bangla mode renders Bangla numerals (৳১,৮৯০).
+ * ৳1,890 — from poisha, rounded to whole taka.
+ *
+ * The reference's money formatter is `fmt = n => '৳' + nf(Math.round(n))`
+ * (oshoppingbd.html): it rounds to whole taka, always. Variant deltas are
+ * computed as `round(price * .12 * i / 10) * 10` poisha, which lands on
+ * multiples of 10 poisha — a tenth of a taka — so without this rounding a
+ * selected variant would render as `৳১,৮৯৩.৬০`, a price the reference never
+ * shows and a shop in Bangladesh never quotes.
+ *
+ * Rounding happens at display only. The stored and transported value stays an
+ * integer number of poisha (AGENTS.md landmine #4), and checkout recomputes
+ * every total server-side.
  */
 export function formatMoney(poisha: number, lang: Lang = 'en'): string {
-  const taka = poisha / 100;
-  const hasFraction = !Number.isInteger(taka);
-
   return `৳${new Intl.NumberFormat(LOCALES[lang], {
-    minimumFractionDigits: hasFraction ? 2 : 0,
-    maximumFractionDigits: 2,
-  }).format(taka)}`;
+    maximumFractionDigits: 0,
+  }).format(Math.round(poisha / 100))}`;
 }
 
 /**

@@ -28,6 +28,20 @@ const OPTIONS: { value: Lang; label: string }[] = [
   { value: 'bn', label: 'বাংলা' },
 ];
 
+/**
+ * Writes the language cookie.
+ *
+ * Module scope, not inline in the handler: the lint rule (correctly) refuses a
+ * `document.cookie` assignment inside a component body, because that is a write
+ * to something outside React's control during render. As a plain function it is
+ * an ordinary side effect, called from an event handler, which is where it
+ * belongs.
+ */
+function writeLangCookie(value: Lang): void {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${LANG_COOKIE}=${value}; path=/; max-age=${LANG_COOKIE_MAX_AGE}; samesite=lax`;
+}
+
 export function LanguageToggle({
   variant = 'topbar',
   className,
@@ -48,9 +62,7 @@ export function LanguageToggle({
    */
   const choose = (value: Lang) => {
     setLang(value);
-    if (typeof document !== 'undefined') {
-      document.cookie = `${LANG_COOKIE}=${value}; path=/; max-age=${LANG_COOKIE_MAX_AGE}; samesite=lax`;
-    }
+    writeLangCookie(value);
   };
 
   return (

@@ -136,6 +136,72 @@ export interface BrandDto {
   productCount: number;
 }
 
+/**
+ * One selectable option inside a variant group.
+ *
+ * `priceDeltaPoisha` is a delta, not an absolute price, because the reference
+ * computes `p.p + o.d` for the selected combination. The DTO's own
+ * `ProductVariantDto.pricePoisha` stays absolute for the cart; this is the
+ * display-side shape the detail page needs.
+ */
+export interface VariantOptionDto {
+  id: string;
+  nameEn: string;
+  nameBn: string;
+  /** Added to the base price. Integer poisha, may be 0. */
+  priceDeltaPoisha: number;
+  stock: number;
+  /** Hex swatch. Present only on colour groups. */
+  swatch: string | null;
+}
+
+/** A variant axis: Size, Colour, Weight, Model, Edition, Pack. */
+export interface VariantGroupDto {
+  id: string;
+  /** The axis label, bilingual. */
+  labelEn: string;
+  labelBn: string;
+  /** `swatch` renders circles, `button` renders labelled pills. */
+  kind: 'button' | 'swatch';
+  options: VariantOptionDto[];
+}
+
+/** A single customer review. Never fabricated — absent means an empty state. */
+export interface ReviewDto {
+  id: string;
+  authorName: string;
+  rating: number;
+  /** ISO date. Formatted at the edge. */
+  createdAt: string;
+  bodyEn: string;
+  bodyBn: string;
+  isVerifiedPurchase: boolean;
+  helpfulCount: number;
+}
+
+/**
+ * Everything the product detail page needs beyond the base `ProductDto`.
+ *
+ * Kept as a separate interface rather than widening `ProductDto`: the list
+ * endpoints do not carry reviews or variant groups, and making them optional on
+ * the shared type would push `undefined` checks into every card.
+ */
+export interface ProductDetailDto extends ProductDto {
+  variantGroups: VariantGroupDto[];
+  reviews: ReviewDto[];
+  /** Rating histogram, index 0 = 5 stars. Empty when there are no reviews. */
+  ratingBreakdown: number[];
+  /** Bullet features for the Features tab. Empty renders nothing. */
+  featuresEn: string[];
+  featuresBn: string[];
+  /** Key/value rows for the Specs tab. */
+  specs: { labelEn: string; labelBn: string; valueEn: string; valueBn: string }[];
+  /** Category light tint, for the gallery backdrop. */
+  tintColor: string;
+  /** Category accent, for hover borders. */
+  accentColor: string;
+}
+
 /** Query shape for the product list endpoint. */
 export interface ProductListQuery {
   page?: number;

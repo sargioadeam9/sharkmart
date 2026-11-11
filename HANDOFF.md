@@ -30,6 +30,50 @@
 
 ---
 
+## 2026-11-12 · Phase 5 · product detail page · complete
+
+**Completed**
+- `src/app/(shop)/product/[slug]/page.tsx` — the route. Slug validated against `MOCK_PRODUCTS`, `notFound()` on a miss, `generateStaticParams` prerenders all 168, per-product metadata + canonical + OG image.
+- `src/components/product/product-page.tsx` — the page. Breadcrumb → gallery + info → tabs → reviews → FBT → 5 rails → sticky mobile bar.
+- `src/components/product/product-gallery.tsx` — 5-angle gallery, zoom, keyboard lightbox.
+- `src/components/product/variant-selector.tsx` — `resolveVariant()`, the single derivation for price/stock/swatch/payload.
+- `src/components/product/product-reviews.tsx` — breakdown filter + sort, empty state.
+- `src/components/product/product-tabs.tsx` — 8 tabs, real tablist with roving tabindex.
+- `src/components/product/frequently-bought-together.tsx` — bundle strip, 5% bundle price, add-all.
+- `src/app/product.css` — ported 1:1 from the reference blocks.
+- `src/lib/product-data.ts` — server-side loader for the page + 4 rails.
+- `src/lib/mock/product-detail.ts` — deterministic variant groups, reviews, specs, breakdown.
+
+**Verified**
+- `npm run build` → green, 187 static pages (168 product + 14 category + home + dev)
+- `npx tsc --noEmit` → clean
+- `npx eslint .` → 0 errors, 1 pre-existing font warning
+- live: `/product/osb-1001` 200, `/product/does-not-exist` 404
+- live: base ৳1,890 → XL ৳2,570; add-to-cart → ✓ + badge 2→3; tabs switch; 5 gallery angles
+- live: specs render once each (SKU · Brand · Category · Warranty · Origin)
+
+**Not done / partial**
+- Mobile widths (360/768/1024) not measured live — no resize tool this session. The 760/820/1024 blocks exist and cover `.fbt`, `.tabs`, `.spec`, `.thumbs`, `.pdbar`, but treat them as **untested** until someone resizes.
+- Reviews are mock fixtures, not real data. Filtering and sorting work; there is no write-review flow (Phase 7).
+- The delivery estimator, coupon copy and share/copy-link are wired to toasts, not to a backend.
+
+**Assumptions**
+- Bundle price is display-only. The reference shows `sum × 0.95`; checkout must recompute server-side (§7.3). If the backend has no bundle rule, the customer sees the honest cart total.
+- `ratingBreakdown` is derived from the actual rating rather than the reference's hardcoded `{5:64,4:22,3:8,2:4,1:2}`. The hardcoded set averages 4.42 while the page displays 4.3 — self-inconsistent. The derived one sums to exactly 100 and matches the shown rating.
+- A `data:image/svg+xml` URL is treated as "no real photo" so the 5-angle fallback runs. Real photo URLs in Phase 6 flip the gallery automatically.
+
+**Landmines**
+- `formatMoney` used to render paisa (`৳১,৮৯৩.৬০`) because variant deltas land on multiples of 10 poisha. The reference's `fmt` rounds to whole taka. Fixed in `src/lib/format.ts` — display rounds, storage stays poisha.
+- The variant delta formula needs the **base price**: `Math.round(p.p * .12 * i / 10) * 10`. An early port dropped `p.p` and produced flat 12/24/36 poisha deltas.
+- `document.cookie` inside a component body trips `react-hooks/immutability`. Moved to a module-scope `writeLangCookie()` helper.
+- `setState` in an effect for the quantity clamp trips `react-hooks/set-state-in-effect`. Derive it instead.
+- PowerShell mangles UTF-8 and literal `\n` in `-replace`/`.Replace()`. Use the edit tool for any file with Bangla or emoji in it.
+
+**Next step**
+- Phase 6: implement the catalog API and flip `NEXT_PUBLIC_USE_MOCK=false`; `getProductDetail` already has the final signature.
+
+---
+
 ## 2026-11-11 23:40 · Phase 4 · category pages ×14 · complete
 
 **Completed**

@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-11 23:40 · **Updated by:** Phase 4 complete (category pages ×14)
+**Last updated:** 2026-11-12 · **Updated by:** Phase 5 complete (product detail page)
 
 ---
 
@@ -12,11 +12,32 @@
 
 | Field | Value |
 | --- | --- |
-| Active phase | **Phase 4 — Category pages ×14** |
+| Active phase | **Phase 5 — Product detail** |
 | Phase status | ✅ **Complete — gate passed** |
-| Build state | `npm run build` green (19 static pages, 14 category slugs prerendered) · `tsc --noEmit` clean · `eslint .` 0 errors, 1 pre-existing warning |
+| Build state | `npm run build` green (187 static pages: 168 product slugs + 14 category slugs) · `tsc --noEmit` clean · `eslint .` 0 errors, 1 pre-existing warning |
 | Blocking issues | None |
-| Next action | Phase 5 — Product detail page |
+| Next action | Phase 6 — API catalog (flip `NEXT_PUBLIC_USE_MOCK=false`) |
+
+### Phase 5 — gate evidence
+
+| Gate requirement | State | Evidence |
+| --- | --- | --- |
+| One route, every product | ✅ | `src/app/(shop)/product/[slug]/page.tsx`; `generateStaticParams` prerenders 168 slugs (`● /product/osb-1001` … `[+165 more paths]`) |
+| Unknown slug renders 404, not a crash | ✅ | `/product/does-not-exist` → HTTP 404 |
+| Section order matches reference `product()` (L720-771) | ✅ | breadcrumb → gallery+info → tabs → reviews → FBT → related → similar → also-viewed → from-brand → recently-viewed |
+| All 8 tabs, reference order | ✅ | Overview · Description · Key Features · Specifications · How to Use · Size Guide · Delivery & Returns · FAQ |
+| Tabs are a real tablist | ✅ | `role="tablist"`, roving tabindex, Arrow/Home/End move focus + selection, `aria-selected` + `aria-controls` |
+| Variant selection drives price, stock and cart payload from one derivation | ✅ | `resolveVariant()` in `variant-selector.tsx`; live: base ৳1,890 → XL ৳2,570 (delta = `round(price × .12 × i / 10) × 10` poisha, reference formula) |
+| Quantity clamped to the selected variant's stock | ✅ | Derived (`effectiveQuantity`), not an effect — no stale window, no cascading render |
+| Gallery shows the reference's 5 angles | ✅ | Front · 1/5 · Back · 2/5 · Side · 3/5 · Detail · 4/5 · In use · 5/5. Data-URI SVG placeholders are treated as "no photo" so the angle fallback runs; real photo URLs flip it automatically |
+| Add to cart writes a real variant line | ✅ | Live click: button → ✓, cart badge 2 → 3, toast fires |
+| Recently viewed recorded once per mount | ✅ | `recordView(product.id)` in an effect, after hydration |
+| Specs render once each, no invented rows | ✅ | SKU · Brand · Category · Warranty · Origin. No fabricated barcode, no invented warranty (both are in the reference, neither is in the data) |
+| Money matches the reference formatter | ✅ | `formatMoney` rounds to whole taka like `fmt = n => '৳' + nf(Math.round(n))`; poisha stays the stored unit |
+| Bangla + English without layout break | ✅ | Verified in both; all copy via `t()`/`tu()` |
+| No horizontal overflow at 1280 | ✅ | `scrollWidth 1263` vs `clientWidth 1280` |
+| `tsc` · `eslint` · `build` | ✅ | Clean · 0 errors (1 pre-existing font warning) · green |
+
 
 ### Phase 4 — gate evidence
 
@@ -116,8 +137,8 @@
 | 1 | Design system & components | ✅ | build + tsc + lint + `/dev/components` + persistence & corrupt-blob tests | 17 components, 3 stores, `/dev/components` proof route |
 | 2 | Layout & cart drawer | ✅ | build + tsc + lint + `/dev/shell` + browser gates (4 threshold values, drawer, focus return, mega menu, language) | 12 layout components, `shell.css`, `(shop)` route group |
 | 3 | Homepage | ✅ | build + tsc + lint + live browser gates (16 sections, order, Bangla, carousels, empty states) | 12 home components, `home.css`; preview strip env-gated |
-| 4 | Category pages ×14 | ⬜ | — | — |
-| 5 | Product detail | ⬜ | — | — |
+| 4 | Category pages ×14 | ✅ | build + tsc + lint + 14 live slugs + 404 + filter round-trip | 1 template, 14 instances |
+| 5 | Product detail | ✅ | build + tsc + lint + live browser (variant price, tabs, add-to-cart, 404, 5-angle gallery) | 168 product pages prerendered |
 | 6 | API — catalog | ⬜ | — | Flip `NEXT_PUBLIC_USE_MOCK=false` here |
 | 7 | Search, wishlist, account | ⬜ | — | — |
 | 8 | Auth, cart, orders, checkout | ⬜ | — | — |
@@ -137,7 +158,7 @@ Add one row when you start. Remove it when you stop. If your file is claimed, do
 
 | Phase | Files / scope | Agent | Since |
 | --- | --- | --- | --- |
-| — | _none — Phase 4 released_ | — | — |
+| — | _none — Phase 5 released_ | — | — |
 
 > **Live collision risk (2026-11-11 19:30):** two sessions were active in this workspace at once and both started a dev server against the same `.next` directory. That crashed one of them. Before starting `npm run dev` or `npm run build`, check `netstat -ano | grep :3000`. One server, one builder, one workspace.
 
