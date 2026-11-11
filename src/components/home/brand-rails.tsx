@@ -11,13 +11,10 @@
  * that, since inventing logos would be a visual delta, not a fix.
  */
 
-import Link from 'next/link';
-
 import type { BrandDto } from '@/types/catalog';
-import { localized } from '@/types/catalog';
 import { useLang } from '@/lib/hooks';
 import { Carousel } from '@/components/shared/carousel';
-import { BrandTile } from '@/components/product/brand-tile';
+import { BrandTile, ExternalBrandChip } from '@/components/product/brand-tile';
 import { SectionHeader } from './section-header';
 
 export interface OwnBrandsRailProps {
@@ -53,7 +50,7 @@ export interface ExternalBrandsRailProps {
 }
 
 export function ExternalBrandsRail({ brands }: ExternalBrandsRailProps) {
-  const { lang, t, tu } = useLang();
+  const { t, tu } = useLang();
 
   if (brands.length === 0) return null;
 
@@ -69,13 +66,7 @@ export function ExternalBrandsRail({ brands }: ExternalBrandsRailProps) {
         autoScrollMs={3500}
       >
         {brands.map((brand) => (
-          <Link
-            key={brand.id}
-            href={`/brand/${brand.slug}`}
-            className="ex"
-          >
-            {localized(lang, brand.nameEn, brand.nameBn)}
-          </Link>
+          <ExternalBrandChip key={brand.id} brand={brand} />
         ))}
       </Carousel>
     </section>

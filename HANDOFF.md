@@ -30,6 +30,55 @@
 
 ---
 
+## 2026-11-11 23:40 · Phase 4 · category pages ×14 · complete
+
+**Completed**
+- `src/app/(shop)/category/[slug]/page.tsx` — the route. Validates the slug against `CATEGORIES`, calls `notFound()` on a miss, `generateStaticParams` prerenders all 14, per-category metadata + canonical.
+- `src/components/category/category-page.tsx` — one template, fourteen instances. Breadcrumb → hero → featured brands → offers → popular → new → top rated → listing, matching the reference's `category()` order.
+- `src/components/category/category-hero.tsx` — `.chero` hero, subcategory chips, breadcrumb, 3 promo offers.
+- `src/components/category/category-listing.tsx` — toolbar, desktop sidebar, mobile sheet, grid, Load More (+8 from 12), empty state with two real escapes.
+- `src/components/category/filter-panel.tsx` — brand checkboxes, rating radios, price slider + 2 inputs, stock/discount toggles, `SortSelect`. Shared by sidebar and sheet.
+- `src/lib/category-filters.ts` — URL as the single source of truth. Total parsing (garbage degrades to defaults), `applyClientFilters` applies all six dimensions + sort.
+- `src/app/category.css` — `.chero`/`.chips`/`.lay`/`.flt`/`.cat-grid`/`.tb`/`.lm`/`.flt-actions`, ported from the reference.
+- `src/components/product/brand-tile.tsx` — added `ExternalBrandChip` (`.ex`), now shared with the home rail.
+- `src/lib/hooks.ts` — added `useDebouncedCallback` (the existing `useDebounced` debounces a value, not a callback).
+- `src/lib/i18n/ui.ts` — added the strings the reference has no key for (`clearFilters`, `applyFilters`, `filterResults`, `closeSheet`, `noResultsBody`, `categoryProducts`).
+
+**Verified** (real output)
+- `npm run build` → green, 19 static pages, `● /category/fashion` … `[+11 more paths]`
+- `npx tsc --noEmit` → clean
+- `npx eslint .` → 0 errors, 1 pre-existing `no-page-custom-font` warning in `layout.tsx`
+- All 14 slugs → 200; `/category/electronics` → 404 page (correct: the real slug is `gadgets-electronics`)
+- Sorts: `price_asc` ৳1,750→৳42,890 · `price_desc` ৳42,890→৳1,750 · `rating` ৪.৯→৩.৯ · `popular` 474→47 reviews · `newest`/`relevance` applied
+- `?rating=4` → 11 of 12 (drops ৩.৯); `?rating=3` → 12 of 12; `?stock=1&discount=1` → 10 of 12
+- Sort change held `scrollY` at 900 (no scroll jump); `back` restored the previous filter state
+- Load More 8 → 12, button disappears at the end
+- Mobile sheet: focus lands on close, Escape closes and returns focus to the trigger
+- Featured brands: 1 `.bt` (OGadgets) + 4 `.ex` (realme, Samsung, Walton, Xiaomi)
+
+**Bugs found and fixed this session**
+- `category-page.tsx` hardcoded `isOwnBrand: false` when deriving brands from products, so all five rendered as `.bt` logo tiles. The reference (L700) renders the house brand as `.bt` and partners as `.ex` chips. Now reads the real flag from `listBrands()`.
+- `applyClientFilters` originally handled only brand + rating, so the price slider, stock and discount toggles silently did nothing — the URL updated and the grid did not. Now applies all six dimensions.
+
+**NOT done**
+- Filtering is client-side over one `limit: 200` fetch. Fine for 12 products per category; Phase 6 should move it server-side when the real API lands (`toProductQuery` grows the fields back, drop `applyClientFilters`).
+- Product cards link to `/product/[slug]`, which is Phase 5. Those links 404 today.
+- Load More is unreachable in practice: every category has exactly 12 products and `PAGE_SIZE` is 12. The mechanism is verified by temporarily lowering the page size; it will appear once categories exceed 12 products.
+
+**Assumed**
+- "Bata Bata" (brand name twice in a `.bt` tile) is reference parity, not a bug — `brandTile` at L649 renders `b.n` in the logo div *and* in the `<b>` below. Left as-is.
+- The reference's `own` brand per category comes from `CATS[].own`; `Category.houseBrand` carries it, but the client component uses `BrandDto.isOwnBrand` instead, which is the same information and already in the DTO.
+
+**Landmines**
+- The real slug is `gadgets-electronics`, not `electronics` (AGENTS.md §10 landmine 2 in spirit). Copy ids from `CATS`.
+- The cart drawer sits in the DOM at `x≈1285` with `aria-hidden="true"` and `visibility: visible`. `browser_snapshot` reports it as `Dialog open: "Cart"` on every page load, and it eats the snapshot's element budget so `main` gets truncated. It is **not** actually open. Read the page with `browser_eval` instead of trusting the snapshot's dialog line.
+- `browser_snapshot` caps at ~250 elements and this page exceeds it; the listing section is past the cap. Query `#allp` directly.
+
+**Exact next step**
+Build Phase 5 — the product detail page at `/product/[slug]`, which every card in this phase already links to.
+
+---
+
 ## 2026-11-11 21:40 · Phase 1 · design system & component library · complete
 
 **Completed**

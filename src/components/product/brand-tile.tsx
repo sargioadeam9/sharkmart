@@ -51,3 +51,22 @@ export function BrandTile({ brand, className }: BrandTileProps) {
     </Link>
   );
 }
+
+/**
+ * ExternalBrandChip — the reference's `.ex` (oshoppingbd.html L162, markup
+ * L662 and L700).
+ *
+ * A partner brand is a plain text tile, not a logo tile: the reference has no
+ * partner logo assets, so it sets the name in bold on a white card. The
+ * category page's "featured brands" rail mixes this with `BrandTile` — house
+ * brand as a logo tile, partners as chips.
+ */
+export function ExternalBrandChip({ brand }: { brand: BrandDto }) {
+  const { lang } = useLang();
+
+  return (
+    <Link href={`/brand/${brand.slug}`} className="ex">
+      {localized(lang, brand.nameEn, brand.nameBn)}
+    </Link>
+  );
+}

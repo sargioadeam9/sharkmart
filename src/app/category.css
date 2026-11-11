@@ -1,0 +1,438 @@
+/* ==========================================================================
+   Category landing pages — /category/[slug]
+
+   Ported from oshoppingbd.html:
+     .bc / .chero / .chips / .offers / .lay / .flt / .tb / .grid / .lm / .nores
+     base rules      L297-327
+     responsive      L458-460 (1200 / 1024 / 820)
+
+   Two deliberate departures, both noted at the rule:
+
+   1. `.flt` on mobile is NOT the reference's `position:fixed` bottom panel.
+      That panel has no scrim, no focus trap and no Escape handler, so it
+      behaves like a stuck sidebar rather than a sheet. Here the desktop
+      sidebar is hidden below 1024px and the filters render inside the shared
+      `MobileSheet` component instead, which already traps focus, locks body
+      scroll and closes on Escape.
+
+   2. `.grid` is scoped to `.lay .grid` / `.cat-grid` rather than the bare
+      `.grid` name, because Tailwind owns `.grid` as a utility and a global
+      override would silently rewrite every `className="grid"` in the app.
+   ========================================================================== */
+
+/* ── breadcrumb ───────────────────────────────────────────── oshoppingbd L297 */
+.bc {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 16px 0 4px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.bc a:hover {
+  color: var(--red);
+}
+
+.bc b {
+  color: var(--navy);
+  font-weight: 600;
+}
+
+/* ── category hero ────────────────────────────────────────── oshoppingbd L300 */
+.chero {
+  border-radius: 24px;
+  padding: 36px 44px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 20px;
+  align-items: center;
+  background: linear-gradient(
+    110deg,
+    var(--t) 40%,
+    color-mix(in srgb, var(--a) 55%, #fff)
+  );
+  border: 2px solid var(--a);
+  position: relative;
+  overflow: hidden;
+  min-height: 230px;
+}
+
+.chero .ib2 {
+  width: 84px;
+  height: 84px;
+  border-radius: 24px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 44px;
+  box-shadow: 0 0 0 3px var(--a);
+  margin-bottom: 12px;
+}
+
+.chero h1 {
+  font-size: clamp(28px, 3.6vw, 44px);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.chero p {
+  max-width: 520px;
+  margin-top: 8px;
+  color: #3d4d6b;
+}
+
+.chero .big {
+  font-size: clamp(100px, 14vw, 190px);
+  filter: drop-shadow(0 18px 18px rgba(0, 0, 0, 0.15));
+  transform: rotate(-6deg);
+  line-height: 1;
+}
+
+/* ── subcategory chips ────────────────────────────────────── oshoppingbd L305 */
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+/* ── promotional offers ───────────────────────────────────── oshoppingbd L308 */
+.offers {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.offers > div {
+  background: var(--t);
+  border: 1.5px dashed var(--a);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.offers .oe {
+  font-size: 30px;
+}
+
+.offers b {
+  display: block;
+}
+
+.offers small {
+  color: #4d5d7a;
+}
+
+/* ── listing layout ───────────────────────────────────────── oshoppingbd L313 */
+.lay {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.flt {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: var(--sh);
+  position: sticky;
+  top: 150px;
+}
+
+.flt h4 {
+  font-size: 15px;
+  margin: 14px 0 8px;
+}
+
+.flt h4:first-child {
+  margin-top: 0;
+}
+
+.flt label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  margin: 6px 0;
+  cursor: pointer;
+}
+
+.flt input[type='checkbox'],
+.flt input[type='radio'] {
+  accent-color: var(--red);
+  width: 16px;
+  height: 16px;
+}
+
+.flt input[type='range'] {
+  width: 100%;
+  accent-color: var(--red);
+}
+
+/* Price range: slider plus the two numeric bounds, so a customer can type an
+   exact figure instead of dragging. The reference only has the slider. */
+.flt .price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.flt .price-row input[type='number'] {
+  width: 100%;
+  min-width: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--navy);
+  outline: 0;
+  background: #fff;
+}
+
+.flt .price-row input[type='number']:focus {
+  border-color: var(--red);
+}
+
+.flt .price-row span {
+  color: var(--muted);
+  font-size: 13px;
+  flex: none;
+}
+
+/* ── toolbar ──────────────────────────────────────────────── oshoppingbd L320 */
+.tb {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.tb select,
+.sel {
+  border: 1.5px solid var(--line);
+  background: #fff;
+  border-radius: 99px;
+  padding: 9px 16px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--navy);
+  outline: 0;
+}
+
+.tb select:focus,
+.sel:focus {
+  border-color: var(--red);
+}
+
+.tb .count {
+  color: var(--muted);
+  font-size: 14px;
+  margin-right: auto;
+  padding-left: 4px;
+}
+
+/* ── product grid ─────────────────────────────────────────── oshoppingbd L323 */
+.cat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.lay .cat-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* The mobile filter trigger. Hidden on desktop, exactly like `.fbtn`. */
+.fbtn {
+  display: none;
+}
+
+/* ── load more ────────────────────────────────────────────── oshoppingbd L325 */
+.lm {
+  text-align: center;
+  margin-top: 26px;
+}
+
+/* ── empty / not-found ────────────────────────────────────── oshoppingbd L326 */
+.nores {
+  text-align: center;
+  padding: 50px 20px;
+  background: #fff;
+  border-radius: 20px;
+}
+
+.nores .e {
+  font-size: 70px;
+}
+
+.nores h2,
+.nores h3 {
+  margin-top: 6px;
+}
+
+.nores p {
+  margin: 8px 0 18px;
+  color: var(--muted);
+}
+
+/* ── responsive ───────────────────────────────────────────── oshoppingbd L458 */
+@media (max-width: 1200px) {
+  .cat-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 1024px) {
+  .lay {
+    grid-template-columns: 1fr;
+  }
+
+  /* Desktop sidebar out; the MobileSheet carries the same fields. */
+  .flt {
+    display: none;
+  }
+
+  .fbtn {
+    display: inline-flex;
+  }
+
+  .lay .cat-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .offers {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 820px) {
+  .cat-grid,
+  .lay .cat-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 760px) {
+  .chero {
+    grid-template-columns: 1fr;
+    padding: 24px 20px;
+    min-height: 0;
+  }
+
+  .chero .big {
+    position: absolute;
+    right: 6px;
+    bottom: -14px;
+    font-size: 120px;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .chero .ib2 {
+    width: 60px;
+    height: 60px;
+    font-size: 32px;
+    border-radius: 18px;
+  }
+
+  .cat-grid,
+  .lay .cat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .chips {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+  }
+
+  .chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chips .chip {
+    flex: none;
+  }
+}
+
+/* ── filter sheet body ───────────────────────────────────────────────────────
+   The fields inside MobileSheet reuse the `.flt` field styles, so the sheet and
+   the sidebar can never drift apart. */
+.msheet .flt-fields h4 {
+  font-size: 15px;
+  margin: 14px 0 8px;
+}
+
+.msheet .flt-fields h4:first-child {
+  margin-top: 0;
+}
+
+.msheet .flt-fields label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+.msheet .flt-fields input[type='checkbox'],
+.msheet .flt-fields input[type='radio'] {
+  accent-color: var(--red);
+  width: 18px;
+  height: 18px;
+}
+
+.msheet .flt-fields input[type='range'] {
+  width: 100%;
+  accent-color: var(--red);
+}
+
+.msheet .flt-fields .price-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.msheet .flt-fields .price-row input[type='number'] {
+  width: 100%;
+  min-width: 0;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--navy);
+  outline: 0;
+}
+
+.msheet .flt-fields .price-row input[type='number']:focus {
+  border-color: var(--red);
+}
+
+.msheet .flt-fields .price-row span {
+  color: var(--muted);
+  font-size: 13px;
+  flex: none;
+}
+
+.msheet .flt-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.msheet .flt-actions .btn {
+  flex: 1;
+  justify-content: center;
+}

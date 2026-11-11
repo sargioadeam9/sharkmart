@@ -221,3 +221,36 @@ export function useDebounced<T>(value: T, delay = 250): T {
 
   return debounced;
 }
+
+/**
+ * Debounces a *callback* rather than a value.
+ *
+ * `useDebounced` above debounces a value you then read; this debounces the
+ * side effect itself. The category listing needs the second shape: the price
+ * inputs fire on every digit, and each write is a URL update, so "1200" would
+ * otherwise be four history writes and four grid rebuilds.
+ *
+ * The returned function is stable across renders and always calls the latest
+ * `callback`, so it never captures a stale closure.
+ */
+export function useDebouncedCallback<A extends unknown[]>(
+  callback: (...args: A) => void,
+  delay = 250,
+): (...args: A) => void {
+  const latest = useRef(callback);
+  const timer = useRef(0);
+
+  useEffect(() => {
+    latest.current = callback;
+  }, [callback]);
+
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+
+  return useCallback(
+    (...args: A) => {
+      window.clearTimeout(timer.current);
+      timer.current = window.setTimeout(() => latest.current(...args), delay);
+    },
+    [delay],
+  );
+}

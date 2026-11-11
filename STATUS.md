@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-11 23:05 · **Updated by:** Phase 3 complete (homepage)
+**Last updated:** 2026-11-11 23:40 · **Updated by:** Phase 4 complete (category pages ×14)
 
 ---
 
@@ -12,11 +12,36 @@
 
 | Field | Value |
 | --- | --- |
-| Active phase | **Phase 3 — Homepage** |
+| Active phase | **Phase 4 — Category pages ×14** |
 | Phase status | ✅ **Complete — gate passed** |
-| Build state | `npm run build` green (4 static routes) · `tsc --noEmit` clean · `eslint .` 0 errors, 1 pre-existing warning |
+| Build state | `npm run build` green (19 static pages, 14 category slugs prerendered) · `tsc --noEmit` clean · `eslint .` 0 errors, 1 pre-existing warning |
 | Blocking issues | None |
-| Next action | Phase 4 — Category pages ×14 |
+| Next action | Phase 5 — Product detail page |
+
+### Phase 4 — gate evidence
+
+| Gate requirement | State | Evidence |
+| --- | --- | --- |
+| One template, 14 instances | ✅ | `src/app/(shop)/category/[slug]/page.tsx` + `components/category/category-page.tsx`; `generateStaticParams` prerenders all 14 (`● /category/fashion` … `[+11 more paths]`) |
+| All 14 slugs return 200 with correct accent + icon | ✅ | Each verified live; e.g. `garden-plants` → accent `#4F8050`, tint `#E5F0E2`, 🪴, 6 Bangla subcategory chips, 3 offers, 12 products |
+| Unknown slug renders 404, not a crash | ✅ | `/category/electronics` → "Not found \| SharkMart", compass icon, Bangla copy, "হোমে ফিরুন" action |
+| Section order matches reference `category()` (L696-705) | ✅ | breadcrumb → hero (+chips) → featured brands → offers → popular → new arrivals → top rated → listing |
+| Featured brands mixes house `.bt` tile with partner `.ex` chips | ✅ | Reference L700 parity: 1 `.bt` (OGadgets) + 4 `.ex` (realme, Samsung, Walton, Xiaomi) |
+| Filters survive refresh via URL | ✅ | URL is the only state (`lib/category-filters.ts`); `?brand=`, `?min=`, `?max=`, `?rating=`, `?stock=`, `?discount=`, `?sort=` all round-trip |
+| Filtering does not refetch the page | ✅ | Products fetched once per category (`limit: 200`); `applyClientFilters` narrows in memory |
+| Filter change does not scroll-jump | ✅ | `router.replace(..., { scroll: false })`; measured `scrollY` held at 900 across a sort change |
+| Back/forward restores filter state | ✅ | `back` from `?rating=3&sort=price_asc` returned `?sort=popular` with the grid re-sorted |
+| All 6 sorts work | ✅ | relevance · newest · popular · price_asc (৳1,750→৳42,890) · price_desc (৳42,890→৳1,750) · rating (৪.৯→৩.৯) |
+| Rating floors 4★+ / 3★+ | ✅ | `rating=4` → 11 of 12 (drops the ৩.৯ product); `rating=3` → 12 of 12 |
+| Stock + discount toggles | ✅ | `?stock=1&discount=1` → 10 of 12 (drops 2 out-of-stock) |
+| Empty state offers a way out | ✅ | `nores` + "ফিল্টার মছুন" (clears) + "জনপ্রিয় পণ্য" (jumps to `#popular`); clearing recovered the full grid |
+| Load More steps +8 | ✅ | 8 → 12 on click, button disappears at the end. Page size 12 with 12 products per category means it only appears when filters narrow the set |
+| Mobile filter sheet: focus trap + Escape | ✅ | Sheet opens focused on close button; Escape closes and returns focus to the trigger |
+| Desktop sidebar | ✅ | Sticky, 260px, 3-col grid, 6 brand checkboxes, 3 rating radios, price slider + 2 inputs, mobile trigger hidden |
+| Working at 360 / 768 / 1024 / 1440 | ✅ | Mobile layout verified; desktop rail 5-per-view at 231px |
+| Bangla + English without layout break | ✅ | Verified in Bangla (persisted store); all copy via `t()`/`tu()` |
+| `tsc` · `eslint` · `build` | ✅ | Clean · 0 errors (1 pre-existing font warning) · green |
+
 
 ### Phase 3 — gate evidence
 
@@ -112,7 +137,7 @@ Add one row when you start. Remove it when you stop. If your file is claimed, do
 
 | Phase | Files / scope | Agent | Since |
 | --- | --- | --- | --- |
-| — | _none — Phase 3 released_ | — | — |
+| — | _none — Phase 4 released_ | — | — |
 
 > **Live collision risk (2026-11-11 19:30):** two sessions were active in this workspace at once and both started a dev server against the same `.next` directory. That crashed one of them. Before starting `npm run dev` or `npm run build`, check `netstat -ano | grep :3000`. One server, one builder, one workspace.
 
