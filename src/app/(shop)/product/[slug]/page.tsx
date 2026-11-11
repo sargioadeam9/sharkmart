@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { BRAND } from '@/lib/brand';
 import { ApiClientError } from '@/lib/api/client';
+import { USE_MOCK } from '@/lib/api/config';
 import { getProduct, listProductSlugs } from '@/lib/api/products';
 import { absoluteUrl } from '@/lib/locale';
 import { loadProductPageData, type ProductPageData } from '@/lib/product-data';
@@ -145,6 +146,13 @@ function jsonLdImages(product: ProductDetailDto): string[] {
  *
  * `aggregateRating` is emitted only when there is a real rating behind it: a
  * rating with zero reviews is a rich-result violation, and Google penalises it.
+ *
+ * It is ALSO suppressed while `USE_MOCK` is on. The mock layer generates its
+ * reviews (`buildReviews` in src/lib/mock/product-detail.ts), so publishing them
+ * would tell Google that a product has hundreds of reviews it never received.
+ * That is fabricated review markup, which Google treats as spam and can answer
+ * with a manual action. Flip `USE_MOCK` to false and real ratings start flowing
+ * through this same block with no further change.
  */
 function ProductJsonLd({ product }: { product: ProductDetailDto }) {
   const canonical = absoluteUrl(`/product/${product.slug}`);
@@ -171,7 +179,8 @@ function ProductJsonLd({ product }: { product: ProductDetailDto }) {
           : 'https://schema.org/InStock',
       url: canonical,
     },
-    ...(product.reviewCount > 0 && product.rating > 0
+    // Suppressed in mock mode: those reviews are generated, not received.
+    ...(!USE_MOCK && product.reviewCount > 0 && product.rating > 0
       ? {
           aggregateRating: {
             '@type': 'AggregateRating',
