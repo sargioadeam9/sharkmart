@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-12 · **Updated by:** Phase 9 pass B1 — products API (B1a) and products list + editor (B1b) shipped and verified
+**Last updated:** 2026-11-12 · **Updated by:** Phase 9 pass B2 — orders API, list, drawer and bulk actions shipped and verified
 
 ---
 
@@ -13,10 +13,10 @@
 | Field | Value |
 | --- | --- |
 | Active phase | **Phase 9 — Admin panel: core modules** |
-| Phase status | 🟡 **Phase 9 PASS B1 COMPLETE** — products API, list and editor all green. B2–B5 (Orders, Inventory, Reviews, Categories, Brands) not started |
-| Build state | Server: `npm test` **131/131** (7 files) · `tsc --noEmit` clean. Storefront: `npm run build` green · `tsc --noEmit` clean. `prisma migrate status` clean, 7 migrations |
+| Phase status | 🟡 **Phase 9 PASS B2 COMPLETE** — products (B1) and orders (B2) green. B3–B5 (Inventory, Reviews, Categories, Brands) not started |
+| Build state | Server: `npm test` **163/163** (8 files) · `tsc --noEmit` clean · `npm run lint` 0 errors (7 pre-existing warnings). Storefront: `npm run build` green · `tsc --noEmit` clean. `prisma migrate status` clean, 7 migrations |
 | Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so the reference's "Estimated profit" KPI is not computable (see HANDOFF). `cache-and-limits.test.ts` "exceeding the search limit" is **flaky under parallel file execution** (passes alone, passed on re-run of the full suite) — the in-process limiter is shared across files |
-| Next action | Phase 9 pass B2 — Orders module (admin CRUD API first, then the screen) |
+| Next action | Phase 9 pass B3 — Inventory module (admin CRUD API first, then the screen) |
 
 ### Phase 6 — gate evidence
 
@@ -209,7 +209,7 @@ cleared only after the server confirms.
 | 6 | API — catalog | ✅ | build + tsc + lint + `npm test` 57/57 + parity-check 611 assertions | Flip `NEXT_PUBLIC_USE_MOCK=false` done here |
 | 7 | Search, wishlist, account | ✅ | build + tsc + live browser (both scripts, type-ahead, wishlist toggle/reload/remove) | `/search` + guest wishlist; account surface landed in Phase 8 |
 | 8 | Auth, cart, orders, checkout | ✅ | `npm test` 89/89 · tsc clean (both) · build green · live browser (merge, badge, drawer, `/cart` agree) | 747 variants (cartesian) · 3 follow-ups closed 2026-11-12 |
-| 9 | Admin — core | ⬜ | — | — |
+| 9 | Admin — core | 🟡 | B1 products + B2 orders: `npm test` 163/163 · tsc clean (both) · build green · live browser (tabs, filters, drawer, bulk, dark mode) | B3–B5 remain |
 | 10 | Admin — business | ⬜ | — | — |
 | 11 | SEO & analytics | ⬜ | — | — |
 | 12 | Testing & polish | ⬜ | — | — |

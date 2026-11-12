@@ -3,6 +3,91 @@
 > **Append-only.** Newest entry at the top. Never rewrite or delete a previous agent's entry — the next agent needs the history of what was tried and rejected.
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
+## 2026-11-12 · Phase 9 pass B2 · Saffron · orders API + list + drawer + bulk · PASS B2 DONE
+
+**Read this first — it will save you an hour**
+
+1. **An orphaned `next start` will serve a stale build and gaslight you.** I rebuilt, restarted,
+   and the page still showed the old UI. The build output *did* contain the new code. Cause: an
+   earlier `next start` (PID 18660) still held port 3000 while my new one silently failed to bind,
+   so the browser was talking to the old server. Before you conclude "my change did not apply",
+   run `Get-NetTCPConnection -LocalPort 3000 -State Listen` and compare the owning PID against the
+   PID your background task reported. If they differ, kill the orphan. This is the same class of
+   bug as the two-`tsx watch` race from B1 — one port, one process.
+
+2. **The admin session is in the in-process store, so every server restart logs you out.** Not a
+   bug, but it makes every verification cycle start at the login screen. Seeded credentials:
+   `super@sharkmart.test` / `Admin@12345` (`server/prisma/seed-test-users.ts`). Redis is still not
+   installed locally, so sessions do not survive a restart.
+
+3. **15 orders have zero line items and it is test residue, not a checkout bug.** All 15 were
+   created the same day by 15 different users at ৳1,000 + ৳60. `server/tests/phase8.test.ts`
+   deletes `orderItem` rows by `variantId` and leaves the parent orders behind. The checkout path
+   always writes items. If you see "0 items" in the drawer, that is why. Worth cleaning up in
+   Phase 12; do not chase it as a bug.
+
+**What I completed**
+
+- `server/src/validators/adminOrder.schema.ts` — Zod schemas for list query, status change, bulk
+  status, payment, courier, notes. `.strict()` throughout.
+- `server/src/routes/admin/order.service.ts` — the data layer. `listAdminOrders` (search across
+  order number / customer name / phone, status + payment + customer-type + date filters, four
+  sorts, pagination), `orderStatusCounts` (one `groupBy`, not nine counts), `getAdminOrder`,
+  `changeOrderStatus`, `bulkChangeOrderStatus`, `setOrderCourier`, `setOrderNotes`.
+- `server/src/routes/admin/orders.ts` — the router, every route behind `requirePermission`.
+- `server/src/services/admin/order.admin.service.ts` — DTOs and mappers.
+- `src/lib/api/admin-orders.ts` — typed client.
+- `src/app/admin/(panel)/orders/page.tsx` — server component: tabs, filters, list.
+- `src/components/admin/orders-table.tsx` — client island: toolbar, table, bulk bar, drawer.
+- `src/app/admin.css` — the `ord-` block, appended.
+- `server/tests/phase9c-orders.test.ts` — 32 tests.
+
+**What I verified**
+
+- `cd server && npm test` → **163/163 across 8 files** (was 131/131 in B1).
+- `npx tsc --noEmit` → clean, both root and `server/`.
+- `npm run lint` → 0 errors, 7 pre-existing warnings.
+- `npm run build` → green, `/admin/orders` compiled.
+- Live browser: five tabs with live counts, status filter, bulk bar, drawer, dark mode, and the
+  refusal path. Screenshot confirmed.
+
+**Three UI bugs I found in verification and fixed — all were invisible to `tsc`**
+
+1. **The list behind the drawer kept its old status.** Change an order from Pending to Confirmed
+   and the drawer updated while the row behind it still said Pending. `router.refresh()` now runs
+   after both the drawer action and the bulk apply.
+2. **The notice bar had no layout.** `prod-notice` only sets colour and padding, so my icon, text
+   and dismiss button stacked vertically. Orders now has its own `ord-notice` with flex layout.
+3. **The notice was green for a refusal.** "0 updated, 1 skipped (illegal transition)" rendered as
+   a success. The notice now carries a tone (`ok` / `warn` / `error`) and a refused bulk action
+   renders red with `role="alert"`. A green banner on a refusal teaches operators to stop reading
+   banners.
+4. **The tabs were missing Delivered.** I had written a comment claiming the reference shows four
+   tabs; it shows five (All, Pending, Shipped, Delivered, Cancelled — `admin panel.html` line 505).
+   Corrected, and the false comment with it.
+
+**What is NOT done**
+
+- B3–B5: Inventory, Reviews, Categories, Brands.
+- The orders list has no column sort UI (the API supports four sorts and the toolbar exposes them;
+  there are no sortable `<th>` headers). The reference does not have them either.
+- Export is client-side CSV of the current page only, not the whole filtered set. Deliberate: it
+  exports what the operator can see.
+
+**What I assumed**
+
+- A status change requires a note. The API enforces it and the drawer disables Save until one is
+  typed. That is an audit-trail decision, not a reference requirement — flag it if the owner wants
+  one-click status changes.
+- Cancelling an order releases stock. `changeOrderStatus` puts it back; nothing restores it if the
+  order is later un-cancelled, because there is no legal transition out of CANCELLED.
+
+**Exact next step**
+
+Phase 9 pass B3 — Inventory: read `prompts/backend.md` for the warehouse/stock contract, then build
+`/admin/inventory` the same way (API + tests first, then the screen), reusing the `ord-` CSS
+patterns and the drawer shape from `orders-table.tsx`.
+
 ## 2026-11-12 · Phase 9 pass B1 · Saffron · products API + list + editor · PASS B1 DONE
 
 **Two things you must know before you touch anything**
