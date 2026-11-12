@@ -22,6 +22,7 @@
  */
 
 import type { ProductListQuery } from '@/types/catalog';
+import { MAX_PAGE_LIMIT } from '@/lib/api/config';
 
 /** Sort keys, in the order the reference's `<select>` lists them. */
 export const SORT_OPTIONS = [
@@ -167,7 +168,7 @@ export function toProductQuery(
 ): ProductListQuery {
   return {
     category: categorySlug,
-    limit: 200,
+    limit: MAX_PAGE_LIMIT,
   };
 }
 

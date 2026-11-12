@@ -16,13 +16,7 @@
  *      future caller that forgets the filter fails loudly instead of leaking.
  */
 
-import type {
-  Brand,
-  Category,
-  ProductImage,
-  ProductSpecification,
-  Review,
-} from '@prisma/client';
+import type { Brand, Category, ProductImage } from '@prisma/client';
 
 // ─── Wire types (mirror of src/types/catalog.ts) ──────────────────────────
 
@@ -431,7 +425,16 @@ export function toBrandDto(row: Brand, productCount: number): BrandDto {
 }
 
 /** An approved review row (with its author) → `ReviewDto`. */
-export function toReviewDto(row: Review & { user: { name: string } }): ReviewDto {
+export function toReviewDto(row: {
+  id: string;
+  rating: number;
+  createdAt: Date;
+  contentEn: string | null;
+  contentBn: string | null;
+  isVerifiedPurchase: boolean;
+  helpfulCount: number;
+  user: { name: string };
+}): ReviewDto {
   return {
     id: row.id,
     authorName: row.user.name,
@@ -445,7 +448,12 @@ export function toReviewDto(row: Review & { user: { name: string } }): ReviewDto
 }
 
 /** A specification row → the detail DTO's spec shape. */
-export function toSpecDto(row: ProductSpecification) {
+export function toSpecDto(row: {
+  labelEn: string;
+  labelBn: string;
+  valueEn: string;
+  valueBn: string;
+}) {
   return {
     labelEn: row.labelEn,
     labelBn: row.labelBn,
@@ -479,3 +487,80 @@ export function buildRatingBreakdown(rating: number, reviewCount: number): numbe
 
   return percents;
 }
+
+/**
+ * Groups a product's variants by their axis, for the storefront's pill UI.
+ *
+ * The wire's `ProductVariantDto` is flat and carries no axis, which is right
+ * for the cart (it needs an id and a price) and useless for the detail page
+ * (it needs "Size: S M L XL"). This rebuilds the group shape from the option's
+ * `ProductAttribute`, preserving the attribute's own order so the pills do not
+ * reshuffle between requests.
+ *
+ * `priceDeltaPoisha` is a delta because the reference computes `p.p + o.d` for
+ * the selected combination; the variant's own `pricePoisha` stays absolute.
+ */
+export function toVariantGroups(
+  variants: {
+    id: string;
+    nameEn: string;
+    nameBn: string;
+    pricePoisha: number;
+    stock: number;
+    sortOrder: number;
+    options: {
+      valueEn: string;
+      valueBn: string;
+      attribute: { id: string; nameEn: string; nameBn: string; type: string; sortOrder: number };
+    }[];
+  }[],
+  basePricePoisha: number,
+): VariantGroupDto[] {
+  const groups = new Map<string, VariantGroupDto & { sortOrder: number }>();
+
+  for (const variant of variants) {
+    for (const option of variant.options) {
+      const { attribute } = option;
+      let group = groups.get(attribute.id);
+
+      if (!group) {
+        group = {
+          id: attribute.id,
+          labelEn: attribute.nameEn,
+          labelBn: attribute.nameBn,
+          // Only colour renders swatches; every other axis is a labelled pill.
+          kind: attribute.type === 'COLOR' ? 'swatch' : 'button',
+          options: [],
+          sortOrder: attribute.sortOrder,
+        };
+        groups.set(attribute.id, group);
+      }
+
+      group.options.push({
+        id: variant.id,
+        nameEn: option.valueEn,
+        nameBn: option.valueBn,
+        priceDeltaPoisha: variant.pricePoisha - basePricePoisha,
+        stock: variant.stock,
+        // The reference's four swatch hexes live in the catalog, not the DB -
+        // the seed stores the colour name only, so the hex is resolved by name.
+        swatch: attribute.type === 'COLOR' ? SWATCH_HEX[option.valueEn] ?? null : null,
+      });
+    }
+  }
+
+  return [...groups.values()]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map(({ sortOrder: _sortOrder, ...group }) => ({
+      ...group,
+      options: group.options.sort((a, b) => a.nameEn.localeCompare(b.nameEn)),
+    }));
+}
+
+/** The reference's four swatches, verbatim (oshoppingbd.html L720). */
+const SWATCH_HEX: Record<string, string> = {
+  Black: '#1e2430',
+  Navy: '#253858',
+  Crimson: '#C51F4B',
+  Sand: '#D9B99B',
+};

@@ -156,7 +156,7 @@ describe('filters', () => {
 });
 
 describe('product detail', () => {
-  it('returns the full detail shape for a real slug', async () => {
+  it('returns the flat detail shape the storefront consumes', async () => {
     const list = await api('/products?limit=1');
     expectSuccess(list.body);
     const slug = (list.body.data as { slug: string }[])[0]!.slug;
@@ -165,12 +165,30 @@ describe('product detail', () => {
     expect(res.status).toBe(200);
     expectSuccess(res.body);
     const detail = res.body.data as Record<string, unknown>;
-    expect(detail).toHaveProperty('product');
-    expect(detail).toHaveProperty('specifications');
-    expect(detail).toHaveProperty('details');
+
+    // The flat ProductDetailDto — every field a component reads, on the wire.
+    expect(detail).toHaveProperty('slug');
+    expect(detail).toHaveProperty('variantGroups');
     expect(detail).toHaveProperty('reviews');
+    expect(detail).toHaveProperty('ratingBreakdown');
+    expect(detail).toHaveProperty('featuresEn');
+    expect(detail).toHaveProperty('featuresBn');
+    expect(detail).toHaveProperty('specs');
+    expect(detail).toHaveProperty('tintColor');
+    expect(detail).toHaveProperty('accentColor');
     expect(detail).toHaveProperty('relatedIds');
-    expect(detail).toHaveProperty('categoryColors');
+
+    // The nested shape is gone: nothing may re-introduce it silently.
+    expect(detail).not.toHaveProperty('product');
+    expect(detail).not.toHaveProperty('specifications');
+    expect(detail).not.toHaveProperty('categoryColors');
+
+    // Seeded content must actually be present, not just declared.
+    expect(Array.isArray(detail.specs)).toBe(true);
+    expect((detail.specs as unknown[]).length).toBeGreaterThan(0);
+    expect(Array.isArray(detail.variantGroups)).toBe(true);
+    expect((detail.variantGroups as unknown[]).length).toBeGreaterThan(0);
+    expect((detail.featuresEn as unknown[]).length).toBeGreaterThan(0);
   });
 
   it('never leaks costPrice or internal fields', async () => {

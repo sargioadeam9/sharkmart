@@ -10,6 +10,7 @@
 
 import type { BrandDto, CategoryDto, ProductDto } from '@/types/catalog';
 import { getCategory, listBrands } from '@/lib/api/categories';
+import { MAX_PAGE_LIMIT } from '@/lib/api/config';
 import { listProducts } from '@/lib/api/products';
 
 export interface CategoryData {
@@ -34,7 +35,7 @@ export interface CategoryData {
 export async function loadCategoryData(slug: string): Promise<CategoryData> {
   const [categoryResponse, productsResponse, brandsResponse] = await Promise.all([
     getCategory(slug),
-    listProducts({ category: slug, limit: 200 }),
+    listProducts({ category: slug, limit: MAX_PAGE_LIMIT }),
     listBrands(),
   ]);
 

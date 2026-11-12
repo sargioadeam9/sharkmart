@@ -73,14 +73,18 @@ export function listProductSlugs(): Promise<ApiSuccess<string[]>> {
 }
 
 /**
- * The detail endpoint. Separate from `getProduct` because it carries variant
- * groups, reviews and specs that the list endpoint does not — Phase 6 will
- * serve it at `/products/:slug/detail`.
+ * The detail endpoint.
+ *
+ * The server serves the full detail at `/products/:slug` — the same path the
+ * list uses for a single product, because the flat `ProductDetailDto` is a
+ * superset of `ProductDto`. There is no `/detail` suffix: that was the plan in
+ * Phase 0 and the server did not implement it, so calling it would 404 on every
+ * product page the moment the mock switch flips.
  */
 export function getProductDetail(
   slug: string,
 ): Promise<ApiSuccess<ProductDetailDto>> {
-  return resolve(`/products/${encodeURIComponent(slug)}/detail`, () => {
+  return resolve(`/products/${encodeURIComponent(slug)}`, () => {
     const product = mockGetProductDetail(slug);
     if (!product) {
       throw notFoundError(slug);

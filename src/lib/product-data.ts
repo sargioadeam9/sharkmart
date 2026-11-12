@@ -15,6 +15,7 @@
  */
 
 import type { ProductDetailDto, ProductDto } from '@/types/catalog';
+import { MAX_PAGE_LIMIT } from '@/lib/api/config';
 import { getProductDetail, listProducts } from '@/lib/api/products';
 
 export interface ProductRails {
@@ -73,9 +74,9 @@ export async function loadProductPageData(
    * round trips for data that is already in hand.
    */
   const [categoryResponse, brandResponse] = await Promise.all([
-    listProducts({ category: product.category.slug, limit: 200 }),
+    listProducts({ category: product.category.slug, limit: MAX_PAGE_LIMIT }),
     product.brand
-      ? listProducts({ brand: product.brand.slug, limit: 200 })
+      ? listProducts({ brand: product.brand.slug, limit: MAX_PAGE_LIMIT })
       : Promise.resolve({ success: true as const, data: [] as ProductDto[] }),
   ]);
 

@@ -15,7 +15,11 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../config/database.js';
 import {
   PRODUCT_LIST_SELECT,
+  buildRatingBreakdown,
   toProductDto,
+  toReviewDto,
+  toSpecDto,
+  toVariantGroups,
   type ProductDto,
   type ProductListRow,
 } from './mappers.js';
@@ -230,6 +234,33 @@ export async function getProductBySlug(slug: string) {
         select: { labelEn: true, labelBn: true, valueEn: true, valueBn: true, sortOrder: true },
         orderBy: { sortOrder: 'asc' },
       },
+      /**
+       * Variants for the detail page carry their axis, which the list select
+       * does not. The storefront renders one pill group per axis, so the group
+       * has to be reconstructed from the option's attribute — the wire's flat
+       * `ProductVariantDto` has no room for it.
+       */
+      variants: {
+        select: {
+          id: true,
+          sku: true,
+          nameEn: true,
+          nameBn: true,
+          pricePoisha: true,
+          stock: true,
+          isActive: true,
+          sortOrder: true,
+          options: {
+            select: {
+              valueEn: true,
+              valueBn: true,
+              attribute: { select: { id: true, nameEn: true, nameBn: true, type: true, sortOrder: true } },
+            },
+          },
+        },
+        where: { isActive: true },
+        orderBy: { sortOrder: 'asc' },
+      },
       details: {
         select: { section: true, contentEn: true, contentBn: true, sortOrder: true },
         orderBy: { sortOrder: 'asc' },
@@ -270,15 +301,35 @@ export async function getProductBySlug(slug: string) {
 
   const base = toProductDto(row as ProductListRow, stockMap.get(row.id) ?? 0);
 
+  /**
+   * The flat detail DTO the storefront consumes.
+   *
+   * The server used to return a nested shape (`{ product, specifications,
+   * details }`) that no component reads, which pushed the flattening into the
+   * frontend and left the Features tab with no source at all. Building it here
+   * means one contract, and `tools/parity-check.mjs` asserts this exact shape.
+   */
+  const features = row.details.find((d) => d.section === 'FEATURES');
+
   return {
-    product: base,
-    categoryColors: {
-      accentColor: row.category.accentColor ?? '#C51F4B',
-      tintColor: row.category.lightTintColor ?? '#F7DCE4',
-    },
-    specifications: row.specifications,
-    details: row.details,
-    reviews: row.reviews,
+    ...base,
+    variantGroups: toVariantGroups(row.variants, row.basePricePoisha),
+    reviews: row.reviews.map(toReviewDto),
+    ratingBreakdown: buildRatingBreakdown(row.ratingAvg, row.reviewCount),
+    featuresEn: splitBullets(features?.contentEn),
+    featuresBn: splitBullets(features?.contentBn),
+    specs: row.specifications.map(toSpecDto),
+    tintColor: row.category.lightTintColor ?? '#F7DCE4',
+    accentColor: row.category.accentColor ?? '#C51F4B',
     relatedIds: related.map((r) => r.id),
   };
+}
+
+/** A newline-separated bullet block → an array. Absent content is an empty list. */
+function splitBullets(content: string | null | undefined): string[] {
+  if (!content) return [];
+  return content
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 }
