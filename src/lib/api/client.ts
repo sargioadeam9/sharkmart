@@ -8,6 +8,21 @@
 import type { ApiResponse, ApiFailure, ApiSuccess } from '@/types/api';
 import { API_BASE_URL, API_PREFIX, USE_MOCK } from './config';
 
+/**
+ * The internal service token, read only where it is safe to read it.
+ *
+ * `INTERNAL_API_TOKEN` is deliberately NOT a `NEXT_PUBLIC_` variable: Next
+ * inlines every `NEXT_PUBLIC_` value into the client bundle, which would hand
+ * the bypass to anyone who opens devtools. This is only ever evaluated on the
+ * server, and the guard below means a browser bundle gets `undefined` even if
+ * the build inlined the name.
+ */
+function internalToken(): string | undefined {
+  if (typeof window !== 'undefined') return undefined;
+  const token = process.env.INTERNAL_API_TOKEN;
+  return token && token.length > 0 ? token : undefined;
+}
+
 export class ApiClientError extends Error {
   readonly code: string;
   readonly status: number;
@@ -43,6 +58,13 @@ export async function apiFetch<T>(
   const { method = 'GET', body, revalidate = 60, signal } = options;
   const url = `${API_BASE_URL}${API_PREFIX}${path}`;
 
+  /**
+   * Server-side calls carry the internal token so `next build` prerendering is
+   * not throttled by the public rate limit. A browser call never does: the
+   * token is absent from the client bundle by construction.
+   */
+  const token = internalToken();
+
   let response: Response;
   try {
     response = await fetch(url, {
@@ -50,6 +72,7 @@ export async function apiFetch<T>(
       headers: {
         Accept: 'application/json',
         ...(body ? { 'Content-Type': 'application/json' } : {}),
+        ...(token ? { 'X-Internal-Token': token } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
       signal,

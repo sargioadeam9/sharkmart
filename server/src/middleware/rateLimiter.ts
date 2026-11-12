@@ -16,9 +16,49 @@
  * prevent.
  */
 
+import { timingSafeEqual } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
 import { getStore } from '../config/redis.js';
+import { env } from '../config/env.js';
 import { fail } from '../types/api.js';
+
+/** Header a trusted first-party service presents to skip the public limit. */
+export const INTERNAL_TOKEN_HEADER = 'x-internal-token';
+
+/**
+ * True when the request presents the shared internal token.
+ *
+ * Why this exists: `next build` prerenders 168 product pages, 14 category pages
+ * and the homepage, each calling this API from the Next server. That is one IP
+ * and 500+ requests in seconds, which trips the 100/min public bucket and turns
+ * a build into a 429 storm. The build is not an attacker; it is us.
+ *
+ * Why it is safe:
+ *   - The token is compared with `timingSafeEqual`, so a wrong token cannot be
+ *     discovered a byte at a time.
+ *   - A missing token, a missing env var, or a length mismatch all fall through
+ *     to the normal limit. There is no "empty token matches" path.
+ *   - The token is never logged, never echoed, and never sent to a browser —
+ *     `client.ts` only attaches it when `typeof window === 'undefined'`.
+ *   - The public limit is untouched. An attacker without the token is limited
+ *     exactly as before.
+ */
+function hasInternalToken(req: Request): boolean {
+  const expected = env.INTERNAL_API_TOKEN;
+  if (!expected) return false;
+
+  const raw = req.headers[INTERNAL_TOKEN_HEADER];
+  const presented = Array.isArray(raw) ? raw[0] : raw;
+  if (!presented) return false;
+
+  const a = Buffer.from(presented, 'utf8');
+  const b = Buffer.from(expected, 'utf8');
+  // timingSafeEqual throws on a length mismatch, so check it first. The length
+  // of the secret is not itself secret.
+  if (a.length !== b.length) return false;
+
+  return timingSafeEqual(a, b);
+}
 
 export interface LimitRule {
   /** Requests allowed per window. */
@@ -60,6 +100,13 @@ export function rateLimit(rule: LimitRule) {
     res: Response,
     next: NextFunction,
   ): Promise<void> {
+    // A trusted first-party caller (the Next server during a build) is not
+    // subject to the public limit. See `hasInternalToken`.
+    if (hasInternalToken(req)) {
+      next();
+      return;
+    }
+
     const windowStart = Math.floor(Date.now() / 1000 / rule.windowSeconds);
     const key = `rl:${rule.scope}:ip:${identity(req)}:${windowStart}`;
     const resetAt = (windowStart + 1) * rule.windowSeconds;

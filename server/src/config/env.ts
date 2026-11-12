@@ -29,6 +29,15 @@ const EnvSchema = z.object({
   // Phase 6 — Redis for cache, rate limiting and flash-sale timers.
   REDIS_URL: z.string().optional(),
 
+  /**
+   * Shared secret a trusted first-party service (the Next server) presents in
+   * `X-Internal-Token` to skip the public rate limit. Optional: when unset, no
+   * request can bypass the limiter, which is the safe default.
+   *
+   * Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   */
+  INTERNAL_API_TOKEN: z.string().min(16).optional(),
+
   // Phase 13 — object storage for product images.
   S3_ENDPOINT: z.string().optional(),
   S3_BUCKET: z.string().optional(),
