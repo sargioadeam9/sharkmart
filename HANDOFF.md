@@ -3,6 +3,115 @@
 > **Append-only.** Newest entry at the top. Never rewrite or delete a previous agent's entry — the next agent needs the history of what was tried and rejected.
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
+## 2026-11-12 · Phase 9 pass B1 · Saffron · products API + list + editor · PASS B1 DONE
+
+**Two things you must know before you touch anything**
+
+1. **`prisma db push` is banned on this project.** It is what caused the bug this pass fixed: the
+   media URL columns were widened to TEXT with `db push`, so the database was text while the
+   migration history still said `VARCHAR(191)`. `migrate status` reported "up to date" the whole
+   time because it compares *applied history*, not column types. A fresh clone plus
+   `migrate deploy` would have recreated the original bug — a 378-char data URI truncated at 191,
+   every thumbnail broken. Use `prisma migrate dev` (or `--create-only` then read the SQL) and
+   `prisma migrate deploy`. The migration is `20261112170000_phase9_product_image_text`.
+
+2. **The CORS default now covers both loopback spellings** —
+   `http://localhost:3000,http://127.0.0.1:3000` in `server/src/config/env.ts` and
+   `server/.env.example`. But CORS alone was **not** the whole story, and this is the part that
+   will bite you: the session cookie is host-only and `SameSite=Lax`. A page served from
+   `127.0.0.1:3000` calling `localhost:4000` is cross-site, so the browser withholds the cookie on
+   the login response and the session never exists. `API_BASE_URL` in `src/lib/api/config.ts` now
+   follows the page's own host for loopback addresses, keeping page and API on one site. Verified:
+   login works from both origins.
+
+**What I completed**
+
+- `server/prisma/migrations/20261112170000_phase9_product_image_text/migration.sql` — four
+  `MODIFY ... TEXT` statements across `ProductImage`, `ProductVideo` (url + thumbnailUrl) and
+  `ReviewMedia`. Generated as a datamodel-to-datamodel diff and committed unedited. Nothing else
+  in the schema moved. `Product.slug` was **not** in the diff — it was never widened.
+- CORS default + `.env.example` + the `API_BASE_URL` loopback resolution above.
+- The products screen (B1b): `/admin/products`, `/admin/products/new`,
+  `/admin/products/[id]`, plus `products-table.tsx`, `product-editor.tsx`,
+  `admin-client.ts`, `admin-products.ts`.
+- `tools/p9-overflow.mjs` kept (argv-driven overflow auditor). The other three p9 probes were
+  throwaway and deleted, along with `server/chk-url.cjs`, `server/fix-images.cjs`,
+  `server/prisma/check-{audit,dashboard}.ts` and `.next-stale-215101/`.
+- `Logo/icon.png` and `Logo/SharkMart Shark Fin Shopping Logo.png` are now **gitignored**. The
+  shipped asset is `public/brand/sharkmart-logo.png`; `Logo/SharkMart Fast Delivery Logo.png`
+  stays tracked. Nothing left untracked for the next phase to trip over.
+
+**What I verified** (commands and results)
+
+- `npx tsc --noEmit` — clean in both packages.
+- `npm test` (server) — **131/131 passing, 7 files, 0 failures**.
+- `npm run build` — green; `/admin/products`, `/admin/products/[id]`, `/admin/products/new` all
+  compiled as dynamic routes.
+- `npx prisma migrate status` — 7 migrations, "Database schema is up to date".
+- Live column types in `information_schema` — `productimage.url`, `productvideo.url`,
+  `productvideo.thumbnailUrl`, `reviewmedia.url` are all `text`. The migration file is the only
+  thing that alters them.
+- Login from `http://127.0.0.1:3000` — **works** (was the original failure). Login from
+  `http://localhost:3000` — still works.
+- Tabs: All / Published / Draft / Archived each render 200 with the right `aria-selected`.
+  Archived is empty rather than erroring. Draft is empty because **all 168 rows are published** —
+  verified in SQL (`isPublished=1, isDraft=0` for 168/168), so the empty tab is correct data.
+- `status=draft&stock=out` returns 0, consistent with the same SQL.
+- Pagination: page 2 shows different rows, total stays 168. Search `OSB-1168` narrows to 1 row.
+- `/admin/products/new` renders; `/admin/products/<real id>` loads a product with its image,
+  3 variants and SEO fields populated.
+- One mutation (Save draft in the editor) produced **exactly one** new audit row: 8 → 9,
+  `product.create`, matching the new product id. The probe product was then deleted.
+- Widths, measured logged-in (not on the login page — see the landmine below): page-level
+  horizontal scroll is **zero** at 1440 / 1180 / 1100 / 1024 / 960 / 950 / 720 / 360. The table
+  stacks into labelled cards at 720 (`thead` hidden, `td` flex, `data-label` present). Sidebar
+  collapses at 960.
+- Dark mode: lowest measured contrast is table headers at **3.95:1**; body text 14.12, badges
+  7.06, h1 15.84, seg tabs 12.18, primary button 5.8. No surface under 3:1.
+
+**What is NOT done / what I could not prove**
+
+- **The table does not fit at 950px.** The brief said it does; measurement says otherwise. At 950
+  the wrapper is 913px and the table is 940px, so it scrolls inside `.table-wrap`. At 1024 it is
+  worse (695 visible of 940) because the sidebar is still present until 960. There is no
+  page-level horizontal scroll, so it degrades cleanly, but the "fits exactly at 950" claim is not
+  true and I did not change the column budget to force it.
+- **The fresh-DB check was blocked by policy.** `CREATE DATABASE` / `DROP DATABASE` is refused by
+  the review gate, so I could not run `migrate deploy` against an empty database. I verified the
+  equivalent from two directions instead: the migration file's SQL is the only statement that
+  alters those four columns, and the live `information_schema` shows them as `text`. If you have
+  permission to create a scratch database, that is the one check still worth running.
+- Bulk actions (select-all + bulk bar) render and the checkboxes work, but I did not exercise a
+  bulk mutation end to end.
+- Export was not exercised.
+
+**Landmines I hit**
+
+- **`prisma migrate dev --create-only` refuses to generate here.** It detects the real drift and
+  demands a database reset. Do not reset — the database holds the only copy of the correct column
+  types. Generate the SQL with
+  `prisma migrate diff --from-schema-datamodel <before> --to-schema-datamodel <after> --script`
+  using a temp copy of `schema.prisma` with the columns reverted.
+- **`migrate diff --from-migrations` is unusable on this machine.** `lower_case_table_names=1` on
+  the Windows MySQL makes the shadow diff think every table needs dropping and recreating
+  (`address` vs `Address`). It emits a full drop-and-create script. Do not trust that output.
+- **Rebuilding `.next` while `next start` is running silently breaks hydration.** The page serves
+  200 but no React event handler works — the login button stays disabled with both fields filled,
+  and the console is clean. Restart the server after every `npm run build`. This cost me the most
+  time and it looks exactly like a React bug.
+- **`tools/p9-overflow.mjs` with no session measures the login page**, which has no table, so it
+  reports 0 offenders and looks like a pass. Any width check must run logged in.
+- `browser_eval` runs in an isolated world, so React DOM expandos are invisible to it. To test
+  whether React is alive, click a toggle and read the resulting DOM.
+
+**Exact next step**
+
+Phase 9 pass B2 — the Orders module: admin orders API first (list with status/payment filters,
+detail with items and status history, status transition), then the screen. Do not touch Products
+again; it is done and pushed.
+
+---
+
 ## 2026-11-12 · Phase 9 pass A · Saffron · admin foundation + dashboard · PASS A DONE
 
 **What I completed**

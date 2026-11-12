@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-12 · **Updated by:** Phase 9 pass A — admin foundation + dashboard shipped and verified
+**Last updated:** 2026-11-12 · **Updated by:** Phase 9 pass B1 — products API (B1a) and products list + editor (B1b) shipped and verified
 
 ---
 
@@ -13,10 +13,10 @@
 | Field | Value |
 | --- | --- |
 | Active phase | **Phase 9 — Admin panel: core modules** |
-| Phase status | 🟡 **Phase 9 PASS A COMPLETE** — shell, RBAC, dashboard, audit helper all green. Pass B (module CRUD) not started |
-| Build state | Server: `npm test` **106/106** (phase9 17/17) · `tsc --noEmit` clean. Storefront: `npm run build` green · `tsc --noEmit` clean |
+| Phase status | 🟡 **Phase 9 PASS B1 COMPLETE** — products API, list and editor all green. B2–B5 (Orders, Inventory, Reviews, Categories, Brands) not started |
+| Build state | Server: `npm test` **131/131** (7 files) · `tsc --noEmit` clean. Storefront: `npm run build` green · `tsc --noEmit` clean. `prisma migrate status` clean, 7 migrations |
 | Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so the reference's "Estimated profit" KPI is not computable (see HANDOFF). `cache-and-limits.test.ts` "exceeding the search limit" is **flaky under parallel file execution** (passes alone, passed on re-run of the full suite) — the in-process limiter is shared across files |
-| Next action | Phase 9 pass B — B1 Products (admin CRUD API first, then the screen) |
+| Next action | Phase 9 pass B2 — Orders module (admin CRUD API first, then the screen) |
 
 ### Phase 6 — gate evidence
 
