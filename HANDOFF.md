@@ -3,6 +3,103 @@
 > **Append-only.** Newest entry at the top. Never rewrite or delete a previous agent's entry — the next agent needs the history of what was tried and rejected.
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
+## 2026-11-12 · Phase 9 pass A · Saffron · admin foundation + dashboard · PASS A DONE
+
+**What I completed**
+
+Pass A only. Pass B (module CRUD) is untouched — no product/order/category/inventory/review admin route exists yet.
+
+- `src/middleware.ts` — matcher `/admin/:path*`, cookie presence only, no JWT decode (edge runtime cannot run
+  `jsonwebtoken`). Missing cookie → 302 `/admin/login?next=…`.
+- `server/src/routes/admin/index.ts` — mounted at `/api/v1/admin` in `routes/index.ts:65`. Router-level
+  `rateLimit(LIMITS.admin)` + `requireAuth`, then a staff gate (`isAdminRole`) that 403s a CUSTOMER.
+  Routes: `GET /me` (role + permission list), `GET /audit` (`audit:read`), `/dashboard` sub-router.
+- `server/src/services/permissions.ts` — one permission matrix, `permissionsFor(role)`. The nav renders from
+  `/me`; the API enforces independently.
+- `server/src/services/audit.service.ts` — `audit()`, `withAudit()` (audit row written inside the caller's
+  transaction), `diffChanges()`. A failed mutation rolls the audit row back.
+- `server/src/routes/admin/dashboard.service.ts` — every dashboard aggregate as a real query (KPIs, series,
+  pipeline, needs-attention, recent orders, best sellers, courier rates). Nothing is computed in the browser.
+- `src/app/admin/(auth)/login/page.tsx` + `admin-login-form.tsx` — login outside the guarded layout (route
+  groups, so `/admin/login` cannot redirect-loop).
+- `src/app/admin/(panel)/layout.tsx` — the real authorization check: calls `/api/v1/admin/me` with the cookie,
+  redirects on no session, renders a 403 page for a non-staff role.
+- `src/app/admin/(panel)/page.tsx` + `dashboard-range.tsx` + `sales-chart.tsx` — dashboard, server component,
+  range selector and chart as the only client islands.
+- `src/components/admin/admin-shell.tsx` — 264px sidebar, grouped RBAC-aware nav, sticky topbar, `/` search
+  focus, notification + account popovers, mobile drawer + scrim, bottom nav, dark mode scoped to `.admin-root`.
+- `src/app/admin.css` — the admin design system, every rule scoped under `.admin-root`, imported from
+  `globals.css:8`.
+
+**Bugs I found and fixed this session (all real, all verified)**
+
+1. **Storefront `.hero` bled into the admin KPI card.** `home.css:20` defines an unscoped
+   `.hero { min-height: 380px; margin-top: 18px }` for the storefront carousel. The admin hero card is
+   `class="card kpi hero"`, so it inherited both: the KPI row measured **398px** with ~134px of content, and the
+   other three cards stretched to match. Fixed in `admin.css` by resetting `min-height: 0; margin-top: 0` on
+   `.kpi.hero`. Row is now **140px**. This is exactly the "two design systems, do not merge them" landmine —
+   the unscoped storefront selector is the leak, not the admin CSS.
+2. **Hamburger collapsed to 2px at ≤960px.** `.menu-btn` is `display: grid` in the mobile media query but the
+   topbar is a flex row, so `flex: 0 1 auto` shrank it to its content width. The mobile drawer was effectively
+   unreachable. Fixed with `flex: 0 0 42px`.
+3. **Topbar overflowed 49px at 360px.** `.search` is `flex: 1` with a default `min-width: auto`, so it refused
+   to shrink below its placeholder and pushed `.top-right` (and the fixed bottom nav, which sizes to the
+   document) off-canvas. Fixed with `.search { min-width: 0 }` and `.top-right { flex: 0 0 auto }`.
+4. **Dark-mode active nav was 2.76:1.** Light mode pairs crimson `#c8143c` on a crimson tint `#3a1522`; the
+   dark token set keeps both. Added `.admin-root[data-theme='dark'] .nav a.active { color: #ff8fa8 }`.
+
+**Verified — real output, not claims**
+
+- `npx tsc --noEmit` → exit 0, **both** packages.
+- `npm run build` → green. `/admin` and `/admin/login` both `ƒ` (dynamic).
+- `npm test` (server) → **106/106**, 6 files. See the flake note below.
+- `node tools/phase9-gates.mjs` → **ALL GATES PASS**:
+  - no cookie → **302** to `/admin/login?next=%2Fadmin`
+  - CUSTOMER → **200** 403 page, no redirect loop, admin nav not leaked
+  - INVENTORY_STAFF → **200**, "Roles and security" absent from nav, `/admin/audit` → **403**
+  - SUPER_ADMIN → `/me` 200 with **18 permissions**, `/audit` 200
+- `node tools/phase9-widths.mjs` → drives real Chrome over CDP at **1440 / 1024 / 720 / 360** (not 390):
+  - all four widths: **no horizontal scroll** (scrollWidth == clientWidth)
+  - sidebar collapses at ≤960, expanded above
+  - tables stack at ≤720 (`table` → `block`, `td` → `flex` with `data-label`)
+  - dark mode: **no surface under 3:1** across 81 checked nodes
+  - storefront unaffected: no `.admin-root`, body bg `rgb(251,248,249)`, no `data-theme` attr
+
+**What is NOT done**
+
+- **Pass B entirely.** No admin CRUD for products, orders, categories, brands, inventory or reviews. The nav
+  links to those routes; they do not exist yet (they 404). Do not mistake a working nav for a working module.
+- **No admin mutation exists yet**, so `AuditLog` is genuinely empty (0 rows). The audit *write* contract is
+  proven by `server/tests/phase9.test.ts` ("audit helper", 4 tests, including rollback-on-failure), not by an
+  HTTP call. The first Pass B mutation is the first real end-to-end proof.
+- Dashboard "Estimated profit" KPI is **not** implemented. `Product` has no cost field, so it is not
+  computable. The fourth slot shows "Delivered" instead. Do not add a fabricated margin.
+
+**What I assumed**
+
+- The reference's `td{display:flex}` at ≤720 is intentional (label left, value right), so "stacked" means
+  `table → block` and `td → flex`, not `td → block`. My first gate script asserted `block` and reported a false
+  failure; the assertion was wrong, not the CSS.
+- Login is rate limited to 5/min, so the gate script spaces its three logins 13s apart. A fourth login in the
+  same minute returns 429 — that is the limiter working.
+
+**Landmines**
+
+- `cache-and-limits.test.ts` "exceeding the search limit returns 429" is **flaky under parallel file
+  execution**: it failed once in a full `npm test` run and passed alone and on a full re-run. The in-process
+  rate-limit store is shared across test files when Redis is down. If it fails, re-run before assuming a
+  regression.
+- Next.js 16 generates a global `LayoutProps` type; a stale `.next` made `tsc` report a bogus error. `npx next
+  typegen` regenerates it without killing a running dev server.
+- The Next.js dev-tools badge is a `nextjs-portal` overlay that sits on top of the sidebar footer avatar and
+  reads as a stray "N". It is dev-only and not a defect — check `elementFromPoint` before "fixing" it.
+
+**Exact next step**
+
+Start Pass B1: build `server/src/routes/admin/products.ts` (list, create, update, publish/draft, image
+reorder, variants, SEO) behind `requirePermission('product:write')`, calling `withAudit()` in the same
+transaction as every write — then the Products screen against it.
+
 ## 2026-11-12 · Phase 8 (part 3) · Saffron · follow-ups closed · PHASE 8 DONE
 
 **What this session did**

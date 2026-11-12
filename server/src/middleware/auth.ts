@@ -16,6 +16,7 @@ import type { NextFunction, Request, Response } from 'express';
 import { prisma } from '../config/database.js';
 import { fail } from '../types/api.js';
 import { verifyAccessToken } from '../services/token.service.js';
+import { can, type Permission } from '../services/permissions.js';
 import { ACCESS_COOKIE } from './session.js';
 
 export interface SessionUser {
@@ -144,6 +145,45 @@ export function requireRole(...roles: string[]) {
       res.status(403).json(fail('FORBIDDEN', 'You do not have access to this resource.'));
       return;
     }
+    next();
+  };
+}
+
+/**
+ * Permission gate — security.md §6: "Middleware checks the permission, not just
+ * the role name. A route declares the permission it needs; the role map is
+ * data, not a chain of `if` statements."
+ *
+ * `requireRole` above is the blunt instrument: it lists roles. This is the one
+ * admin routes should use, because it reads the matrix in
+ * `services/permissions.ts` — the same matrix the sidebar reads. That is what
+ * keeps "the nav hides it" and "the API rejects it" from drifting apart.
+ *
+ * A permission the role does not hold is a **403**, not a 404: the resource
+ * exists and the caller is authenticated, they simply may not act on it. (The
+ * 404-not-403 rule applies to *other users'* resources, where a 403 would
+ * confirm the id exists — a different situation.)
+ *
+ * Must be mounted after `requireAuth`, which is what puts `req.session` on the
+ * request. Mounted alone it 401s rather than throwing, so a misordered route
+ * fails closed.
+ */
+export function requirePermission(...permissions: Permission[]) {
+  return function permissionGate(req: Request, res: Response, next: NextFunction): void {
+    if (!req.session) {
+      res.status(401).json(fail('UNAUTHORIZED', 'You must be signed in.'));
+      return;
+    }
+
+    // Every listed permission is required, not any one of them. A route that
+    // needs both read and write declares both.
+    const allowed = permissions.every((permission) => can(req.session!.role, permission));
+
+    if (!allowed) {
+      res.status(403).json(fail('FORBIDDEN', 'You do not have access to this resource.'));
+      return;
+    }
+
     next();
   };
 }

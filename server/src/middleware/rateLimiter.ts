@@ -97,6 +97,18 @@ export const LIMITS = {
   checkout: { scope: 'checkout', limit: 10, windowSeconds: 300 },
   /** Refresh rotation — generous, because a tab reload can legitimately burst. */
   refresh: { scope: 'refresh', limit: 30, windowSeconds: 60 },
+
+  // ── Phase 9 — admin surface (security.md §3) ──────────────────────────────
+  /**
+   * The admin panel. 200/min per IP, per the spec.
+   *
+   * Higher than the public 100 because an admin screen legitimately fires a
+   * burst: a dashboard load is eight aggregate calls, and a table page with
+   * filters, a count and a bulk action is five more. 200 leaves room for a
+   * fast operator clicking through screens without ever being the person the
+   * limiter is aimed at.
+   */
+  admin: { scope: 'admin', limit: 200, windowSeconds: 60 },
 } as const satisfies Record<string, LimitRule>;
 
 /**

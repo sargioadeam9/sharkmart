@@ -22,6 +22,7 @@ import { meOrdersRouter, trackRouter } from './customer/orders.js';
 import { cartRouter } from './customer/cart.js';
 import { checkoutRouter } from './customer/checkout.js';
 import { wishlistRouter } from './customer/wishlist.js';
+import { adminRouter } from './admin/index.js';
 
 export const routes: Router = Router();
 
@@ -56,5 +57,11 @@ apiV1.use('/track', trackRouter);
 apiV1.use('/me/orders', meOrdersRouter);
 apiV1.use('/me/wishlist', wishlistRouter);
 apiV1.use('/me', meRouter);
+
+// ── Admin (Phase 9) ────────────────────────────────────────────────────────
+// Mounted after the customer surface. Its own router carries the admin rate
+// bucket, `requireAuth` and the staff gate, so nothing here can accidentally
+// serve an admin route without a session.
+apiV1.use('/admin', adminRouter);
 
 routes.use('/api/v1', apiV1);

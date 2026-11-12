@@ -1,0 +1,1377 @@
+/* ==========================================================================
+   Admin panel stylesheet — source of truth: `admin panel.html` (frozen).
+
+   SCOPE IS THE WHOLE POINT OF THIS FILE.
+
+   Every rule below is nested under `.admin-root`, and the token block is
+   declared on `.admin-root` rather than `:root`. Three consequences, all
+   deliberate:
+
+     1. The admin palette cannot leak into the storefront. The storefront's
+        `--red` is #C51F4B; the admin's `--brand` is #c8143c. Two different
+        reds, two different namespaces (AGENTS.md §3, landmine #1).
+     2. `[data-theme=dark]` is scoped to `.admin-root[data-theme=dark]`, so a
+        dark admin tab cannot darken a storefront page. The reference declares
+        dark mode on `[data-theme=dark]` globally because it is a standalone
+        document; here it must be scoped or it is a bug.
+     3. Nothing here can restyle a storefront element, because every selector
+        starts with a class that only exists inside the admin shell.
+
+   Token names are kept identical to the reference (`--brand`, `--navy`,
+   `--bg`, `--r-lg`, ...) so a selector can be copied from the reference
+   without translation. That is the cheapest way to stay faithful.
+
+   Breakpoints are the admin's own: 1180 / 960 / 720 / 360. NOT the
+   storefront's 1200 / 1024 / 820 / 760. Sidebar collapses at 960, tables
+   stack at 720. Never test at 390 — the reference breakpoint is 360.
+   ========================================================================== */
+
+.admin-root {
+  /* ---------- Tokens (admin panel.html :root, line 21) ---------- */
+  --brand: #c8143c;
+  --brand-600: #a80f31;
+  --brand-50: #fdf0f3;
+  --brand-100: #f9d9e1;
+
+  --navy: #16223d;
+  --navy-2: #24365f;
+  --navy-3: #3d5486;
+
+  --bg: #f6f7fa;
+  --card: #fff;
+  --line: #e8eaf0;
+  --line-2: #f0f1f5;
+
+  --text: #1a2238;
+  --muted: #6b7490;
+  --faint: #9aa2b8;
+
+  --ok: #12805c;
+  --ok-bg: #e3f6ee;
+  --warn: #a15c00;
+  --warn-bg: #fff2dc;
+  --bad: #c8143c;
+  --bad-bg: #fdeaee;
+  --info: #2b5fd9;
+  --info-bg: #e8effd;
+  --mute-bg: #eef0f5;
+
+  --r-lg: 20px;
+  --r-md: 14px;
+  --r-sm: 10px;
+  --r-pill: 999px;
+
+  --side: 264px;
+
+  --shadow: 0 1px 2px rgba(22, 34, 61, 0.04), 0 8px 24px -12px rgba(22, 34, 61, 0.1);
+  --font: 'Plus Jakarta Sans', 'Hind Siliguri', system-ui, sans-serif;
+
+  /* The admin shell owns its own background — the storefront's warm off-white
+     must not show through behind a card. */
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Bangla: the reference relies on the font stack; headings need more room. */
+.admin-root.bn {
+  font-family: 'Hind Siliguri', 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+.admin-root.bn h1,
+.admin-root.bn h2,
+.admin-root.bn h3 {
+  line-height: 1.25;
+}
+
+.admin-root *,
+.admin-root *::before,
+.admin-root *::after {
+  box-sizing: border-box;
+}
+
+.admin-root h1,
+.admin-root h2,
+.admin-root h3,
+.admin-root h4 {
+  margin: 0;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.admin-root a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-root button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  border: 0;
+  background: none;
+}
+
+.admin-root input,
+.admin-root select,
+.admin-root textarea {
+  font: inherit;
+  color: inherit;
+}
+
+.admin-root [hidden] {
+  display: none !important;
+}
+
+/* ---------- Sidebar ---------- */
+.admin-root .sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: var(--side);
+  background: var(--card);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  z-index: 40;
+  transition: transform 0.25s;
+}
+.admin-root .brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 22px 14px;
+  font-weight: 800;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+.admin-root .brand b {
+  color: var(--brand);
+}
+.admin-root .logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+  background: var(--brand);
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 14px -4px rgba(200, 20, 60, 0.5);
+  flex: none;
+}
+.admin-root .nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 14px 16px;
+}
+.admin-root .nav h6 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--faint);
+  margin: 18px 10px 6px;
+}
+.admin-root .nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  color: var(--muted);
+  font-weight: 500;
+  min-height: 42px;
+  transition: background 0.15s, color 0.15s;
+}
+.admin-root .nav a:hover {
+  background: var(--line-2);
+  color: var(--text);
+}
+.admin-root .nav a.active {
+  background: var(--brand-50);
+  color: var(--brand);
+  font-weight: 700;
+}
+.admin-root .nav .count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--brand);
+  color: #fff;
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+}
+.admin-root .side-foot {
+  padding: 14px;
+  border-top: 1px solid var(--line);
+}
+.admin-root .me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: var(--r-md);
+}
+.admin-root .me small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.admin-root .avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--navy);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex: none;
+  border: 0;
+  cursor: pointer;
+}
+.admin-root .scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 34, 61, 0.45);
+  z-index: 35;
+}
+
+/* ---------- Topbar ---------- */
+.admin-root .main {
+  margin-left: var(--side);
+  min-height: 100vh;
+}
+.admin-root .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 32px;
+  background: rgba(246, 247, 250, 0.88);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.admin-root .menu-btn {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--r-sm);
+  background: var(--card);
+  border: 1px solid var(--line);
+  place-items: center;
+}
+.admin-root .search {
+  flex: 1;
+  max-width: 560px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 0 16px;
+  height: 44px;
+  color: var(--faint);
+  position: relative;
+}
+.admin-root .search:focus-within {
+  border-color: var(--brand-100);
+  box-shadow: 0 0 0 4px var(--brand-50);
+}
+.admin-root .search input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--text);
+  min-width: 0;
+}
+.admin-root .search kbd {
+  font: 600 11px var(--font);
+  background: var(--mute-bg);
+  border-radius: 6px;
+  padding: 2px 7px;
+  color: var(--muted);
+}
+.admin-root .top-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.admin-root .icon-btn {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+}
+.admin-root .icon-btn .dot {
+  position: absolute;
+  top: 9px;
+  right: 10px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--brand);
+  border: 2px solid #fff;
+}
+.admin-root .lang {
+  display: flex;
+  background: var(--mute-bg);
+  border-radius: var(--r-pill);
+  padding: 3px;
+}
+.admin-root .lang button {
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--muted);
+}
+.admin-root .lang button.on {
+  background: #fff;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Page ---------- */
+.admin-root .page {
+  padding: 28px 32px 56px;
+  max-width: 1440px;
+  margin: auto;
+}
+.admin-root .title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+.admin-root h1 {
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+.admin-root .sub {
+  color: var(--muted);
+  margin-top: 4px;
+}
+.admin-root .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.admin-root .seg {
+  display: flex;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 3px;
+}
+.admin-root .seg button {
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  font-weight: 600;
+  color: var(--muted);
+  min-height: 36px;
+}
+.admin-root .seg button.on {
+  background: var(--navy);
+  color: #fff;
+}
+.admin-root .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: var(--r-pill);
+  background: var(--brand);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 8px 18px -8px rgba(200, 20, 60, 0.65);
+  transition: background 0.15s;
+}
+.admin-root .btn:hover {
+  background: var(--brand-600);
+}
+.admin-root .btn.ghost {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: none;
+}
+.admin-root .btn.ghost:hover {
+  background: var(--line-2);
+}
+.admin-root .btn.sm {
+  height: 36px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+.admin-root .btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-root .card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
+  padding: 22px;
+  min-width: 0;
+}
+.admin-root .card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.admin-root .card-head h2 {
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+.admin-root .link {
+  color: var(--brand);
+  font-weight: 600;
+  font-size: 13px;
+}
+.admin-root .grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.admin-root .grid-main {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.admin-root .grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+/* ---------- KPI ---------- */
+.admin-root .kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.admin-root .kpi .label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.admin-root .kpi .value {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+.admin-root .kpi .foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.admin-root .delta {
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 3px 9px;
+  border-radius: var(--r-pill);
+}
+.admin-root .delta.up {
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+.admin-root .delta.down {
+  color: var(--bad);
+  background: var(--bad-bg);
+}
+.admin-root .kpi.hero {
+  background: linear-gradient(145deg, var(--navy) 0%, var(--navy-2) 70%, var(--navy-3) 100%);
+  border: 0;
+  color: #fff;
+  /* The storefront carousel owns an unscoped `.hero` (home.css: min-height 380px,
+     margin-top 18px). `.kpi.hero` out-specifies it for most properties, but
+     min-height and margin-top are not declared here, so they bleed through and
+     inflate the whole KPI row to 398px. Reset them explicitly. */
+  min-height: 0;
+  margin-top: 0;
+}
+.admin-root .kpi.hero .label,
+.admin-root .kpi.hero .foot {
+  color: #c4cde4;
+}
+.admin-root .kpi.hero .delta.up {
+  background: rgba(255, 255, 255, 0.14);
+  color: #9af0c8;
+}
+.admin-root .kpi.hero::after {
+  content: '';
+  position: absolute;
+  right: -50px;
+  top: -60px;
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ---------- Pipeline ---------- */
+.admin-root .pipeline {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.admin-root .step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: 14px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  border: 1px solid transparent;
+  transition: border-color 0.15s, background 0.15s;
+}
+.admin-root .step:hover {
+  border-color: var(--line);
+  background: var(--card);
+}
+.admin-root .step span {
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 13px;
+}
+.admin-root .step b {
+  font-size: 22px;
+  letter-spacing: -0.02em;
+}
+.admin-root .step.focus {
+  background: var(--brand-50);
+  border-color: var(--brand-100);
+}
+.admin-root .step.focus b,
+.admin-root .step.focus span {
+  color: var(--brand);
+}
+.admin-root .step i {
+  height: 4px;
+  border-radius: 4px;
+  background: var(--line);
+  margin-top: 8px;
+  overflow: hidden;
+  display: block;
+}
+.admin-root .step i em {
+  display: block;
+  height: 100%;
+  background: var(--navy-3);
+  border-radius: 4px;
+}
+.admin-root .step.focus i em {
+  background: var(--brand);
+}
+
+/* ---------- Chart ---------- */
+.admin-root .chart {
+  height: 230px;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  padding-top: 40px;
+}
+.admin-root .bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+  justify-content: flex-end;
+  min-width: 0;
+}
+.admin-root .bar {
+  width: 100%;
+  max-width: 34px;
+  border-radius: 10px 10px 4px 4px;
+  background: var(--line);
+  position: relative;
+  transition: background 0.15s;
+  transform-origin: bottom;
+  animation: admin-grow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+.admin-root .bar:hover {
+  background: var(--navy-3);
+}
+.admin-root .bar.top {
+  background: var(--brand);
+}
+.admin-root .bar-col span {
+  font-size: 12px;
+  color: var(--faint);
+}
+.admin-root .legend {
+  display: flex;
+  gap: 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.admin-root .legend i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--brand);
+}
+
+/* ---------- Lists ---------- */
+.admin-root .alert-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.admin-root .alert {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+.admin-root .alert .chip {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.admin-root .alert .chip.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.admin-root .alert .chip.bad {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.admin-root .alert .chip.info {
+  background: var(--info-bg);
+  color: var(--info);
+}
+.admin-root .alert .chip.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.admin-root .alert div {
+  flex: 1;
+  min-width: 0;
+}
+.admin-root .alert small {
+  display: block;
+  color: var(--muted);
+}
+.admin-root .alert b.n {
+  font-size: 18px;
+}
+.admin-root .rank {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.admin-root .rank-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.admin-root .thumb {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--brand-50);
+  color: var(--brand);
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  flex: none;
+}
+.admin-root .rank-item div {
+  flex: 1;
+  min-width: 0;
+}
+.admin-root .rank-item small {
+  color: var(--muted);
+  display: block;
+}
+.admin-root .ellip {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.admin-root .meter {
+  height: 8px;
+  border-radius: 8px;
+  background: var(--line-2);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.admin-root .meter i {
+  display: block;
+  height: 100%;
+  border-radius: 8px;
+  background: var(--navy-3);
+}
+.admin-root .meter.ok i {
+  background: var(--ok);
+}
+
+/* ---------- Table ---------- */
+.admin-root .table-wrap {
+  overflow-x: auto;
+  margin: 0 -8px;
+}
+.admin-root table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 560px;
+}
+.admin-root th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 12.5px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.admin-root td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--line-2);
+  white-space: nowrap;
+}
+.admin-root tr:last-child td {
+  border-bottom: 0;
+}
+.admin-root tbody tr:hover {
+  background: var(--bg);
+}
+.admin-root td .who {
+  font-weight: 600;
+}
+.admin-root td .who small {
+  display: block;
+  color: var(--muted);
+  font-weight: 400;
+}
+.admin-root .num {
+  text-align: right;
+}
+.admin-root .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: var(--r-pill);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.admin-root .badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.admin-root .badge.ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+.admin-root .badge.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+}
+.admin-root .badge.bad {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.admin-root .badge.info {
+  background: var(--info-bg);
+  color: var(--info);
+}
+.admin-root .badge.mute {
+  background: var(--mute-bg);
+  color: var(--muted);
+}
+
+/* ---------- Popovers ---------- */
+.admin-root .rel {
+  position: relative;
+}
+.admin-root .pop {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 340px;
+  max-width: calc(100vw - 24px);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  box-shadow: 0 24px 50px -18px rgba(22, 34, 61, 0.4);
+  padding: 8px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.18s, transform 0.18s, visibility 0.18s;
+  z-index: 50;
+}
+.admin-root .pop.open {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+.admin-root .pop.small {
+  width: 230px;
+}
+.admin-root .search .pop {
+  left: 0;
+  right: 0;
+  width: auto;
+  top: calc(100% + 8px);
+  transform-origin: top center;
+  color: var(--text);
+}
+.admin-root .pop-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px 10px;
+}
+.admin-root .item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  padding: 10px;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  cursor: pointer;
+}
+.admin-root .item:hover {
+  background: var(--bg);
+}
+.admin-root .item small {
+  display: block;
+  color: var(--muted);
+}
+.admin-root .item.unread::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand);
+  margin-left: auto;
+  flex: none;
+}
+.admin-root .item .chip {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--brand-50);
+  color: var(--brand);
+}
+.admin-root .item.danger {
+  color: var(--bad);
+}
+.admin-root .pop hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 6px 0;
+}
+.admin-root .empty {
+  padding: 14px;
+  color: var(--muted);
+}
+
+/* ---------- Overlay / drawer / modal ---------- */
+.admin-root .overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(22, 34, 61, 0.5);
+  backdrop-filter: blur(3px);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s;
+  z-index: 60;
+}
+.admin-root .overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+.admin-root .modal {
+  background: var(--card);
+  border-radius: 24px;
+  width: min(580px, 100%);
+  max-height: 92vh;
+  overflow: auto;
+  transform: translateY(18px) scale(0.98);
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+.admin-root .overlay.open .modal {
+  transform: none;
+}
+.admin-root .m-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 24px 8px;
+}
+.admin-root .m-head h2 {
+  font-size: 19px;
+  letter-spacing: -0.01em;
+}
+.admin-root .m-body {
+  padding: 12px 24px 8px;
+  overflow: auto;
+}
+.admin-root .m-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px 22px;
+}
+.admin-root .x {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: var(--bg);
+}
+.admin-root .x:hover {
+  background: var(--line);
+}
+.admin-root .overlay.side {
+  place-items: stretch end;
+  padding: 0;
+}
+.admin-root .drawer {
+  width: min(440px, 100%);
+  max-height: none;
+  height: 100%;
+  border-radius: 24px 0 0 24px;
+  transform: translateX(100%);
+}
+
+/* ---------- Forms ---------- */
+.admin-root .form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+.admin-root .form .full {
+  grid-column: 1 / -1;
+}
+.admin-root .field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.admin-root .field input,
+.admin-root .field select {
+  height: 44px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  padding: 0 14px;
+  background: var(--card);
+  font-weight: 400;
+}
+.admin-root .field input:focus,
+.admin-root .field select:focus {
+  outline: 0;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px var(--brand-50);
+}
+.admin-root .field.err input {
+  border-color: var(--bad);
+  box-shadow: 0 0 0 4px var(--bad-bg);
+}
+.admin-root .field .msg {
+  color: var(--bad);
+  font-weight: 500;
+  font-size: 12px;
+  display: none;
+}
+.admin-root .field.err .msg {
+  display: block;
+}
+.admin-root .row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.admin-root .info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 8px 0 18px;
+}
+.admin-root .info-grid div {
+  background: var(--bg);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+}
+.admin-root .info-grid small {
+  display: block;
+  color: var(--muted);
+}
+
+/* ---------- Toasts ---------- */
+.admin-root .toasts {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 80;
+}
+.admin-root .toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--navy);
+  color: #fff;
+  padding: 12px 18px;
+  border-radius: var(--r-pill);
+  font-weight: 600;
+  box-shadow: 0 16px 30px -12px rgba(22, 34, 61, 0.6);
+  animation: admin-tin 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ---------- Animations ---------- */
+@keyframes admin-grow {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes admin-tin {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes admin-fillx {
+  from {
+    transform: scaleX(0);
+  }
+}
+@keyframes admin-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(200, 20, 60, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(200, 20, 60, 0);
+  }
+}
+.admin-root .meter i,
+.admin-root .step i em {
+  transform-origin: left;
+  animation: admin-fillx 1s 0.15s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+/* ---------- Dark mode (scoped to the admin root only) ----------
+   The reference declares this on `[data-theme=dark]` globally because it is a
+   standalone document. Here it MUST be scoped: a global rule would darken the
+   storefront the moment an admin toggled the theme. */
+.admin-root[data-theme='dark'] {
+  --bg: #0e1424;
+  --card: #161f36;
+  --line: #27335a;
+  --line-2: #1d2745;
+  --text: #eaeefb;
+  --muted: #97a3c6;
+  --faint: #6f7ca0;
+  --brand-50: #3a1522;
+  --brand-100: #5a1d33;
+  --mute-bg: #212c4a;
+  --ok: #4cd9a1;
+  --ok-bg: #0f3a2e;
+  --warn: #f2b45a;
+  --warn-bg: #3d2c0f;
+  --bad: #ff6b88;
+  --bad-bg: #3d1520;
+  --info: #7ea3ff;
+  --info-bg: #15264f;
+  --navy: #22345f;
+}
+.admin-root[data-theme='dark'] .topbar {
+  background: rgba(14, 20, 36, 0.85);
+}
+.admin-root[data-theme='dark'] .lang button.on,
+.admin-root[data-theme='dark'] .step:hover {
+  background: var(--card);
+}
+.admin-root[data-theme='dark'] .kpi.hero {
+  background: linear-gradient(145deg, #1b2a4d 0%, #24365f 70%, #2c4373 100%);
+}
+.admin-root[data-theme='dark'] .icon-btn .dot {
+  border-color: var(--card);
+}
+.admin-root[data-theme='dark'] .avatar {
+  background: var(--navy-3);
+}
+
+/* Active nav in dark mode: the light-mode pairing is crimson (#c8143c) on a
+   crimson tint (#3a1522), which lands at 2.76:1 — below the 3:1 floor and hard
+   to read. Lighten the label and keep the tint. */
+.admin-root[data-theme='dark'] .nav a.active {
+  color: #ff8fa8;
+}
+
+/* ---------- Responsive (admin breakpoints: 1180 / 960 / 720 / 360) ---------- */
+@media (max-width: 1180px) {
+  .admin-root .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-root .pipeline {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .admin-root .grid-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 960px) {
+  .admin-root .sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow);
+  }
+  .admin-root .sidebar.open {
+    transform: none;
+  }
+  .admin-root .scrim.open {
+    display: block;
+  }
+  .admin-root .main {
+    margin-left: 0;
+  }
+  .admin-root .menu-btn {
+    display: grid;
+    /* The topbar is a flex row; without this the 42px trigger collapses to its
+       content width (2px) and the drawer becomes unreachable on a phone. */
+    flex: 0 0 42px;
+  }
+  .admin-root .topbar,
+  .admin-root .page {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .admin-root .grid-main {
+    grid-template-columns: 1fr;
+  }
+  .admin-root .lang,
+  .admin-root .search kbd {
+    display: none;
+  }
+  /* Search is `flex:1` with a default `min-width:auto`, so it refuses to shrink
+     below its placeholder and pushes the whole top-right cluster off-canvas.
+     Let it shrink, and stop the icon cluster from being the thing that gives. */
+  .admin-root .search {
+    min-width: 0;
+  }
+  .admin-root .top-right {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-root .page {
+    padding-bottom: 96px;
+  }
+  .admin-root h1 {
+    font-size: 22px;
+  }
+  .admin-root .grid-4 {
+    gap: 12px;
+  }
+  .admin-root .kpi .value {
+    font-size: 24px;
+  }
+  .admin-root .card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+  .admin-root .grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .admin-root .pipeline {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-root .actions {
+    width: 100%;
+  }
+  .admin-root .actions .btn {
+    flex: 1;
+  }
+  .admin-root .seg {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .admin-root .seg button {
+    flex: 1;
+  }
+  .admin-root .table-wrap {
+    margin: 0;
+  }
+
+  /* Tables collapse to stacked cards. `data-label` on each td supplies the
+     row header, so a stacked card still says what each value is. */
+  .admin-root table,
+  .admin-root thead,
+  .admin-root tbody,
+  .admin-root tr,
+  .admin-root td {
+    display: block;
+    min-width: 0;
+  }
+  .admin-root thead {
+    display: none;
+  }
+  .admin-root tr {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .admin-root tr:last-child {
+    border: 0;
+  }
+  .admin-root td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    border: 0;
+    white-space: normal;
+  }
+  .admin-root td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .admin-root .num {
+    text-align: left;
+  }
+
+  /* Mobile bottom nav */
+  .admin-root .bottom-nav {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    z-index: 30;
+    background: var(--navy);
+    border-radius: 22px;
+    padding: 8px;
+    box-shadow: 0 14px 30px -10px rgba(22, 34, 61, 0.5);
+  }
+  .admin-root .bottom-nav a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    color: #aab4d0;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 0;
+    border-radius: 16px;
+    min-height: 48px;
+  }
+  .admin-root .bottom-nav a.active {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+  }
+  .admin-root .rel .pop {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: 70px;
+    width: auto;
+    max-width: none;
+  }
+  .admin-root .overlay {
+    place-items: end center;
+    padding: 0;
+  }
+  .admin-root .modal {
+    width: 100%;
+    border-radius: 24px 24px 0 0;
+    max-height: 94vh;
+  }
+  .admin-root .drawer {
+    height: auto;
+    max-height: 94vh;
+    border-radius: 24px 24px 0 0;
+  }
+  .admin-root .form,
+  .admin-root .info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-root .bottom-nav a {
+    font-size: 10px;
+  }
+  .admin-root .btn {
+    padding: 0 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-root *,
+  .admin-root *::before,
+  .admin-root *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

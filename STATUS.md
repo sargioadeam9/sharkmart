@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-12 · **Updated by:** Phase 8 closed out — follow-ups fixed, gates re-run
+**Last updated:** 2026-11-12 · **Updated by:** Phase 9 pass A — admin foundation + dashboard shipped and verified
 
 ---
 
@@ -13,10 +13,10 @@
 | Field | Value |
 | --- | --- |
 | Active phase | **Phase 9 — Admin panel: core modules** |
-| Phase status | ✅ **Phase 8 COMPLETE — auth, cart, orders, checkout all green** |
-| Build state | Server: `npm test` **89/89** · `tsc --noEmit` clean · `eslint .` 0 errors. Storefront: `npm run build` green (171 product pages + 14 categories, all from the live API) · `tsc --noEmit` clean · `eslint .` 0 errors (2 pre-existing warnings) |
-| Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only) |
-| Next action | Phase 9 — admin shell + core modules (see `prompts/masterbuild.md:676`) |
+| Phase status | 🟡 **Phase 9 PASS A COMPLETE** — shell, RBAC, dashboard, audit helper all green. Pass B (module CRUD) not started |
+| Build state | Server: `npm test` **106/106** (phase9 17/17) · `tsc --noEmit` clean. Storefront: `npm run build` green · `tsc --noEmit` clean |
+| Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so the reference's "Estimated profit" KPI is not computable (see HANDOFF). `cache-and-limits.test.ts` "exceeding the search limit" is **flaky under parallel file execution** (passes alone, passed on re-run of the full suite) — the in-process limiter is shared across files |
+| Next action | Phase 9 pass B — B1 Products (admin CRUD API first, then the screen) |
 
 ### Phase 6 — gate evidence
 
