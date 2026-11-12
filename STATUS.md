@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-12 · **Updated by:** Phase 7 — catalog flipped to the real API
+**Last updated:** 2026-11-12 · **Updated by:** Phase 8 closed out — follow-ups fixed, gates re-run
 
 ---
 
@@ -12,11 +12,11 @@
 
 | Field | Value |
 | --- | --- |
-| Active phase | **Phase 7 — Search, wishlist, account (real API)** |
-| Phase status | 🟡 **PARTIAL — catalog flip + `/search` + guest wishlist done; account surface deferred to Phase 8** |
-| Build state | Server: `npm test` 57/57 · `tsc --noEmit` clean · `eslint .` 0 errors. Storefront: `npm run build` green (189 static pages + `/search` dynamic, all from the live API) · `tsc --noEmit` clean · `eslint .` 0 errors (1 pre-existing font warning) |
+| Active phase | **Phase 9 — Admin panel: core modules** |
+| Phase status | ✅ **Phase 8 COMPLETE — auth, cart, orders, checkout all green** |
+| Build state | Server: `npm test` **89/89** · `tsc --noEmit` clean · `eslint .` 0 errors. Storefront: `npm run build` green (171 product pages + 14 categories, all from the live API) · `tsc --noEmit` clean · `eslint .` 0 errors (2 pre-existing warnings) |
 | Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only) |
-| Next action | Phase 8 — auth first, then the deferred account surface (`/login`, `/register`, `/profile`, `/orders`, `/track`, wishlist merge) |
+| Next action | Phase 9 — admin shell + core modules (see `prompts/masterbuild.md:676`) |
 
 ### Phase 6 — gate evidence
 
@@ -51,7 +51,7 @@
 | Section order matches reference `product()` (L720-771) | ✅ | breadcrumb → gallery+info → tabs → reviews → FBT → related → similar → also-viewed → from-brand → recently-viewed |
 | All 8 tabs, reference order | ✅ | Overview · Description · Key Features · Specifications · How to Use · Size Guide · Delivery & Returns · FAQ |
 | Tabs are a real tablist | ✅ | `role="tablist"`, roving tabindex, Arrow/Home/End move focus + selection, `aria-selected` + `aria-controls` |
-| Variant selection drives price, stock and cart payload from one derivation | ✅ | `resolveVariant()` in `variant-selector.tsx`; live: base ৳1,890 → XL ৳2,570 (delta = `round(price × .12 × i / 10) × 10` poisha, reference formula) |
+| Variant selection drives price, stock and cart payload from one derivation | ✅ | `resolveVariant()` in `variant-selector.tsx`; live: base ৳1,890 → XL ৳2,570 → XL · Sand ৳3,251 (delta = `round(price × .12 × i / 10) × 10` poisha, reference formula). Since Phase 8 a variant is a full combination; `variantId` resolves through `variantGroups[].combinations` |
 | Quantity clamped to the selected variant's stock | ✅ | Derived (`effectiveQuantity`), not an effect — no stale window, no cascading render |
 | Gallery shows the reference's 5 angles | ✅ | Front · 1/5 · Back · 2/5 · Side · 3/5 · Detail · 4/5 · In use · 5/5. Data-URI SVG placeholders are treated as "no photo" so the angle fallback runs; real photo URLs flip it automatically |
 | Add to cart writes a real variant line | ✅ | Live click: button → ✓, cart badge 2 → 3, toast fires |
@@ -148,8 +148,8 @@ Scope note: Phase 7 in `masterbuild.md` covers search, wishlist and account **pl
 | Zero component signature changes | ✅ | No existing component's props changed. `SearchBar`'s `products` prop is now documented `@deprecated` and ignored, not removed — callers keep compiling |
 | Five surfaces match the frontend DTOs | ✅ | `node tools/parity-check.mjs` → **611 field assertions, 5/5 PASS** |
 | Detail endpoint serves the flat `ProductDetailDto` | ✅ | `variantGroups`/`reviews`/`ratingBreakdown`/`featuresEn`/`featuresBn`/`specs`/`tintColor`/`accentColor` on the wire; nested shape removed |
-| Seeded content is real, not just declared | ✅ | 588 variants · 840 specifications · 168 feature blocks |
-| Variant stock agrees with warehouse stock | ✅ | All 168 products: `Σ variant.stock === WarehouseStock.quantity`, 0 mismatches |
+| Seeded content is real, not just declared | ✅ | 747 variants (full cartesian product) · 840 specifications · 168 feature blocks |
+| Variant stock agrees with warehouse stock | ✅ | All 168 products: `Σ variant.stock === WarehouseStock.quantity`, 0 mismatches (3 `CONC-*` test leftovers excluded — see HANDOFF) |
 | `/search` renders results in the first HTML response | ✅ | `curl localhost:3000/search?q=panjabi` → 2 product cards, 1 line containing `৳`, 0 `aria-busy`. Server component loads via `initialData`, no effect |
 | Search works in both scripts | ✅ | `?q=panjabi` → 2 results · `?q=পাঞ্জাবি` → 2 results, both 1 `৳` line |
 | Empty state, not a skeleton | ✅ | `?q=zzzzzz` → `aria-busy` count 0, `Nothing matched` present, 0 product cards, 3 escapes (browse all, popular, category links) |
@@ -207,8 +207,8 @@ cleared only after the server confirms.
 | 4 | Category pages ×14 | ✅ | build + tsc + lint + 14 live slugs + 404 + filter round-trip | 1 template, 14 instances |
 | 5 | Product detail | ✅ | build + tsc + lint + live browser (variant price, tabs, add-to-cart, 404, 5-angle gallery) | 168 product pages prerendered |
 | 6 | API — catalog | ✅ | build + tsc + lint + `npm test` 57/57 + parity-check 611 assertions | Flip `NEXT_PUBLIC_USE_MOCK=false` done here |
-| 7 | Search, wishlist, account | 🟡 | build + tsc + live browser (both scripts, type-ahead, wishlist toggle/reload/remove) | **PARTIAL** — `/search` + guest wishlist done; account surface deferred to Phase 8 |
-| 8 | Auth, cart, orders, checkout | ⬜ | — | — |
+| 7 | Search, wishlist, account | ✅ | build + tsc + live browser (both scripts, type-ahead, wishlist toggle/reload/remove) | `/search` + guest wishlist; account surface landed in Phase 8 |
+| 8 | Auth, cart, orders, checkout | ✅ | `npm test` 89/89 · tsc clean (both) · build green · live browser (merge, badge, drawer, `/cart` agree) | 747 variants (cartesian) · 3 follow-ups closed 2026-11-12 |
 | 9 | Admin — core | ⬜ | — | — |
 | 10 | Admin — business | ⬜ | — | — |
 | 11 | SEO & analytics | ⬜ | — | — |

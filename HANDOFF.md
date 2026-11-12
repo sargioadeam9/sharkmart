@@ -3,6 +3,130 @@
 > **Append-only.** Newest entry at the top. Never rewrite or delete a previous agent's entry — the next agent needs the history of what was tried and rejected.
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
+## 2026-11-12 · Phase 8 (part 3) · Saffron · follow-ups closed · PHASE 8 DONE
+
+**What this session did**
+
+The three items the part-2 entry listed as "not done" were already fixed in the working tree before this
+session started — the part-2 note was written before those edits landed and was never corrected. Verified
+each one against the code rather than trusting the note:
+
+1. **`VariantOptionDto.id` is gone.** `src/types/catalog.ts:147-161` and `mappers.ts:580-589` both publish
+   `valueKey` (`attributeId:value`) with a doc comment saying it is not a variant id. `variant-selector.tsx:54`
+   builds the same key client-side. The trap the note warned about no longer exists.
+2. **`phase8.test.ts` cleans up after itself.** The `CONC-*` probe is deleted in a `finally` block
+   (`phase8.test.ts:716-721`), ordered OrderItem → CartItem → variant → product because `OrderItem` holds a
+   non-cascading reference. A live check found **0 `CONC-*` products** in the database, so the three leftovers
+   the note mentioned were already gone.
+3. **The skipped count reaches the shopper.** `session-provider.tsx:81-86` toasts `cartMergePartial` with
+   `{count}` when `skipped > 0` and `cartMerged` on a clean merge. Both strings exist in EN and BN
+   (`account-strings.ts:170-171, 326-327`), spread into `UI_STRINGS` via `...ACCOUNT_STRINGS`.
+
+**Added**
+
+- `server/prisma/cleanup-conc.ts` — idempotent one-off that removes any `CONC-*` product, its variants, cart
+  lines and order lines. Run with `npx tsx prisma/cleanup-conc.ts`. Found nothing to do today; kept so a future
+  failed test run can be cleaned without hand-writing SQL.
+- `tools/update-status-phase8.mjs` — the doc updater used for this session (Node, UTF-8 safe).
+
+**Verified** (re-run from scratch this session, not carried over)
+
+- `npx tsc --noEmit` → exit 0, **both** packages.
+- `npm test` (server) → **89/89 pass**, 5 files, 16.55s.
+- `npm run build` → green; 171 product pages + 14 categories prerendered, `/login`, `/register`, `/search`,
+  `/orders/[id]` dynamic.
+- `npm run lint` → **0 errors**, 2 warnings, both pre-existing (`layout.tsx` font, `wishlist-page.tsx` deps).
+- `npx tsx prisma/cleanup-conc.ts` → `0 CONC-* products`.
+
+**Not done**
+
+- No new browser pass this session. The part-2 browser evidence (merge → badge 1 → drawer → `/cart` subtotal all
+  agreeing, drawer decrement reaching the server) stands as the last live verification and was not re-run.
+- Redis is still not installed locally; cache and rate limiter run on the in-process fallback. Correct for a
+  single process, not for production. Unchanged from Phase 6.
+
+**Assumed**
+
+- The part-2 note's "not done" list was stale rather than the code being reverted. Confirmed by reading each of
+  the three call sites; nothing regressed.
+
+**Landmines**
+
+- `HANDOFF.md` entries are written at the end of a session and can go stale within the same session if more work
+  lands afterwards. Read the code before acting on a "not done" list — this session's entire job was that check.
+
+**Exact next step**
+
+- Run the Phase 9 master prompt (`prompts/masterbuild.md:676`) — admin shell + core modules. Phase 9 is the first
+  phase that must not share a token namespace with the storefront (landmine #1: `#c8143c` vs `#C51F4B`).
+
+---
+
+## 2026-11-12 · Phase 8 (part 2) · Saffron · cart sync + variant model · complete
+
+**The finding that drove this session**
+
+`POST /cart/sync` returned `{merged: 0, skipped: 1}` for every guest cart, and `session-provider.tsx` cleared localStorage as soon as that promise resolved. A shopper's cart was destroyed at login while the server stored nothing. Four independent causes, all now fixed:
+
+1. `product-card.tsx` sent `variantId: null`; `resolveLine` rejected it for any product with variants (all 171 have them).
+2. `product-page.tsx:167` sent `variant.labelEn` — a display string like `"XL · Crimson"` — as `variantId`. No variant can ever match that.
+3. `resolveLine` returned `stock: 0` for the variant-less path, and `syncCart` skips `stock <= 0`.
+4. `account.ts` typed the sync response as `ServerCart`, but the route returns `{cart, merged, skipped}`. `res.data.lines` was always `undefined`.
+
+**The structural decision (approved by the owner)**
+
+Phase 7 seeded one variant per option per axis, so a two-axis product had `Size=M` and `Colour=Navy` as separate rows and **no row for the pair the shopper selects**. 24 of 171 products are two-axis. `HANDOFF.md` (Phase 7 → Assumed) reserved this for Phase 8. Owner chose **full cartesian product**.
+
+- `server/prisma/seed.ts` — `seedProductContent()` now materialises every combination (OSB-1001: 8 → 16 variants). SKU `${sku}-${index}`, name `"M · Navy"`, price = base + summed per-axis deltas (reference formula preserved). Stock distributed across combinations, so `Σ variant.stock === WarehouseStock.quantity` still holds. Reseed: **747 variants** (was 588), idempotent across two runs.
+- `server/src/services/mappers.ts` — `toVariantGroups()` dedupes options by value (a combination repeats each value), takes each option's *best* stock and *cheapest* delta, and publishes `combinations: Record<selectionKey, variantId>` on every group. New `combinationKey()` is the single definition of that key.
+- `src/types/catalog.ts` + `mappers.ts` `VariantGroupDto` — added `combinations`.
+- `src/components/product/variant-selector.tsx` — `selectionKey()` mirrors the server key; `ResolvedVariant` now carries `variantId`; stock prefers the resolved combination's own row over the per-option minimum.
+- `server/src/services/cart.service.ts` — `resolveLine()` variant-less path reads real `WarehouseStock` (was hardcoded `0`), and a variant-less line on a variant product is now legal (card quick-add, matching the reference's `addCart(id,1,'')`) instead of a 400.
+- `src/lib/api/account.ts` — `syncCart()` returns `{cart, merged, skipped}`.
+- `src/components/providers/session-provider.tsx` — clears the local cart **only when `skipped === 0`**.
+
+**Second finding: three cart surfaces disagreed**
+
+`/cart` read the server cart when signed in; the header badge and the drawer read the local store only. After a successful merge the local store is correctly cleared, so the badge dropped to 0 and the drawer said "Your cart is empty" over a cart that had a line in it.
+
+- New `src/lib/hooks/use-effective-cart.ts` — one source: local store for a guest, server cart for a signed-in user, adapted to `CartLine` once.
+- `header.tsx` badge and `cart-drawer.tsx` both read it. Drawer mutations route to `updateCartItem`/`removeCartItem` by `serverLineId` when signed in, local store otherwise.
+- `cart-store.ts` `CartLine` gained optional `serverLineId`.
+
+**Verified** (real output)
+- `npx tsc --noEmit` → clean, both packages.
+- `npm run lint` → **0 errors**, 2 warnings (both pre-existing: `layout.tsx` font, `wishlist-page.tsx` deps).
+- `npm run build` → green, 171 product pages prerendered.
+- `npm test` (server) → **89/89 pass**, 5 files.
+- Seed integrity probe: 171 published, 0 variant-less, **0 products with inconsistent axes, 0 duplicate combinations**; stock mismatches vs warehouse = 3, all `CONC-*` leftovers from `phase8.test.ts:641` (test artifacts, not a regression).
+- API probe: `/products/osb-1001` → 16 variants, 16 combination entries; `M · Navy` key resolves to a real variant (234360 poisha, stock 1); `POST /cart/sync` → **merged 1, skipped 0**, line stored with `variantNameEn: "M · Navy"`.
+- Browser, `/product/osb-1001`: default L · Black ৳2,344; XL · Black ৳2,570; **XL · Sand ৳3,251** (struck ৳4,511) — every figure matches the DB row exactly.
+- Browser, add to cart → localStorage line carries `variantId: "a72d0235-…"` (a real UUID, verified as `XL · Sand`, 325080, SKU `OSB-1001-15`) with `variantNameEn: "XL · Sand"` as display only.
+- Browser, register + login with a guest cart → local cleared, server `cartItems` holds the line. Header badge **1**, drawer shows `Cotton Panjabi / XL · Sand / ৳3,251`, `/cart` subtotal ৳3,251, free delivery. All three agree.
+- Browser, drawer decrement to 0 → server `cartItems` count **0**. Mutation reached the server.
+
+**Not done**
+- `variantGroups[].options[].id` is still a variant id, which is now misleading: one option value spans many variants. Nothing reads it (the client resolves through `combinations`), but it should be removed or renamed in a follow-up rather than left as a trap.
+- The three `CONC-*` test products are still in the database. `phase8.test.ts` should clean up after itself.
+- Guest cart merge does not report `skipped` to the shopper. The count is available; no UI surfaces "3 items could not be added".
+
+**Assumed**
+- A variant-less line on a variant product is legal and priced at base price, because the reference's card quick-add does exactly that. If the owner wants cards to force a variant choice, that is a product decision, not a bug fix.
+- `emoji`/`tint` on a server line use the card's neutral fallback (`null` / `#F4E9DD`); the server does not carry presentation fields.
+
+**Landmines hit**
+1. **PowerShell eats `$` in `node -e "..."`.** `p.$disconnect()` became a variable lookup. Write a probe file, or use `\u0024`.
+2. **The API dev server does not hot-reload route changes reliably.** A stale process on :4000 served the old route table and returned 404 for a path that existed. Kill the PID on the port and restart before probing.
+3. **`/products/:slug` is the detail route, not `/products/:slug/detail`.** The latter 404s.
+4. **Register is rate limited at 3/min.** Repeated browser attempts burn the budget; space them out or create the account through the API first.
+5. **Server-rendered page text shows the signed-out header and an empty cart** before hydration. Reading `page text` too early looks like a bug that is not there; wait for the client to resolve `/me`.
+
+**Exact next step**
+
+- Remove or rename `VariantOptionDto.id` (it no longer identifies the selection), then make `phase8.test.ts` delete its `CONC-*` products.
+
+---
+
 ## 2026-11-12 · Phase 7 (part 2) · Saffron · ~2h
 
 **Completed**
