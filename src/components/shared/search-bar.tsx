@@ -5,8 +5,8 @@
  * (oshoppingbd.html L50-62, markup L634).
  *
  * Behaviour:
- *   - Typing is debounced (250ms) before suggestions are computed, so a fast
- *     typist does not run a filter per keystroke.
+ *   - Typing is debounced (220ms) before a request fires, so a fast typist does
+ *     not run a query per keystroke.
  *   - Suggestions are a combobox: ArrowDown/ArrowUp move, Enter selects,
  *     Escape closes, and the active option is announced via
  *     `aria-activedescendant`.
@@ -14,21 +14,37 @@
  *   - Submitting goes to `/search?q=…` — the real route, not the reference's
  *     hash router (AGENTS.md landmine #10).
  *
- * Phase 1 has no search endpoint, so the suggestions come from the local mock
- * catalog. Phase 6 swaps `suggest()` for the API call; the component does not
- * change.
+ * Source of suggestions: the real API, through `searchProducts`.
+ *
+ * This used to filter the local mock catalog, which was correct in Phase 1 when
+ * there was no endpoint and wrong the moment `USE_MOCK` went false — the header
+ * would suggest products the live catalog might not contain, and clicking one
+ * landed on a 404. The server's bilingual `contains` is the only source that
+ * agrees with what `/search` will actually return.
+ *
+ * Categories still come from props: they are the fourteen fixed reference
+ * records, not catalog data, so filtering them locally costs nothing and keeps
+ * the dropdown useful before the first request lands.
+ *
+ * Failure policy: a failed or aborted request leaves the box fully usable. It
+ * clears the list and does not throw — a suggestion dropdown is an enhancement,
+ * and an API blip must not break typing or submitting.
  */
 
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { localized, type ProductDto, type CategoryDto } from '@/types/catalog';
 import { cn } from '@/lib/utils';
 import { useDebounced, useLang } from '@/lib/hooks';
+import { searchProducts } from '@/lib/api/products';
 
 export interface SearchBarProps {
-  /** Products to suggest from. */
+  /**
+   * @deprecated Suggestions come from the API now. Kept so existing callers do
+   * not break; the value is ignored.
+   */
   products?: ProductDto[];
-  /** Categories to suggest from. */
+  /** Categories to suggest from — fixed reference records, filtered locally. */
   categories?: CategoryDto[];
   /** Initial value, e.g. from `?q=` on the results page. */
   defaultValue?: string;
@@ -49,9 +65,12 @@ interface Suggestion {
 }
 
 const MAX_SUGGESTIONS = 7;
+/** Below this many characters a query matches almost everything, so it waits. */
+const MIN_TERM = 2;
+/** 220ms: long enough to skip intermediate keystrokes, short enough to feel live. */
+const DEBOUNCE_MS = 220;
 
 export function SearchBar({
-  products = [],
   categories = [],
   defaultValue = '',
   size = 'md',
@@ -64,59 +83,89 @@ export function SearchBar({
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const [productHits, setProductHits] = useState<Suggestion[]>([]);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
 
-  const debounced = useDebounced(value.trim().toLowerCase(), 250);
+  const term = value.trim().toLowerCase();
+  const debounced = useDebounced(term, DEBOUNCE_MS);
 
-  const suggestions = useMemo<Suggestion[]>(() => {
-    if (debounced.length < 2) return [];
+  /**
+   * Fetch suggestions for the debounced term.
+   *
+   * The previous request is aborted on every new term, so a slow response for
+   * "pa" cannot land after the response for "panjabi" and repaint the list with
+   * the wrong products. The `cancelled` flag covers the same race for a request
+   * that resolved before the abort was observed.
+   */
+  useEffect(() => {
+    if (debounced.length < MIN_TERM) {
+      setProductHits([]);
+      return;
+    }
 
-    const catHits: Suggestion[] = categories
-      .filter((c) => {
-        const en = c.nameEn.toLowerCase();
-        const bn = c.nameBn.toLowerCase();
-        return en.includes(debounced) || bn.includes(debounced);
+    const controller = new AbortController();
+    let cancelled = false;
+
+    searchProducts(debounced, { limit: MAX_SUGGESTIONS, signal: controller.signal })
+      .then((response) => {
+        if (cancelled) return;
+
+        setProductHits(
+          response.data.map((p) => ({
+            kind: 'product' as const,
+            id: p.id,
+            label: localized(lang, p.nameEn, p.nameBn),
+            href: `/product/${p.slug}`,
+            meta: p.sku,
+            emoji: '🛍️',
+            tint: '#F4E9DD',
+          })),
+        );
       })
-      .slice(0, 3)
-      .map((c) => ({
-        kind: 'category',
-        id: c.id,
-        label: localized(lang, c.nameEn, c.nameBn),
-        href: `/category/${c.slug}`,
-        meta: `${c.productCount}`,
-        emoji: c.iconEmoji,
-        tint: c.lightTintColor,
-      }));
+      .catch(() => {
+        // Aborted by a newer keystroke, or the API failed. Either way the box
+        // stays usable: clear the list, keep the typed value, allow submitting.
+        if (cancelled || controller.signal.aborted) return;
+        setProductHits([]);
+      });
 
-    const prodHits: Suggestion[] = products
-      .filter((p) => {
-        const hay = [
-          p.nameEn,
-          p.nameBn,
-          p.sku,
-          p.brand?.nameEn ?? '',
-          p.brand?.nameBn ?? '',
-        ]
-          .join(' ')
-          .toLowerCase();
-        return hay.includes(debounced);
-      })
-      .slice(0, MAX_SUGGESTIONS - catHits.length)
-      .map((p) => ({
-        kind: 'product',
-        id: p.id,
-        label: localized(lang, p.nameEn, p.nameBn),
-        href: `/product/${p.slug}`,
-        meta: p.sku,
-        emoji: '🛍️',
-        tint: '#F4E9DD',
-      }));
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [debounced, lang]);
 
-    return [...catHits, ...prodHits];
-  }, [debounced, categories, products, lang]);
+  /**
+   * Category hits are local and cheap, so they are derived during render rather
+   * than fetched. They lead the list because a category is the broader answer.
+   */
+  const catHits: Suggestion[] =
+    debounced.length < MIN_TERM
+      ? []
+      : categories
+          .filter((c) => {
+            const en = c.nameEn.toLowerCase();
+            const bn = c.nameBn.toLowerCase();
+            return en.includes(debounced) || bn.includes(debounced);
+          })
+          .slice(0, 3)
+          .map((c) => ({
+            kind: 'category' as const,
+            id: c.id,
+            label: localized(lang, c.nameEn, c.nameBn),
+            href: `/category/${c.slug}`,
+            meta: `${c.productCount}`,
+            emoji: c.iconEmoji,
+            tint: c.lightTintColor,
+          }));
+
+  const suggestions: Suggestion[] = [
+    ...catHits,
+    ...productHits.slice(0, Math.max(0, MAX_SUGGESTIONS - catHits.length)),
+  ];
 
   const showList = open && suggestions.length > 0;
 
@@ -132,11 +181,18 @@ export function SearchBar({
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
-  // Reset the highlight when the result set changes — during render, so the
-  // list never paints with a stale highlight pointing at a different row.
-  const [lastDebounced, setLastDebounced] = useState(debounced);
-  if (debounced !== lastDebounced) {
-    setLastDebounced(debounced);
+  /**
+   * Reset the highlight when the result set changes — during render, so the
+   * list never paints with a stale highlight pointing at a different row.
+   *
+   * Keyed on the suggestion ids rather than the term: the list can change under
+   * the same term (a late response, a language switch), and the highlight must
+   * follow the rows, not the string.
+   */
+  const signature = suggestions.map((s) => `${s.kind}-${s.id}`).join('|');
+  const [lastSignature, setLastSignature] = useState(signature);
+  if (signature !== lastSignature) {
+    setLastSignature(signature);
     setActiveIndex(-1);
   }
 

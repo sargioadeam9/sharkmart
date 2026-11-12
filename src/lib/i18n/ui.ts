@@ -116,6 +116,15 @@ export const UI_STRINGS = {
     faqA1: 'Yes. 100% genuine.',
     faqQ2: 'Is Cash on Delivery available?',
     faqA2: 'Yes, nationwide.',
+    /* ── search results (Phase 7) ─────────────────────────────────────────── */
+    searchPrompt: 'Type at least 2 characters to search',
+    searchTooShort: 'Keep typing',
+    searchTooShortBody: 'Enter at least 2 characters to search the catalog.',
+    searchNoResultsBody:
+      'Nothing matched “{q}”. Check the spelling, or try a broader term.',
+    browseAll: 'Browse all products',
+    browseCategories: 'Browse a category',
+    searchResultsFor: 'Results for “{q}”',
   },
   bn: {
     close: 'বন্ধ করুন',
@@ -216,6 +225,15 @@ export const UI_STRINGS = {
     faqA1: 'হ্যাঁ, ১০০% অরিজিনাল।',
     faqQ2: 'ক্যাশ অন ডেলিভারি আছে?',
     faqA2: 'হ্যাঁ, সারাদেশে।',
+    /* ── search results (Phase 7) ─────────────────────────────────────────── */
+    searchPrompt: 'খুঁজতে কমপক্ষে ২টি অক্ষর লিখুন',
+    searchTooShort: 'আরও লিখুন',
+    searchTooShortBody: 'ক্যাটালগে খুঁজতে কমপক্ষে ২টি অক্ষর লিখুন।',
+    searchNoResultsBody:
+      '“{q}” এর সাথে কিছু মেলেনি। বানান দেখুন, অথবা আরও সাধারণ শব্দ চেষ্টা করুন।',
+    browseAll: 'সব পণ্য দেখুন',
+    browseCategories: 'ক্যাটাগরি দেখুন',
+    searchResultsFor: '“{q}” এর ফলাফল',
   },
 } as const satisfies Record<Lang, Record<string, string>>;
 

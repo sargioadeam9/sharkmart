@@ -13,6 +13,7 @@ import type {
   ProductListQuery,
 } from '@/types/catalog';
 import { ApiClientError, resolve } from './client';
+import { MAX_PAGE_LIMIT } from './config';
 import {
   mockGetProduct,
   mockGetProductDetail,
@@ -91,4 +92,40 @@ export function getProductDetail(
     }
     return { success: true as const, data: product };
   });
+}
+
+/**
+ * Search the catalog.
+ *
+ * There is no separate search endpoint on the frontend side: the server's
+ * `/products?q=` already does the bilingual `contains` over nameEn, nameBn, sku,
+ * brand and category names (`product.service.ts`), and `/api/v1/search` wraps
+ * the same service. Going through `/products` keeps one query shape for both the
+ * results page and the type-ahead, so a term that suggests also returns.
+ *
+ * `limit` is bounded by `MAX_PAGE_LIMIT` rather than trusted: the server rejects
+ * anything above its cap with a 422, and a type-ahead must never be the thing
+ * that trips that.
+ *
+ * `signal` lets the caller abort an in-flight suggestion request when the user
+ * keeps typing. It is passed through to `fetch`; the mock path resolves
+ * synchronously and ignores it.
+ */
+export function searchProducts(
+  term: string,
+  options: {
+    limit?: number;
+    sort?: ProductListQuery['sort'];
+    page?: number;
+    signal?: AbortSignal;
+  } = {},
+): Promise<ApiSuccess<ProductDto[]>> {
+  const q = term.trim();
+  const limit = Math.min(options.limit ?? 7, MAX_PAGE_LIMIT);
+
+  return resolve(
+    `/products${toQueryString({ q, limit, sort: options.sort, page: options.page })}`,
+    () => mockListProducts({ q, limit, sort: options.sort, page: options.page }),
+    { signal: options.signal },
+  );
 }
