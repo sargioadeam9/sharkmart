@@ -58,7 +58,7 @@ export function errorHandler(
     return;
   }
 
-  // eslint-disable-next-line no-console
+   
   console.error('[unhandled]', err);
 
   res.status(500).json(
