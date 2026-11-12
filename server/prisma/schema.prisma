@@ -45,6 +45,11 @@ model User {
   notifications Notification[]
   auditLogs     AuditLog[]
 
+  // Phase 8 — sessions and credential recovery.
+  refreshTokens       RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
+  couponRedemptions   CouponRedemption[]
+
   @@index([role])
   @@index([createdAt])
 }
@@ -56,6 +61,114 @@ enum Role {
   INVENTORY_STAFF
   MARKETING_STAFF
   CUSTOMER
+}
+
+/**
+ * Refresh-token session, one row per issued refresh token.
+ * Rotation and reuse detection (security.md §4) need per-token state, which a
+ * stateless JWT cannot carry. The row is the source of truth; the JWT is only
+ * the transport.
+ * `familyId` groups every token descended from one login. Presenting a token
+ * that is already `revokedAt` means someone replayed a consumed token, so the
+ * whole family is revoked — that is the reuse-detection control.
+ * Only `tokenHash` (sha256 of the raw token) is stored. A database leak must
+ * not hand an attacker live sessions.
+ */
+model RefreshToken {
+  id         String    @id @default(uuid())
+  userId     String
+  familyId   String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  /**
+   * Set when this token was rotated — the successor's id.
+   */
+  replacedBy String?
+  userAgent  String?
+  ipAddress  String?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+}
+
+/**
+ * Password reset token — security.md §5.
+ * Single use, hashed at rest, 30 minute TTL. One active token per user: issuing
+ * a new one sets `usedAt` on the previous, so an old link in an inbox cannot
+ * still work.
+ */
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+/**
+ * Coupon redemption ledger.
+ * `Coupon.usedCount` alone cannot enforce a per-user limit: a counter is global
+ * and a second request can read it before the first commits. This table makes
+ * the per-user rule a unique constraint the database enforces, which is what
+ * "coupon reuse beyond limit" in the Phase 8 gate actually tests.
+ */
+model CouponRedemption {
+  id           String   @id @default(uuid())
+  couponId     String
+  userId       String
+  /**
+   * Null until the order row exists.
+   *
+   * The redemption is claimed inside the checkout transaction *before* the
+   * order is created, so the unique (couponId, userId) index can reject a
+   * concurrent second use. A placeholder string would collide across different
+   * users, since `orderId` is unique — null is the only correct sentinel, and
+   * MySQL allows many nulls in a unique index.
+   */
+  orderId      String?  @unique
+  amountPoisha Int
+  createdAt    DateTime @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([couponId, userId])
+  @@index([userId])
+}
+
+/**
+ * Idempotency record for POST /checkout.
+ * A double-submit with the same `Idempotency-Key` must return the same order,
+ * not create a second one. The unique key on (userId, key) is the enforcement;
+ * the stored response lets the replay return byte-identical output.
+ * `status` guards the in-flight case: two concurrent requests with one key —
+ * the second sees PROCESSING and is told to retry rather than racing the first
+ * into a duplicate order.
+ */
+model IdempotencyKey {
+  id           String    @id @default(uuid())
+  userId       String?
+  key          String
+  scope        String    @default("checkout")
+  status       String    @default("PROCESSING") // PROCESSING | COMPLETED | FAILED
+  responseJson Json?
+  createdAt    DateTime  @default(now())
+  completedAt  DateTime?
+
+  @@unique([scope, key])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Address {
@@ -131,16 +244,16 @@ model Brand {
 }
 
 model Product {
-  id              String    @id @default(uuid())
-  slug            String    @unique
-  sku             String    @unique
-  barcode         String?   @unique
-  nameEn          String
-  nameBn          String
-  descriptionEn   String?   @db.Text
-  descriptionBn   String?   @db.Text
-  categoryId      String
-  brandId         String?
+  id            String  @id @default(uuid())
+  slug          String  @unique
+  sku           String  @unique
+  barcode       String? @unique
+  nameEn        String
+  nameBn        String
+  descriptionEn String? @db.Text
+  descriptionBn String? @db.Text
+  categoryId    String
+  brandId       String?
 
   // Money — integer poisha, never Decimal, never Float.
   basePricePoisha      Int
@@ -150,14 +263,13 @@ model Product {
 
   /**
    * The struck-through "was" price, stored rather than derived.
-   *
    * Deriving it as basePrice / (1 - discountPercent/100) is wrong for 129 of
    * the 168 catalog products: the reference rounds the original price to whole
    * taka independently of the sale price, so 950 at 28% off shows ৳1,320, not
    * the ৳1,319 the formula produces. The catalog carries the real number, so
    * the database stores it. 0 means "no discount", matching the wire contract.
    */
-  originalPricePoisha  Int  @default(0)
+  originalPricePoisha Int @default(0)
 
   isPublished    Boolean   @default(false)
   isDraft        Boolean   @default(true)
@@ -200,7 +312,6 @@ model Product {
   @@index([isPublished, isDraft])
   @@index([isFeatured])
   @@index([isFlashSale])
-
   // ── Phase 6 composite indexes ─────────────────────────────────────────
   // Every public listing filters on (isPublished, isDraft) first, so that
   // pair leads each composite. Without these, MySQL scans the whole table
@@ -254,7 +365,7 @@ model ProductVariant {
   barcode       String? @unique
   nameEn        String
   nameBn        String
-  pricePoisha    Int
+  pricePoisha   Int
   stock         Int     @default(0)
   reservedStock Int     @default(0)
   sortOrder     Int     @default(0)
@@ -393,27 +504,40 @@ enum MediaType {
 // ─── ORDER ───────────────────────────────────────────────────────────────
 
 model Order {
-  id             String        @id @default(uuid())
-  orderNumber    String        @unique
-  userId         String?
-  guestPhone     String?
-  guestName      String?
-  currentStatus  OrderStatus   @default(PENDING)
+  id            String      @id @default(uuid())
+  orderNumber   String      @unique
+  userId        String?
+  guestPhone    String?
+  guestName     String?
+  currentStatus OrderStatus @default(PENDING)
 
   subtotalPoisha       Int
-  discountAmountPoisha Int @default(0)
+  discountAmountPoisha Int     @default(0)
   couponId             String?
   deliveryChargePoisha Int
   totalAmountPoisha    Int
 
-  paymentMethod String        @default("COD") // COD | BKASH | NAGAD | SSLCOMMERZ
-  paymentStatus PaymentStatus @default(UNPAID)
-  paidAmountPoisha Int        @default(0)
+  paymentMethod    String        @default("COD") // COD | BKASH | NAGAD | SSLCOMMERZ
+  paymentStatus    PaymentStatus @default(UNPAID)
+  paidAmountPoisha Int           @default(0)
+
+  /**
+   * Gateway transaction id and status only — never card data, never wallet
+   * credentials (AGENTS.md §7.10, security.md §10). `paymentGateway` records
+   * which provider issued the id so a reconciliation job knows where to look.
+   */
+  paymentGateway String?
+  paymentTxnId   String?
+
+  /**
+   * The Idempotency-Key that created this order, for audit and replay.
+   */
+  idempotencyKey String?
 
   courierName   String?
   consignmentId String?
   trackingUrl   String?
-  notes         String?       @db.Text
+  notes         String? @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -451,10 +575,10 @@ enum PaymentStatus {
 }
 
 model OrderItem {
-  id              String        @id @default(uuid())
-  orderId         String
-  productId       String
-  variantId       String?
+  id        String  @id @default(uuid())
+  orderId   String
+  productId String
+  variantId String?
 
   // Snapshot at order time — an order must render correctly even after the
   // product is renamed, repriced or deleted.
@@ -533,6 +657,8 @@ model Coupon {
   createdAt            DateTime   @default(now())
 
   orders Order[]
+
+  redemptions CouponRedemption[]
 
   @@index([isActive, startDate, endDate])
 }
@@ -648,11 +774,11 @@ model Supplier {
 }
 
 model SupplierProduct {
-  id         String @id @default(uuid())
-  supplierId String
-  productId  String
+  id              String @id @default(uuid())
+  supplierId      String
+  productId       String
   costPricePoisha Int
-  leadDays   Int?
+  leadDays        Int?
 
   supplier Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -662,13 +788,13 @@ model SupplierProduct {
 }
 
 model PurchaseOrder {
-  id               String    @id @default(uuid())
-  supplierId       String
-  status           String    @default("DRAFT") // DRAFT | ORDERED | PARTIAL | RECEIVED | CANCELLED
+  id                String    @id @default(uuid())
+  supplierId        String
+  status            String    @default("DRAFT") // DRAFT | ORDERED | PARTIAL | RECEIVED | CANCELLED
   totalAmountPoisha Int
-  notes            String?   @db.Text
-  createdAt        DateTime  @default(now())
-  receivedAt       DateTime?
+  notes             String?   @db.Text
+  createdAt         DateTime  @default(now())
+  receivedAt        DateTime?
 
   supplier Supplier            @relation(fields: [supplierId], references: [id])
   items    PurchaseOrderItem[]
@@ -678,12 +804,12 @@ model PurchaseOrder {
 }
 
 model PurchaseOrderItem {
-  id               String @id @default(uuid())
+  id               String  @id @default(uuid())
   purchaseOrderId  String
   productId        String
   variantId        String?
   quantity         Int
-  receivedQuantity Int    @default(0)
+  receivedQuantity Int     @default(0)
   costPricePoisha  Int
 
   purchaseOrder PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
@@ -760,14 +886,14 @@ enum MovementType {
 // ─── EXPENSE ─────────────────────────────────────────────────────────────
 
 model Expense {
-  id            String   @id @default(uuid())
-  category      String
-  description   String
-  amountPoisha  Int
-  date          DateTime
-  receiptUrl    String?
-  createdBy     String
-  createdAt     DateTime @default(now())
+  id           String   @id @default(uuid())
+  category     String
+  description  String
+  amountPoisha Int
+  date         DateTime
+  receiptUrl   String?
+  createdBy    String
+  createdAt    DateTime @default(now())
 
   @@index([date])
   @@index([category])
@@ -776,13 +902,13 @@ model Expense {
 // ─── EMPLOYEE & HR ───────────────────────────────────────────────────────
 
 model Employee {
-  id          String    @id @default(uuid())
-  userId      String    @unique
-  department  String?
-  designation String?
-  joiningDate DateTime?
+  id           String    @id @default(uuid())
+  userId       String    @unique
+  department   String?
+  designation  String?
+  joiningDate  DateTime?
   salaryPoisha Int?
-  isActive    Boolean   @default(true)
+  isActive     Boolean   @default(true)
 
   attendance Attendance[]
   leaves     LeaveRequest[]

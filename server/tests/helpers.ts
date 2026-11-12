@@ -22,18 +22,41 @@ export function api(path: string) {
 }
 
 /**
+ * Clears every rate-limit bucket and account lockout, but leaves the response
+ * cache alone.
+ *
+ * This is the one the Phase 8 suite wants. Those limits are real and tight —
+ * register is 3/min per IP, login 5/min — and every test here registers at
+ * least one user from 127.0.0.1, so a suite of 30 tests exhausts the bucket
+ * within the first few. The limiter is not wrong; the test process is a very
+ * noisy client that looks exactly like a scripted account-creation attack.
+ *
+ * Clearing per test (not once per file) keeps the suite honest: each test
+ * starts with a full budget, and a test that deliberately trips a limit still
+ * sees a real 429 because nothing clears the bucket mid-test.
+ */
+export async function resetRateLimits(): Promise<void> {
+  const store = await getStore();
+  // Both limiter families: `rl:` is the fixed window (catalog), `rlsw:` is the
+  // sliding window (auth, cart, checkout). Missing the second one leaves the
+  // auth suites rate-limited from a previous run.
+  const buckets = await store.keys('rl:*');
+  const sliding = await store.keys('rlsw:*');
+  const lockouts = await store.keys('lockout:*');
+  const all = [...buckets, ...sliding, ...lockouts];
+  if (all.length > 0) await store.del(...all);
+}
+
+/**
  * Wipes the response cache and every rate-limit bucket.
  *
  * Without this, a suite that fires 100+ requests trips the limiter and every
  * later assertion fails with a 429 that has nothing to do with the code under
- * test. The limiter is correct; the test process is just a very noisy client.
+ * test.
  */
 export async function resetState(): Promise<void> {
   await clearCache();
-
-  const store = await getStore();
-  const buckets = await store.keys('rl:*');
-  if (buckets.length > 0) await store.del(...buckets);
+  await resetRateLimits();
 }
 
 /** Re-resolves the store so a suite can start from a known backend. */

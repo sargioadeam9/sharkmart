@@ -122,7 +122,15 @@ export interface BrandDto {
 }
 
 export interface VariantOptionDto {
-  id: string;
+  /**
+   * Stable identity of this option *value* within the product: `attributeId:value`.
+   *
+   * Deliberately NOT a variant id. Since Phase 8 a variant is a full
+   * combination across the axes, so one option value spans many variants and no
+   * single id can name it. Use `VariantGroupDto.combinations` to turn a
+   * selection into a real `ProductVariant.id`.
+   */
+  valueKey: string;
   nameEn: string;
   nameBn: string;
   priceDeltaPoisha: number;
@@ -136,6 +144,8 @@ export interface VariantGroupDto {
   labelBn: string;
   kind: 'button' | 'swatch';
   options: VariantOptionDto[];
+  /** Selection key → `ProductVariant.id`. See `combinationKey()`. */
+  combinations: Record<string, string>;
 }
 
 export interface ReviewDto {
@@ -497,6 +507,11 @@ export function buildRatingBreakdown(rating: number, reviewCount: number): numbe
  * `ProductAttribute`, preserving the attribute's own order so the pills do not
  * reshuffle between requests.
  *
+ * Since Phase 8 a variant is a full *combination* across the axes, so the same
+ * option value appears once per variant that carries it. The groups therefore
+ * dedupe by value, and the mapping from a selection to a real variant id is
+ * published separately as `combinations` — see `combinationKey()`.
+ *
  * `priceDeltaPoisha` is a delta because the reference computes `p.p + o.d` for
  * the selected combination; the variant's own `pricePoisha` stays absolute.
  */
@@ -514,11 +529,24 @@ export function toVariantGroups(
       attribute: { id: string; nameEn: string; nameBn: string; type: string; sortOrder: number };
     }[];
   }[],
-  basePricePoisha: number,
+  _basePricePoisha: number,
 ): VariantGroupDto[] {
   const groups = new Map<string, VariantGroupDto & { sortOrder: number }>();
+  const combinations: Record<string, string> = {};
+
+  if (variants.length === 0) return [];
+
+  // The cheapest variant is the all-first-options combination, whose deltas are
+  // all zero. Every option's delta is therefore its cheapest containing
+  // variant's price minus this floor — exact, because deltas are additive.
+  const floorPrice = Math.min(...variants.map((variant) => variant.pricePoisha));
 
   for (const variant of variants) {
+    combinations[combinationKey(variant.options.map((option) => ({
+      attributeId: option.attribute.id,
+      valueEn: option.valueEn,
+    })))] = variant.id;
+
     for (const option of variant.options) {
       const { attribute } = option;
       let group = groups.get(attribute.id);
@@ -531,16 +559,29 @@ export function toVariantGroups(
           // Only colour renders swatches; every other axis is a labelled pill.
           kind: attribute.type === 'COLOR' ? 'swatch' : 'button',
           options: [],
+          combinations,
           sortOrder: attribute.sortOrder,
         };
         groups.set(attribute.id, group);
       }
 
+      const existing = group.options.find((o) => o.nameEn === option.valueEn);
+      if (existing) {
+        // An option is selectable while *any* combination carrying it has
+        // stock, so the pill takes the best of its variants, not the first.
+        existing.stock = Math.max(existing.stock, variant.stock);
+        existing.priceDeltaPoisha = Math.min(
+          existing.priceDeltaPoisha,
+          variant.pricePoisha - floorPrice,
+        );
+        continue;
+      }
+
       group.options.push({
-        id: variant.id,
+        valueKey: `${attribute.id}:${option.valueEn}`,
         nameEn: option.valueEn,
         nameBn: option.valueBn,
-        priceDeltaPoisha: variant.pricePoisha - basePricePoisha,
+        priceDeltaPoisha: variant.pricePoisha - floorPrice,
         stock: variant.stock,
         // The reference's four swatch hexes live in the catalog, not the DB -
         // the seed stores the colour name only, so the hex is resolved by name.
@@ -553,8 +594,25 @@ export function toVariantGroups(
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map(({ sortOrder: _sortOrder, ...group }) => ({
       ...group,
+      combinations,
       options: group.options.sort((a, b) => a.nameEn.localeCompare(b.nameEn)),
     }));
+}
+
+/**
+ * The stable key for one selection: every `attributeId:value` pair, sorted.
+ *
+ * The client builds the same string from its selected options, so a selection
+ * resolves to a variant id without the client having to know the combination
+ * table's shape. Sorting makes the key independent of axis order.
+ */
+export function combinationKey(
+  selection: { attributeId: string; valueEn: string }[],
+): string {
+  return selection
+    .map((part) => `${part.attributeId}:${part.valueEn}`)
+    .sort()
+    .join('|');
 }
 
 /** The reference's four swatches, verbatim (oshoppingbd.html L720). */

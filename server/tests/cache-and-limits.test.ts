@@ -108,8 +108,19 @@ describe('rate limiting', () => {
   it('exceeding the search limit returns 429 with the envelope', async () => {
     await resetState();
 
-    const limit = 30;
+    /**
+     * Read the limit off the response instead of hardcoding it.
+     *
+     * This test used to say `const limit = 30`, which was true until Phase 7
+     * raised the search bucket to 90 to stop the header's type-ahead 429-ing
+     * mid-word. A hardcoded number silently stops testing the limiter the
+     * moment the limit moves; the header cannot drift from the middleware.
+     */
     let last = await api('/search?q=a');
+    const limit = Number(last.headers['x-ratelimit-limit']);
+    expect(Number.isFinite(limit)).toBe(true);
+    expect(limit).toBeGreaterThan(0);
+
     for (let i = 0; i < limit; i += 1) {
       last = await api('/search?q=a');
       if (last.status === 429) break;

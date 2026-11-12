@@ -20,11 +20,26 @@ const EnvSchema = z.object({
   /** Comma-separated list. Kept as a string here, split by the CORS setup. */
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
 
-  // Phase 8 — declared now so the shape is frozen, optional until then.
+  // Phase 8 — auth. Optional at parse time so the catalog-only suites and a
+  // fresh clone still boot; `requireAuthSecrets()` below is what refuses to
+  // serve auth routes without them.
   JWT_ACCESS_SECRET: z.string().optional(),
   JWT_REFRESH_SECRET: z.string().optional(),
   ACCESS_TOKEN_TTL: z.string().default('15m'),
   REFRESH_TOKEN_TTL: z.string().default('7d'),
+
+  /**
+   * Cookie flag override.
+   *
+   * `Secure` is mandatory in production (security.md §4). Locally the API is
+   * served over plain http on localhost, and a `Secure` cookie is silently
+   * dropped by the browser — which would make every login appear to succeed and
+   * then immediately be anonymous. So: forced true in production, defaulted to
+   * false elsewhere, and overridable only outside production.
+   */
+  COOKIE_SECURE: z
+    .enum(['true', 'false'])
+    .optional(),
 
   // Phase 6 — Redis for cache, rate limiting and flash-sale timers.
   REDIS_URL: z.string().optional(),
@@ -56,7 +71,7 @@ function loadEnv(): Env {
     const issues = parsed.error.issues
       .map((issue) => `  - ${issue.path.join('.')}: ${issue.message}`)
       .join('\n');
-     
+
     console.error(`\nInvalid environment configuration:\n${issues}\n\nCopy .env.example to .env and fill it in.\n`);
     process.exit(1);
   }
@@ -71,3 +86,41 @@ export const isProduction = env.NODE_ENV === 'production';
 export const corsOrigins = env.CORS_ORIGINS.split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+/**
+ * `Secure` is not negotiable in production. Outside it, `COOKIE_SECURE` may
+ * turn it on for a staging box behind https, but nothing can turn it off in
+ * production — a config typo must not quietly downgrade session cookies.
+ */
+export const cookieSecure = isProduction ? true : env.COOKIE_SECURE === 'true';
+
+/**
+ * Throws if the auth secrets are missing or too weak.
+ *
+ * Called by the auth router at mount time, not at import time: the catalog
+ * suites import `createApp()` and must not need auth secrets to run. A weak
+ * secret is a real vulnerability (a 6-character HMAC key is brute-forceable
+ * offline), so the floor is 32 characters and it is enforced, not documented.
+ */
+export function requireAuthSecrets(): { access: string; refresh: string } {
+  const access = env.JWT_ACCESS_SECRET;
+  const refresh = env.JWT_REFRESH_SECRET;
+
+  if (!access || access.length < 32) {
+    throw new Error(
+      'JWT_ACCESS_SECRET must be set to at least 32 characters — auth routes cannot be served without it.',
+    );
+  }
+  if (!refresh || refresh.length < 32) {
+    throw new Error(
+      'JWT_REFRESH_SECRET must be set to at least 32 characters — auth routes cannot be served without it.',
+    );
+  }
+  if (access === refresh) {
+    throw new Error(
+      'JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must differ — one leaked key must not mint both token types.',
+    );
+  }
+
+  return { access, refresh };
+}

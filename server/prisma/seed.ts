@@ -506,63 +506,91 @@ async function seedProductContent(
 ): Promise<void> {
   // ── Variants ────────────────────────────────────────────────────────────
   //
-  // One variant per option per axis, each carrying a single VariantOption.
-  // That mirrors the reference's model: the UI renders one group per axis and
-  // lets the shopper pick independently within each, so a variant is "one
-  // choice on one axis", not a full combination.
+  // One variant per *combination* across the axes, each carrying one
+  // VariantOption per axis.
+  //
+  // Phase 7 seeded one variant per option per axis, so "Size=M" and
+  // "Colour=Navy" were two separate rows and there was no row for the pair the
+  // shopper actually selects. That left a two-axis selection with no
+  // purchasable SKU: the cart could not resolve it, and `POST /cart/sync`
+  // silently skipped every such line. Phase 8's cart needs a combined SKU per
+  // selection (HANDOFF.md, Phase 7 → Assumed), so the seed materialises the
+  // full cartesian product.
+  //
+  // The UI is unchanged: it still renders one pill group per axis and lets the
+  // shopper pick independently. What changed is that every combination of those
+  // independent picks now has a row behind it.
   const axes: AxisSpec[] = [];
   const primaryAxis = AXES[p.categoryId];
   if (primaryAxis) axes.push(primaryAxis);
   if (COLOUR_CATEGORIES.includes(p.categoryId)) axes.push(COLOUR_AXIS);
 
-  const optionCount = axes.reduce((sum, axis) => sum + axis.options.length, 0);
-  const stocks = distributeStock(p.stock, optionCount);
-
   // Replace rather than upsert: the option set is derived, so a delete-then-
   // create is the honest write and keeps a reseed from accumulating rows.
   await prisma.productVariant.deleteMany({ where: { productId } });
 
-  let optionCursor = 0;
+  // A product with no axis is variant-less; its stock lives in WarehouseStock.
+  // It still needs its specs and features, so this is a skip, not a return.
+  if (axes.length > 0) {
+    /**
+     * Each axis paired with its attribute id, so the combination loop never
+     * indexes two parallel arrays and never has to prove an id exists.
+     */
+    const axisParts = axes.map((axis) => {
+      const attributeId = attributeIds.get(`${p.categoryId}:${axis.labelEn}`);
+      if (!attributeId) {
+        throw new Error(`seed: missing attribute ${p.categoryId}:${axis.labelEn}`);
+      }
+      return { axis, attributeId };
+    });
 
-  for (const [axisIndex, axis] of axes.entries()) {
-    const attributeId = attributeIds.get(`${p.categoryId}:${axis.labelEn}`);
-    if (!attributeId) {
-      throw new Error(`seed: missing attribute ${p.categoryId}:${axis.labelEn}`);
-    }
+    // Every combination, in axis order: [[S,Black],[S,Navy],…,[XL,Sand]].
+    const combinations = axisParts.reduce<{ en: string; bn: string }[][]>(
+      (acc, { axis }) => acc.flatMap((combo) => axis.options.map((option) => [...combo, option])),
+      [[]],
+    );
 
-    for (const [index, option] of axis.options.entries()) {
+    const stocks = distributeStock(p.stock, combinations.length);
+
+    for (const [index, combo] of combinations.entries()) {
       /**
-       * Price delta: the reference scales the option price by 12% per step
-       * (`Math.round(p.p * .12 * i / 10) * 10`). Same shape, in poisha, so the
-       * pills show the same deltas they did under the mock.
+       * Price delta: the reference scales each option by 12% per step
+       * (`Math.round(p.p * .12 * i / 10) * 10`) and sums the selected options'
+       * deltas. A combination therefore carries the sum of its axes' deltas.
        */
-      const priceDeltaPoisha =
-        Math.round((basePricePoisha * 0.12 * index) / 10) * 10;
+      const priceDeltaPoisha = combo.reduce((sum, option, axisIndex) => {
+        const axis = axisParts[axisIndex]?.axis;
+        if (!axis) return sum;
+        const optionIndex = axis.options.findIndex((axisOption) => axisOption.en === option.en);
+        return sum + Math.round((basePricePoisha * 0.12 * optionIndex) / 10) * 10;
+      }, 0);
 
       const variant = await prisma.productVariant.create({
         data: {
           productId,
-          sku: `${p.sku}-${axisIndex}${index}`,
-          nameEn: option.en,
-          nameBn: option.bn,
+          sku: `${p.sku}-${index}`,
+          nameEn: combo.map((option) => option.en).join(' · '),
+          nameBn: combo.map((option) => option.bn).join(' · '),
           pricePoisha: basePricePoisha + priceDeltaPoisha,
-          stock: stocks[optionCursor] ?? 0,
+          stock: stocks[index] ?? 0,
           sortOrder: index,
           isActive: true,
         },
         select: { id: true },
       });
 
-      await prisma.variantOption.create({
-        data: {
-          variantId: variant.id,
-          attributeId,
-          valueEn: option.en,
-          valueBn: option.bn,
-        },
-      });
-
-      optionCursor++;
+      for (const [axisIndex, option] of combo.entries()) {
+        const part = axisParts[axisIndex];
+        if (!part) continue;
+        await prisma.variantOption.create({
+          data: {
+            variantId: variant.id,
+            attributeId: part.attributeId,
+            valueEn: option.en,
+            valueBn: option.bn,
+          },
+        });
+      }
     }
   }
 
