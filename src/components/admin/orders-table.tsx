@@ -84,6 +84,28 @@ const STATUS_LABEL: Record<AdminOrderStatus, { en: string; bn: string }> = {
   REFUNDED: { en: 'Refunded', bn: 'রিফান্ড হয়েছে' },
 };
 
+/**
+ * Every status, in pipeline order — the options for the status filter.
+ *
+ * The tabs above the table are the five the reference shows. This select is
+ * what makes the other four reachable: CONFIRMED and RETURNED are both produced
+ * by the normal flow (the transition table allows PENDING -> CONFIRMED, and a
+ * delivered order can be returned), so leaving them tab-only would mean those
+ * orders live exclusively inside "All", which paginates at 20. Nine tabs on one
+ * row would be a wall of text; a select is the honest control for nine.
+ */
+const STATUS_ORDER: AdminOrderStatus[] = [
+  'PENDING',
+  'CONFIRMED',
+  'PROCESSING',
+  'SHIPPED',
+  'DELIVERED',
+  'CANCELLED',
+  'RETURNED',
+  'REFUND_PENDING',
+  'REFUNDED',
+];
+
 const PAYMENT_TONE: Record<string, string> = {
   UNPAID: 'mute',
   PARTIALLY_PAID: 'warn',
@@ -219,6 +241,24 @@ export function OrdersToolbar({
       </div>
 
       <div className="prod-filters">
+        {/* The status select. The tabs are the fast path for the five common
+            states; this is the complete list, and it is the only way to reach
+            CONFIRMED, PROCESSING, RETURNED, REFUND_PENDING and REFUNDED. */}
+        <select
+          value={status}
+          onChange={(event) =>
+            navigate({ status: event.target.value === 'all' ? undefined : event.target.value })
+          }
+          aria-label={lang === 'bn' ? 'অর্ডার অবস্থা' : 'Order status'}
+        >
+          <option value="all">{lang === 'bn' ? 'সব অবস্থা' : 'All statuses'}</option>
+          {STATUS_ORDER.map((value) => (
+            <option key={value} value={value}>
+              {statusLabel(value, lang)}
+            </option>
+          ))}
+        </select>
+
         <select
           value={paymentStatus}
           onChange={(event) => navigate({ paymentStatus: event.target.value })}

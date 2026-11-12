@@ -47,9 +47,13 @@ function one(value: string | string[] | undefined): string | undefined {
  * The status tabs.
  *
  * These mirror the reference's `#ordTabs` exactly: All, Pending, Shipped,
- * Delivered, Cancelled. The remaining states (PROCESSING, RETURNED,
- * REFUND_PENDING, REFUNDED, ...) are reachable through the status filter —
- * nine tabs on one row would be a wall of text.
+ * Delivered, Cancelled. The remaining states — CONFIRMED, PROCESSING, RETURNED,
+ * REFUND_PENDING, REFUNDED — are reachable through the status select in the
+ * toolbar, which lists all nine. That select is not optional decoration: the
+ * transition table allows PENDING -> CONFIRMED, so CONFIRMED orders are created
+ * by the normal flow, and a returned order is a real state with real money
+ * attached. Nine tabs on one row would be a wall of text, so the tabs stay as
+ * the fast path and the select carries the full list.
  */
 const TABS: Array<{ key: AdminOrderStatus | 'all'; en: string; bn: string }> = [
   { key: 'all', en: 'All', bn: 'সব' },
