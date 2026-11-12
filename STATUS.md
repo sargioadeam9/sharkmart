@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-12 · **Updated by:** Phase 6 complete (public catalog API)
+**Last updated:** 2026-11-12 · **Updated by:** Phase 7 — catalog flipped to the real API
 
 ---
 
@@ -12,11 +12,11 @@
 
 | Field | Value |
 | --- | --- |
-| Active phase | **Phase 6 — Public catalog API** |
-| Phase status | ✅ **Complete — gate passed** |
-| Build state | Server: `npm test` 57/57 · `tsc --noEmit` clean · `eslint .` 0 errors. Storefront: `npm run build` green (187 static pages) · `tsc --noEmit` clean |
+| Active phase | **Phase 7 — Search, wishlist, account (real API)** |
+| Phase status | 🟡 **Catalog flip complete — search/wishlist/account not started** |
+| Build state | Server: `npm test` 57/57 · `tsc --noEmit` clean · `eslint .` 0 errors. Storefront: `npm run build` green (187 static pages, all from the live API) · `tsc --noEmit` clean · `eslint .` 0 errors (1 pre-existing font warning) |
 | Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only) |
-| Next action | Phase 7 — flip `NEXT_PUBLIC_USE_MOCK=false` and point `src/lib/api/*` at `/api/v1` |
+| Next action | Phase 7 remainder — `/search`, `/wishlist`, `/login`, `/register`, `/profile`, `/orders`, `/track` |
 
 ### Phase 6 — gate evidence
 
@@ -137,6 +137,26 @@
 | Corrupt persisted state cannot crash the app | ✅ | valid-version garbage blobs → clean render, stores reset, 0 console errors |
 | `tsc` / `lint` / `build` all pass | ✅ | exit 0 / 0 errors / 3 routes prerendered |
 | Console clean in the browser | ✅ | 0 errors, 0 warnings |
+
+### Phase 7 — catalog flip gate evidence
+
+Scope note: Phase 7 in `masterbuild.md` covers search, wishlist and account **plus** "replace the mock layer with real data for everything already built". This session completed the catalog flip half. The account surface (`/search`, `/wishlist`, `/login`, `/register`, `/profile`, `/orders`, `/track`) is not started.
+
+| Gate requirement | State | Evidence |
+| --- | --- | --- |
+| Mock layer off for the catalog routes | ✅ | `.env.local` `NEXT_PUBLIC_USE_MOCK=false`; `npm run build` prerendered all 187 pages from `http://localhost:4000/api/v1` |
+| Zero component signature changes | ✅ | No file under `src/components/**` touched. Only `src/lib/api/*` and the three data loaders changed |
+| Five surfaces match the frontend DTOs | ✅ | `node tools/parity-check.mjs` → **611 field assertions, 5/5 PASS** |
+| Detail endpoint serves the flat `ProductDetailDto` | ✅ | Server now returns `variantGroups`/`reviews`/`ratingBreakdown`/`featuresEn`/`featuresBn`/`specs`/`tintColor`/`accentColor` directly; nested `{product, specifications, categoryColors}` removed |
+| Seeded content is real, not just declared | ✅ | 588 variants · 840 specifications · 168 feature blocks. `osb-1009` returns 5 specs, 2 variant groups (Size button + Colour swatch), 4 features |
+| Variant stock agrees with warehouse stock | ✅ | All 168 products: `Σ variant.stock === WarehouseStock.quantity`, 0 mismatches. All 15 sold-out products have every option at 0 |
+| Seed still idempotent | ✅ | Ran twice → identical counts (14/84/25/168/168/588/840/168) |
+| Rendered HTML carries the content | ✅ | `.next/server/app/product/osb-1009.html` contains the spec rows, feature bullets, `>S<`/`>M<`/`>L<`/`>XL<` pills and colour swatches |
+| Build, typecheck, lint, tests green | ✅ | `next build` 187 pages · `tsc --noEmit` clean both apps · `eslint .` 0 errors · server `npm test` 57/57 |
+
+**Deliberate omission — reviews are not seeded.** A fabricated customer review with a person's name on it is not demo data, it is a lie. `reviewCount` still carries the catalog's aggregate, so the rating badge renders; the review list shows its empty state until real reviews exist. The mock layer's generated reviews must never reach the database.
+
+---
 
 ### Phase 0 — gate evidence
 
