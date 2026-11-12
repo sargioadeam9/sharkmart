@@ -73,8 +73,16 @@ export interface LimitRule {
 export const LIMITS = {
   /** General public API surface. */
   api: { scope: 'api', limit: 100, windowSeconds: 60 },
-  /** Search is heavier than a listing read, so it gets its own bucket. */
-  search: { scope: 'search', limit: 30, windowSeconds: 60 },
+  /**
+   * Search is heavier than a listing read, so it gets its own bucket.
+   *
+   * 90/min, not 30: this bucket also serves the header's type-ahead, and a
+   * 12-character query is ~12 requests on its own. At 30 a normal shopper hit a
+   * 429 mid-word, which is the limiter failing the user it exists to protect.
+   * 90 still bounds a `contains` scan at 1.5 req/s per IP, which is the actual
+   * protection; the number is a rate, not a quota.
+   */
+  search: { scope: 'search', limit: 90, windowSeconds: 60 },
 } as const satisfies Record<string, LimitRule>;
 
 /**

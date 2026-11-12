@@ -59,11 +59,19 @@ Resolve the client IP from the trusted proxy header only, with exactly one trust
 | `reset` (request) | 3 | 15 min | IP |
 | `otp:send` | 3 | 5 min | phone, plus 10/hour per IP |
 | `otp:verify` | 5 | 5 min | phone |
-| `search` | 30 | 1 min | IP |
+| `search` | 90 | 1 min | IP |
 | `cart` (write) | 60 | 1 min | user |
 | `checkout` | 10 | 5 min | user |
 | `api` (public general) | 100 | 1 min | IP |
 | `admin` | 200 | 1 min | user |
+
+**Why `search` is 90 and not 30.** This bucket also serves the storefront's
+header type-ahead. A single 12-character query is ~12 requests, so at 30 a
+normal shopper was rate-limited mid-word — the limiter blocking the user it
+exists to protect. 90 bounds a `contains` scan at 1.5 req/s per IP, which is the
+real protection; the number is a rate ceiling, not a daily quota. The trusted
+first-party bypass (`INTERNAL_API_TOKEN`, server-side only) is unchanged and
+still skips the bucket for `next build` prerendering.
 
 ### The 429 contract
 
