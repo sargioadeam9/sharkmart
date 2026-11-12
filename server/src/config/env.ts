@@ -17,8 +17,17 @@ const EnvSchema = z.object({
     .string()
     .min(1, 'DATABASE_URL is required — see .env.example'),
 
-  /** Comma-separated list. Kept as a string here, split by the CORS setup. */
-  CORS_ORIGINS: z.string().default('http://localhost:3000'),
+  /**
+   * Comma-separated list. Kept as a string here, split by the CORS setup.
+   *
+   * Both loopback spellings are listed by default. Next.js happily serves on
+   * either, and a browser opened at 127.0.0.1 sends that origin — a default
+   * covering only `localhost` rejects the login POST at the origin check, the
+   * form never gets a session, and it reads like a broken frontend.
+   */
+  CORS_ORIGINS: z
+    .string()
+    .default('http://localhost:3000,http://127.0.0.1:3000'),
 
   // Phase 8 — auth. Optional at parse time so the catalog-only suites and a
   // fresh clone still boot; `requireAuthSecrets()` below is what refuses to

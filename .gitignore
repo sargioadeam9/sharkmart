@@ -48,3 +48,8 @@ server/.env
 # local secrets
 gh-token.txt
 *.token
+
+# brand source art - the shipped asset is public/brand/sharkmart-logo.png
+/Logo/icon.png
+/Logo/SharkMart Shark Fin Shopping Logo.png
+
