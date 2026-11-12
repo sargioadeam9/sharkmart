@@ -20,6 +20,8 @@ import type { ProductDetailDto, VariantGroupDto } from '@/types/catalog';
 import { localized } from '@/types/catalog';
 
 export interface ResolvedVariant {
+  /** The real `ProductVariant.id` for this selection, or null when unmatched. */
+  variantId: string | null;
   /** Base price plus every selected option's delta, in poisha. */
   pricePoisha: number;
   /** Struck-through price, 0 when the product has no discount. */
@@ -33,6 +35,27 @@ export interface ResolvedVariant {
   labelBn: string;
   /** True when any selected option has no stock. */
   isOutOfStock: boolean;
+}
+
+/**
+ * The selection key the server publishes as `combinations`.
+ *
+ * Must match `combinationKey()` in `server/src/services/mappers.ts` exactly:
+ * every `attributeId:value` pair, sorted, joined with `|`. The server owns the
+ * table; this only has to build the same string from the same selection.
+ */
+export function selectionKey(
+  groups: VariantGroupDto[],
+  selection: number[],
+): string {
+  return groups
+    .map((group, groupIndex) => {
+      const option = group.options[selection[groupIndex] ?? 0];
+      return option ? `${group.id}:${option.nameEn}` : null;
+    })
+    .filter((part): part is string => part !== null)
+    .sort()
+    .join('|');
 }
 
 /**
@@ -64,15 +87,25 @@ export function resolveVariant(
 
   const pricePoisha = product.pricePoisha + delta;
 
+  // A combination's own stock is authoritative: it is the row that actually
+  // ships. The per-option minimum is only a fallback for a selection the
+  // combination table does not cover.
+  const combinations = product.variantGroups[0]?.combinations ?? {};
+  const variantId = combinations[selectionKey(product.variantGroups, selection)] ?? null;
+  const combinationStock = variantId
+    ? product.variants.find((v) => v.id === variantId)?.stock
+    : undefined;
+
   return {
+    variantId,
     pricePoisha,
     originalPricePoisha:
       product.originalPricePoisha > 0 ? product.originalPricePoisha + delta : 0,
-    stock: Math.max(0, stock),
+    stock: Math.max(0, combinationStock ?? stock),
     swatch,
     labelEn: labelsEn.join(' · '),
     labelBn: labelsBn.join(' · '),
-    isOutOfStock: stock <= 0,
+    isOutOfStock: (combinationStock ?? stock) <= 0,
   };
 }
 
@@ -150,7 +183,7 @@ function VariantGroup({
           const out = option.stock <= 0;
           return (
             <button
-              key={option.id}
+              key={option.valueKey}
               type="button"
               onClick={() => onSelect(index)}
               className={cn(index === selectedIndex && 'on')}

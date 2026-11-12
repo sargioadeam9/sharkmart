@@ -29,9 +29,11 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 
-import { useCartStore } from '@/lib/store/cart-store';
+import { useCartStore, type CartLine } from '@/lib/store/cart-store';
 import { useUiStore } from '@/lib/store/ui-store';
 import { useLang, useBodyScrollLock, useEscapeKey, useFocusReturn } from '@/lib/hooks';
+import { useEffectiveCart } from '@/lib/hooks/use-effective-cart';
+import { removeCartItem, updateCartItem } from '@/lib/api/account';
 import { cartTotals } from '@/lib/cart-totals';
 import {
   amountToFreeDeliveryPoisha,
@@ -55,7 +57,8 @@ export function CartDrawer() {
   const open = useUiStore((s) => s.cartOpen);
   const closeCart = useUiStore((s) => s.closeCart);
 
-  const lines = useCartStore((s) => s.lines);
+  const cart = useEffectiveCart();
+  const lines = cart.lines;
   const setQuantity = useCartStore((s) => s.setQuantity);
   const removeLine = useCartStore((s) => s.removeLine);
 
@@ -110,22 +113,49 @@ export function CartDrawer() {
   }, [lines]);
 
   const handleQuantityChange = useCallback(
-    (productId: string, variantId: string | null, next: number) => {
+    (line: CartLine, next: number) => {
       // Quantity 0 removes the line — reference behaviour.
       if (next <= 0) {
-        removeLine(productId, variantId);
+        if (line.serverLineId) {
+          void removeCartItem(line.serverLineId)
+            .then(() => cart.refresh())
+            .catch(() => toast(tu('errorBody')));
+          return;
+        }
+        removeLine(line.productId, line.variantId);
         return;
       }
-      setQuantity(productId, variantId, next);
+
+      if (line.serverLineId) {
+        void updateCartItem(line.serverLineId, next)
+          .then(() => cart.refresh())
+          .catch(() => toast(tu('errorBody')));
+        return;
+      }
+
+      setQuantity(line.productId, line.variantId, next);
     },
-    [removeLine, setQuantity],
+    // `cart.refresh` is stable per render of the hook; the store actions are stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [removeLine, setQuantity, tu],
   );
 
   const handleRemove = useCallback(
-    (productId: string, variantId: string | null, name: string) => {
-      removeLine(productId, variantId);
+    (line: CartLine, name: string) => {
+      if (line.serverLineId) {
+        void removeCartItem(line.serverLineId)
+          .then(() => {
+            cart.refresh();
+            toast(`${name} — ${tu('removeItem')}`);
+          })
+          .catch(() => toast(tu('errorBody')));
+        return;
+      }
+
+      removeLine(line.productId, line.variantId);
       toast(`${name} — ${tu('removeItem')}`);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [removeLine, tu],
   );
 
@@ -237,13 +267,7 @@ export function CartDrawer() {
                       </div>
                       <QuantityStepper
                         value={line.quantity}
-                        onChange={(next) =>
-                          handleQuantityChange(
-                            line.productId,
-                            line.variantId,
-                            next,
-                          )
-                        }
+                        onChange={(next) => handleQuantityChange(line, next)}
                         min={0}
                         max={line.stockQuantity > 0 ? line.stockQuantity : 1}
                         decreaseLabel={tu('decreaseQty')}
@@ -258,9 +282,7 @@ export function CartDrawer() {
                       <button
                         type="button"
                         className="rm"
-                        onClick={() =>
-                          handleRemove(line.productId, line.variantId, name)
-                        }
+                        onClick={() => handleRemove(line, name)}
                       >
                         {lang === 'bn' ? 'মুছুন' : 'Remove'}
                       </button>
@@ -332,14 +354,25 @@ export function CartDrawer() {
             <span>{formatMoney(totals.totalPoisha, lang)}</span>
           </div>
 
-          <button
-            type="button"
+          <Link
+            href="/checkout"
             className="btn red"
-            disabled={totals.lineCount === 0}
-            onClick={() => toast(t('demo'))}
+            aria-disabled={totals.lineCount === 0 || undefined}
+            onClick={(event) => {
+              // A Link cannot be `disabled`, so the guard is on the click. The
+              // checkout page re-checks the cart anyway; this just avoids
+              // navigating to an empty-checkout screen.
+              if (totals.lineCount === 0) event.preventDefault();
+              else closeCart();
+            }}
+            style={
+              totals.lineCount === 0
+                ? { pointerEvents: 'none', opacity: 0.55 }
+                : undefined
+            }
           >
             {t('chk')} →
-          </button>
+          </Link>
           <button type="button" className="btn line" onClick={closeCart}>
             {t('cont')}
           </button>

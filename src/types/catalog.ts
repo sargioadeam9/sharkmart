@@ -145,7 +145,12 @@ export interface BrandDto {
  * display-side shape the detail page needs.
  */
 export interface VariantOptionDto {
-  id: string;
+  /**
+   * Identity of this option *value*: `attributeId:value`. Not a variant id —
+   * one value spans every variant that carries it. Resolve a selection through
+   * `VariantGroupDto.combinations`.
+   */
+  valueKey: string;
   nameEn: string;
   nameBn: string;
   /** Added to the base price. Integer poisha, may be 0. */
@@ -164,6 +169,16 @@ export interface VariantGroupDto {
   /** `swatch` renders circles, `button` renders labelled pills. */
   kind: 'button' | 'swatch';
   options: VariantOptionDto[];
+  /**
+   * Selection → real `ProductVariant.id`.
+   *
+   * A variant is a full combination across the axes, so no single group can
+   * name the variant a selection resolves to. The key is every
+   * `attributeId:value` pair sorted and joined with `|`; the client builds the
+   * same string from its selected options. Identical on every group of a
+   * product — it is one table, repeated for convenience.
+   */
+  combinations: Record<string, string>;
 }
 
 /** A single customer review. Never fabricated — absent means an empty state. */

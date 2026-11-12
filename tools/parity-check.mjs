@@ -314,6 +314,26 @@ async function surfaceProductDetail() {
     if (!Array.isArray(group.options) || group.options.length === 0) {
       fail(`data.variantGroups[${i}].options`, 'empty axis');
     }
+
+    /**
+     * An option is a *value*, not a variant. `id` used to carry a variant id,
+     * which was wrong the moment variants became full combinations — one value
+     * spans many variants. Guard both halves so it cannot come back.
+     */
+    for (const [j, option] of (group.options ?? []).entries()) {
+      const path = `data.variantGroups[${i}].options[${j}]`;
+      expectType(option, 'valueKey', 'string', path);
+      checks += 1;
+      if ('id' in option) {
+        fail(`${path}.id`, 'option carries a variant id — resolve through combinations instead');
+      }
+    }
+
+    expectType(group, 'combinations', 'object', `data.variantGroups[${i}]`);
+    checks += 1;
+    if (Object.keys(group.combinations ?? {}).length === 0) {
+      fail(`data.variantGroups[${i}].combinations`, 'empty — no selection can resolve to a variant');
+    }
   }
 
   // The nested shape must be gone, or a component reading it would break.

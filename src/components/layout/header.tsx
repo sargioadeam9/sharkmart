@@ -20,11 +20,11 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import type { CategoryDto, ProductDto } from '@/types/catalog';
-import { useCartStore } from '@/lib/store/cart-store';
 import { useWishlistStore } from '@/lib/store/wishlist-store';
 import { useUiStore } from '@/lib/store/ui-store';
+import { useSessionStore } from '@/lib/store/session-store';
 import { useLang } from '@/lib/hooks';
-import { cartItemCount } from '@/lib/store/cart-store';
+import { useEffectiveCart } from '@/lib/hooks/use-effective-cart';
 import { formatNumber } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Logo } from '@/components/brand/logo';
@@ -57,9 +57,21 @@ const MORE_LINKS: { key: 'only' | 'trend' | 'clear' | 'gift' | 'help'; href: str
 export function Header({ categories, products }: HeaderProps) {
   const { lang, t, tu } = useLang();
 
-  const cartCount = useCartStore((s) => cartItemCount(s.lines));
-  const wishCount = useWishlistStore((s) => s.ids.length);
+  const cartCount = useEffectiveCart().itemCount;  const wishCount = useWishlistStore((s) => s.ids.length);
   const openCart = useUiStore((s) => s.openCart);
+
+  /**
+   * The account link reflects the session.
+   *
+   * `status` starts 'unknown' and resolves after `/me`, so the first paint is
+   * the signed-out state — which is what the server rendered too, so there is
+   * no hydration mismatch. A signed-in shopper sees their first name instead of
+   * "Login / Register", which is the difference between a shop that remembers
+   * you and one that does not.
+   */
+  const sessionUser = useSessionStore((s) => s.user);
+  const signedIn = useSessionStore((s) => s.status) === 'authenticated';
+  const firstName = sessionUser?.name.trim().split(/\s+/)[0] ?? '';
 
   /**
    * The badge replays its bump animation whenever the count changes. Keying on
@@ -118,9 +130,9 @@ export function Header({ categories, products }: HeaderProps) {
             </b>
           </button>
 
-          <Link className="ib" href="/account">
+          <Link className="ib" href={signedIn ? '/profile' : '/login'}>
             <UserIcon />
-            <span>{t('login')}</span>
+            <span>{signedIn ? firstName : t('login')}</span>
           </Link>
         </div>
       </div>

@@ -10,7 +10,20 @@
 
 import type { ReactNode } from 'react';
 import { StorefrontShell } from '@/components/layout/storefront-shell';
+import { SessionProvider } from '@/components/providers/session-provider';
 
+/**
+ * `SessionProvider` wraps the whole storefront, not just the account routes.
+ *
+ * It has to: the header shows the signed-in name, the cart drawer needs to know
+ * whether to merge, and the guest→account cart merge must run once on any page
+ * a shopper lands on after signing in — not only if they happen to open
+ * `/profile`.
+ */
 export default function ShopLayout({ children }: { children: ReactNode }) {
-  return <StorefrontShell>{children}</StorefrontShell>;
+  return (
+    <SessionProvider>
+      <StorefrontShell>{children}</StorefrontShell>
+    </SessionProvider>
+  );
 }

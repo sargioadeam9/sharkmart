@@ -164,7 +164,10 @@ export function ProductPage({ product, rails }: ProductPageProps) {
       tint: product.tintColor,
       unitPricePoisha: variant.pricePoisha,
       originalUnitPricePoisha: variant.originalPricePoisha,
-      variantId: variant.labelEn || null,
+      // The real ProductVariant.id, resolved from the selection. It used to be
+      // `variant.labelEn` — a display string like "XL · Crimson" — which the
+      // server could never match to a variant, so every synced line was skipped.
+      variantId: variant.variantId,
       variantNameEn: variant.labelEn || null,
       variantNameBn: variant.labelBn || null,
       quantity: 1,

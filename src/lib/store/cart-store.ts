@@ -52,6 +52,13 @@ export interface CartLine {
   quantity: number;
   /** Stock at the time it was added — the stepper's ceiling. */
   stockQuantity: number;
+
+  /**
+   * The server's `CartItem.id`, present only on a line hydrated from the server
+   * cart. Mutations for a signed-in shopper address this id; a guest line has
+   * none and is mutated in the local store instead.
+   */
+  serverLineId?: string;
 }
 
 export interface CartTotals {
@@ -65,6 +72,19 @@ export interface CartTotals {
 
 interface CartState {
   lines: CartLine[];
+
+  /**
+   * Bumped whenever the *server* cart changes for reasons the local store
+   * cannot see — currently the guest→account merge at sign-in.
+   *
+   * `useEffectiveCart` fetches the server cart once per session flip. The merge
+   * POST and that fetch both start when the session becomes authenticated, so
+   * the fetch can resolve first and cache an empty cart; nothing re-read it
+   * afterwards, and the header badge sat at 0 over a cart with a line in it.
+   * Not persisted (see `partialize`): it is a change signal, not state.
+   */
+  serverRevision: number;
+  bumpServerRevision: () => void;
 
   addLine: (line: CartLine, quantity?: number) => void;
   removeLine: (productId: string, variantId: string | null) => void;
@@ -121,6 +141,9 @@ export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       lines: [],
+      serverRevision: 0,
+      bumpServerRevision: () =>
+        set((state) => ({ serverRevision: state.serverRevision + 1 })),
 
       addLine: (line, quantity = 1) =>
         set((state) => {
@@ -247,8 +270,7 @@ export const useCartStore = create<CartState>()(
       },
 
       /** Only the lines are worth persisting. */
-      partialize: (state) => ({ lines: state.lines }),
-    },
+      partialize: (state) => ({ lines: state.lines }),    },
   ),
 );
 

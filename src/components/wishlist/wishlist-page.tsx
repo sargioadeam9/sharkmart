@@ -35,7 +35,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toCartLine } from '@/components/product/product-card';
 
-type Status = 'idle' | 'loading' | 'ready' | 'failed';
+type Status = 'idle' | 'ready' | 'failed';
 
 export function WishlistPage() {
   const { lang, t, tu } = useLang();
@@ -53,6 +53,12 @@ export function WishlistPage() {
   const hydrated = useStoreHydrated(useWishlistStore);
 
   const [status, setStatus] = useState<Status>('idle');
+  /**
+   * Bumped by the retry button. The effect's real trigger is `ids.length`, so
+   * a failed read could not otherwise be retried: setting `status` back to
+   * `idle` changes nothing the effect depends on.
+   */
+  const [retryNonce, setRetryNonce] = useState(0);
   const [catalog, setCatalog] = useState<ProductDto[]>([]);
 
   /**
@@ -69,13 +75,9 @@ export function WishlistPage() {
    * pathological catalog cannot spin here.
    */
   useEffect(() => {
-    if (!hydrated || ids.length === 0) {
-      setStatus('idle');
-      return;
-    }
+    if (!hydrated || ids.length === 0) return;
 
     let cancelled = false;
-    setStatus('loading');
 
     (async () => {
       const all: ProductDto[] = [];
@@ -125,8 +127,8 @@ export function WishlistPage() {
     };
     // `ids.length` is the trigger, not `ids`: adding a second product must not
     // refetch a catalog already in hand. Only the empty → non-empty transition
-    // needs a load.
-  }, [hydrated, ids.length]);
+    // needs a load. `retryNonce` is the explicit retry lever.
+  }, [hydrated, ids.length, retryNonce]);
 
   /** Saved ids in the order they were added, resolved to products. */
   const items = useMemo(() => {
@@ -156,7 +158,14 @@ export function WishlistPage() {
 
   // ── states ───────────────────────────────────────────────────────────────
 
-  if (!hydrated || (status === 'loading' && items.length === 0)) {
+  /**
+   * Loading is derived, not stored: `status` only records an outcome, and
+   * setting it synchronously inside the effect is the cascading render the
+   * rule forbids. A non-empty wishlist with no outcome yet is still loading.
+   */
+  const loading = hydrated && ids.length > 0 && status === 'idle';
+
+  if (!hydrated || (loading && items.length === 0)) {
     return (
       <div className="wrap" aria-busy="true">
         <div className="cat-grid">
@@ -179,7 +188,10 @@ export function WishlistPage() {
             <button
               type="button"
               className="btn red"
-              onClick={() => setStatus('idle')}
+              onClick={() => {
+                setStatus('idle');
+                setRetryNonce((n) => n + 1);
+              }}
             >
               {tu('retry')}
             </button>

@@ -31,7 +31,7 @@
  * and an API blip must not break typing or submitting.
  */
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { localized, type ProductDto, type CategoryDto } from '@/types/catalog';
 import { cn } from '@/lib/utils';
@@ -101,10 +101,7 @@ export function SearchBar({
    * that resolved before the abort was observed.
    */
   useEffect(() => {
-    if (debounced.length < MIN_TERM) {
-      setProductHits([]);
-      return;
-    }
+    if (debounced.length < MIN_TERM) return;
 
     const controller = new AbortController();
     let cancelled = false;
@@ -142,30 +139,51 @@ export function SearchBar({
    * Category hits are local and cheap, so they are derived during render rather
    * than fetched. They lead the list because a category is the broader answer.
    */
-  const catHits: Suggestion[] =
-    debounced.length < MIN_TERM
-      ? []
-      : categories
-          .filter((c) => {
-            const en = c.nameEn.toLowerCase();
-            const bn = c.nameBn.toLowerCase();
-            return en.includes(debounced) || bn.includes(debounced);
-          })
-          .slice(0, 3)
-          .map((c) => ({
-            kind: 'category' as const,
-            id: c.id,
-            label: localized(lang, c.nameEn, c.nameBn),
-            href: `/category/${c.slug}`,
-            meta: `${c.productCount}`,
-            emoji: c.iconEmoji,
-            tint: c.lightTintColor,
-          }));
+  const catHits: Suggestion[] = useMemo(
+    () =>
+      debounced.length < MIN_TERM
+        ? []
+        : categories
+            .filter((c) => {
+              const en = c.nameEn.toLowerCase();
+              const bn = c.nameBn.toLowerCase();
+              return en.includes(debounced) || bn.includes(debounced);
+            })
+            .slice(0, 3)
+            .map((c) => ({
+              kind: 'category' as const,
+              id: c.id,
+              label: localized(lang, c.nameEn, c.nameBn),
+              href: `/category/${c.slug}`,
+              meta: `${c.productCount}`,
+              emoji: c.iconEmoji,
+              tint: c.lightTintColor,
+            })),
+    [categories, debounced, lang],
+  );
 
-  const suggestions: Suggestion[] = [
-    ...catHits,
-    ...productHits.slice(0, Math.max(0, MAX_SUGGESTIONS - catHits.length)),
-  ];
+  /**
+   * Hits only count while the debounced term is long enough to have fetched
+   * them. Deriving this instead of clearing `productHits` in the effect keeps
+   * a stale list from flashing when the box is emptied, without the cascading
+   * render `react-hooks/set-state-in-effect` forbids.
+   */
+  const liveProductHits = useMemo(
+    () => (debounced.length < MIN_TERM ? [] : productHits),
+    [debounced, productHits],
+  );
+
+  /**
+   * Memoised: `suggestions` is a dependency of the keydown handler below, and a
+   * fresh array every render would rebuild that handler on every keystroke.
+   */
+  const suggestions: Suggestion[] = useMemo(
+    () => [
+      ...catHits,
+      ...liveProductHits.slice(0, Math.max(0, MAX_SUGGESTIONS - catHits.length)),
+    ],
+    [catHits, liveProductHits],
+  );
 
   const showList = open && suggestions.length > 0;
 

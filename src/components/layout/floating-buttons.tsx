@@ -15,7 +15,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { useCartStore, cartItemCount } from '@/lib/store/cart-store';
+import { useEffectiveCart } from '@/lib/hooks/use-effective-cart';
 import { useUiStore } from '@/lib/store/ui-store';
 import { useLang } from '@/lib/hooks';
 import { formatNumber } from '@/lib/format';
@@ -33,7 +33,15 @@ const SUPPORT_CHANNELS = [
 export function FloatingButtons() {
   const { lang, tu } = useLang();
 
-  const cartCount = useCartStore((s) => cartItemCount(s.lines));
+  /**
+   * The effective cart, not the local store.
+   *
+   * A signed-in shopper's cart lives on the server; the local store is cleared
+   * after a successful merge. Reading `useCartStore` here meant this button sat
+   * at 0 over a cart with a line in it — the same disagreement the header badge
+   * had before `useEffectiveCart` existed.
+   */
+  const cartCount = useEffectiveCart().itemCount;
   const openCart = useUiStore((s) => s.openCart);
 
   const [supportOpen, setSupportOpen] = useState(false);

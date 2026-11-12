@@ -204,7 +204,7 @@ function buildGroup(
     const stock = baseStock <= 0 ? 0 : soldOutOption ? 0 : Math.max(2, 14 - index * 3);
 
     return {
-      id: `var_${productSeed}_${index}`,
+      valueKey: `var_${productSeed}_${index}`,
       nameEn: option.en,
       nameBn: option.bn,
       priceDeltaPoisha,
@@ -221,6 +221,9 @@ function buildGroup(
     labelBn: axis.labelBn,
     kind,
     options,
+    // The mock is a fixture, not a cart source: the real combination table is
+    // the server's. Empty here so the shape matches without inventing ids.
+    combinations: {},
   };
 }
 
@@ -231,7 +234,7 @@ function buildColourGroup(productSeed: number, baseStock: number): VariantGroupD
     labelBn: 'রং',
     kind: 'swatch',
     options: SWATCHES.map((swatch, index) => ({
-      id: `var_${productSeed}_c${index}`,
+      valueKey: `var_${productSeed}_c${index}`,
       nameEn: swatch.en,
       nameBn: swatch.bn,
       priceDeltaPoisha: 0,
@@ -239,6 +242,7 @@ function buildColourGroup(productSeed: number, baseStock: number): VariantGroupD
         baseStock <= 0 ? 0 : index === 3 && productSeed % 2 === 1 ? 0 : 9,
       swatch: swatch.hex,
     })),
+    combinations: {},
   };
 }
 

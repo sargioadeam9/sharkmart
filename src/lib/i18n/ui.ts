@@ -14,9 +14,11 @@
 
 import type { Lang } from '@/lib/format';
 import { localizeNumber } from './index';
+import { ACCOUNT_STRINGS } from './account-strings';
 
 export const UI_STRINGS = {
   en: {
+    ...ACCOUNT_STRINGS.en,
     close: 'Close',
     previous: 'Previous',
     next: 'Next',
@@ -127,6 +129,7 @@ export const UI_STRINGS = {
     searchResultsFor: 'Results for “{q}”',
   },
   bn: {
+    ...ACCOUNT_STRINGS.bn,
     close: 'বন্ধ করুন',
     previous: 'আগের',
     next: 'পরের',
