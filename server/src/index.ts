@@ -12,7 +12,7 @@ import { checkDatabase, prisma } from './config/database.js';
 async function main(): Promise<void> {
   const databaseUp = await checkDatabase();
   if (!databaseUp) {
-    // eslint-disable-next-line no-console
+     
     console.error(
       '\nCannot reach MySQL at DATABASE_URL.\n' +
         'Check that the server is running and the credentials in .env are correct.\n' +
@@ -43,7 +43,7 @@ async function main(): Promise<void> {
 }
 
 main().catch((error: unknown) => {
-  // eslint-disable-next-line no-console
+   
   console.error('Fatal startup error:', error);
   process.exit(1);
 });
