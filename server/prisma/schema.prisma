@@ -274,6 +274,16 @@ model Product {
   isPublished    Boolean   @default(false)
   isDraft        Boolean   @default(true)
   isFeatured     Boolean   @default(false)
+
+  /**
+   * Soft archive (Phase 9 pass B1).
+   *
+   * Nullable and additive on purpose: the public queries already filter on
+   * `isPublished`, so an archived row is invisible to the storefront without
+   * touching a single public mapper or contract. Archiving keeps the row (and
+   * its order history) intact, which is what "archive instead of delete" means.
+   */
+  archivedAt     DateTime?
   isFlashSale    Boolean   @default(false)
   flashSaleStart DateTime?
   flashSaleEnd   DateTime?
@@ -312,6 +322,7 @@ model Product {
   @@index([isPublished, isDraft])
   @@index([isFeatured])
   @@index([isFlashSale])
+  @@index([archivedAt])
   // ── Phase 6 composite indexes ─────────────────────────────────────────
   // Every public listing filters on (isPublished, isDraft) first, so that
   // pair leads each composite. Without these, MySQL scans the whole table

@@ -26,6 +26,19 @@ const USERS = [
   { email: 'super@sharkmart.test', name: 'Rahim Hossain', role: 'SUPER_ADMIN' as const },
   { email: 'inventory@sharkmart.test', name: 'Inventory Staff', role: 'INVENTORY_STAFF' as const },
   { email: 'customer@sharkmart.test', name: 'Test Customer', role: 'CUSTOMER' as const },
+  /**
+   * Phase 9 pass B1 adds these two.
+   *
+   * The products suite needs to prove the permission gate is real in both
+   * directions: a role that holds `catalog:write` must be admitted, and a role
+   * that does not must be refused. INVENTORY_STAFF and MARKETING_STAFF both hold
+   * `catalog:write` in the shipped matrix (services/permissions.ts:73-96), so
+   * neither can prove the refusal — ORDER_MANAGER can, once a route needs a
+   * permission it does not hold. MARKETING_STAFF is seeded anyway because the
+   * brief's gate list names it and a future B2-B5 screen will need it.
+   */
+  { email: 'marketing@sharkmart.test', name: 'Marketing Staff', role: 'MARKETING_STAFF' as const },
+  { email: 'manager@sharkmart.test', name: 'Order Manager', role: 'ORDER_MANAGER' as const },
 ];
 
 async function main(): Promise<void> {

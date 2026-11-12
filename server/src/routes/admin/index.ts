@@ -23,6 +23,7 @@ import { prisma } from '../../config/database.js';
 import { notFound } from '../../middleware/errorHandler.js';
 import { isAdminRole, permissionsFor } from '../../services/permissions.js';
 import { dashboardRouter } from './dashboard.js';
+import { productsRouter } from './products.js';
 
 export const adminRouter: Router = Router();
 
@@ -143,3 +144,4 @@ adminRouter.get('/audit', requirePermission('audit:read'), async (req, res, next
 
 // ── Module routers ──────────────────────────────────────────────────────────
 adminRouter.use('/dashboard', dashboardRouter);
+adminRouter.use('/products', productsRouter);
