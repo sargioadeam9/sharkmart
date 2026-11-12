@@ -30,6 +30,73 @@
 
 ---
 
+## 2026-11-12 · Phase 6 · public catalog API · complete
+
+**Completed**
+- `server/src/services/mappers.ts` — the wire contract. `ProductDto` / `ProductDetailDto` / `CategoryDto` / `BrandDto`, explicit `PRODUCT_LIST_SELECT` (never `SELECT *`), `stockStatusOf`.
+- `server/src/services/product.service.ts` — listing, slugs, detail. `PUBLISHED` filter defined once; warehouse stock summed in one `groupBy` per page, not per row.
+- `server/src/services/category.service.ts`, `homepage.service.ts` — category tree with counts; the homepage aggregate (9 parallel `findMany` + 1 stock query, fixed query count).
+- `server/src/services/cache.ts` — cache-aside with tag registration. TTLs: homepage 300s, categories 600s, products 120s, flash sale 60s.
+- `server/src/config/redis.ts` — `KeyValueStore` with an ioredis backend and an in-process fallback. Redis down degrades to per-process caching; it never fails a request.
+- `server/src/middleware/rateLimiter.ts` — fixed-window `INCR`+`EXPIRE`, 100/min API, 30/min search, `X-RateLimit-*` on every response, fail-open.
+- `server/src/middleware/validate.ts`, `requestLogger.ts` — Zod query/param validation; pino HTTP logging.
+- `server/src/validators/catalog.schema.ts` — every schema `.strict()` (unknown key = 422), every numeric `coerce`d and bounded.
+- `server/src/routes/public/{products,categories,discovery}.ts` — all nine endpoints.
+- `server/prisma/schema.prisma` + migration `20261111192735_phase6_catalog_api_indexes` — `originalPricePoisha` column and 6 composite indexes on the filtered/sorted paths.
+- `server/tests/` — 57 tests across 4 files: envelope, products, search, cache-and-limits.
+- `eslint.config.mjs` — **the server was excluded from lint entirely before this phase.** Added a `server/**/*.ts` block so `npm run lint` actually covers the API.
+
+**Verified** (real command output)
+
+- `npm test` (server) → **57 passed / 57**, 4 files, 3.69s
+- `npx tsc --noEmit` (server) → exit 0
+- `npx tsc --noEmit` (root) → exit 0
+- `npx eslint .` (root) → **0 errors**, 1 pre-existing warning (`layout.tsx` custom font)
+- `npx prisma validate` → valid
+- `npm run build` (root) → green, 187 pages (168 product + 14 category + 5 static)
+
+**EXPLAIN — indexes proven, not assumed**
+
+| Query | type | key chosen | rows |
+| --- | --- | --- | --- |
+| category + createdAt sort + page | `range` | `Product_isPublished_isDraft_categoryId_createdAt_idx` | 12 |
+| price-sorted listing | `ref` | `Product_isPublished_isDraft_basePricePoisha_idx` | 168 |
+| flash-sale window | `ref` | `Product_isFlashSale_idx` | 56 |
+| warehouse stock groupBy | `index` | `WarehouseStock_productId_idx` | 168 |
+
+No full table scan on any of the four. The flash-sale plan shows `Using filesort` — expected, because `isFlashSale` is the selective predicate and the sort is on `flashSaleEnd`; at 56 rows it is cheaper than a wider composite index.
+
+**p95 latency** (60 runs, warm cache, in-process, seeded data)
+
+| Endpoint | p50 | p95 | p99 |
+| --- | --- | --- | --- |
+| `/products?limit=20` | 8.4ms | **12.9ms** | 14.4ms |
+| `/products?category=fashion&sort=price_asc` | 7.4ms | **10.7ms** | 11.7ms |
+| `/homepage` | 30.8ms | **44.1ms** | 51.9ms |
+| `/categories` | 5.5ms | **8.8ms** | 9.6ms |
+
+Cold cache (15 runs, cache cleared between each): `/products` p95 **33.2ms**, `/homepage` p95 **117.3ms**. Both under the 200ms gate with the cache doing nothing.
+
+**Not done / partial**
+- **Redis is not installed on this machine.** Everything above ran on the in-process fallback. The cache and limiter are correct and tested, but cross-process sharing is unproven until a real Redis is running. `REDIS_URL` is set in `.env` and points at `localhost:6379`.
+- `inStockOnly` is applied after the page is mapped, so `meta.total` counts in-stock and out-of-stock together when that flag is set. Documented in `product.service.ts`; the storefront uses it as a client-side filter and does not read the count.
+- No `LandingPage` rows are seeded, so `/landing/:slug` is only tested for its 404 path.
+- The storefront still reads the mock layer. `NEXT_PUBLIC_USE_MOCK=false` is Phase 7's job.
+
+**Assumptions**
+- `originalPricePoisha` is now stored by the seed rather than derived. Deriving it from `discountPercent` was wrong for 129 of 168 products — OSB-1127 is ৳1,240 → ৳2,070, and the reverse formula said ৳2,067. The struck-through price must be the real original, not a back-computation.
+- Flash-sale products got real `flashSaleStart`/`flashSaleEnd` windows in the seed; `isFlashSale` alone left the window empty and the endpoint returned nothing.
+- `trust proxy` is set to exactly 1 hop in production only. Trusting all hops would let a client spoof `X-Forwarded-For` and reset its own rate limit.
+
+**Landmines**
+- **Prisma client generation fails while the API dev server is running** — the running process holds the query engine DLL on Windows. Stop the server, regenerate, restart. Cost 10 minutes.
+- **The rate limiter will fail your own load test.** 240 requests in a minute trips the 100/min bucket and every later assertion returns 429. Any latency or soak script must clear `rl:*` between measurements.
+- **`clearCache` originally left `tag:*` registrations behind**, so `invalidateTag` reported deleting keys that no longer existed. Fixed in this phase; the test that caught it is `invalidateTag deletes the keys registered under it`.
+- **`LOG_LEVEL=silent` is not valid** — the enum is `fatal|error|warn|info|debug|trace`. An invalid value exits the process at boot with a config error, which looks like a crash.
+
+**Next step**
+- Phase 7: flip `NEXT_PUBLIC_USE_MOCK=false` for search and the account routes, and point the storefront's `src/lib/api/*` at `/api/v1` — the endpoints and their payload shapes are now fixed and tested.
+
 ## 2026-11-12 · Phase 5 · product detail page · complete
 
 **Completed**

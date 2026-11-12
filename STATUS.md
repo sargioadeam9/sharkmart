@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-12 · **Updated by:** Phase 5 complete (product detail page)
+**Last updated:** 2026-11-12 · **Updated by:** Phase 6 complete (public catalog API)
 
 ---
 
@@ -12,11 +12,35 @@
 
 | Field | Value |
 | --- | --- |
-| Active phase | **Phase 5 — Product detail** |
+| Active phase | **Phase 6 — Public catalog API** |
 | Phase status | ✅ **Complete — gate passed** |
-| Build state | `npm run build` green (187 static pages: 168 product slugs + 14 category slugs) · `tsc --noEmit` clean · `eslint .` 0 errors, 1 pre-existing warning |
-| Blocking issues | None |
-| Next action | Phase 6 — API catalog (flip `NEXT_PUBLIC_USE_MOCK=false`) |
+| Build state | Server: `npm test` 57/57 · `tsc --noEmit` clean · `eslint .` 0 errors. Storefront: `npm run build` green (187 static pages) · `tsc --noEmit` clean |
+| Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only) |
+| Next action | Phase 7 — flip `NEXT_PUBLIC_USE_MOCK=false` and point `src/lib/api/*` at `/api/v1` |
+
+### Phase 6 — gate evidence
+
+| Gate requirement | State | Evidence |
+| --- | --- | --- |
+| All endpoints return the exact contract envelope | ✅ | `tests/envelope.test.ts` — 7 success routes asserted `{ success, data }`; 404/422 asserted `{ success:false, error:{code} }`. No route returns a bare array |
+| Nine endpoints live under `/api/v1` | ✅ | `products` · `products/slugs` · `products/:slug` · `categories` · `categories/:slug` · `brands` · `brands/:slug` · `search` · `flash-sale` · `homepage` · `landing/:slug` |
+| Bilingual search returns sensible results in both scripts | ✅ | `tests/search.test.ts` — `যোগা` and `yoga` both resolve the same product slug; SKU and brand-name search verified |
+| Pagination correct at page 1, last page, and beyond | ✅ | `tests/products.test.ts` — page 1 = exactly `limit`; last page = remainder; beyond last = empty array with honest `total`; consecutive pages do not overlap |
+| `/homepage` is one request, not eight | ✅ | `tests/cache-and-limits.test.ts` — exactly one `cache:homepage:*` key after a call; 9 parallel `findMany` + 1 stock query, fixed count |
+| p95 < 200ms on seeded data | ✅ | Warm p95: `/products` **12.9ms**, `/homepage` **44.1ms**, `/categories` **8.8ms**. Cold p95: `/products` 33.2ms, `/homepage` 117.3ms |
+| Indexes proven by EXPLAIN | ✅ | All four heavy queries use an index (`range`/`ref`/`index`), no full scan. Plans pasted in `HANDOFF.md` |
+| Draft/unpublished products never appear in public responses | ✅ | `tests/products.test.ts` creates a real draft and proves it is absent from listing, search, slug list, and 404s on direct access |
+| No N+1 | ✅ | Warehouse stock summed in one `groupBy` per page (`warehouseStockFor`), not per row |
+| Never `SELECT *` | ✅ | Explicit `PRODUCT_LIST_SELECT` in `mappers.ts`; every `findMany` names its fields |
+| Public responses never leak `costPrice` | ✅ | `tests/products.test.ts` asserts the serialized payload contains no `costPrice` |
+| Unknown slug is 404 with the envelope, never 500 | ✅ | Asserted for product and landing page |
+| Redis cache with tag-based invalidation | ✅ | `cache.ts` — TTLs 300/600/120/60s; `invalidateTag` proven to delete registered keys and leave other tags intact |
+| Rate limiting returns 429 | ✅ | Search bucket (30/min) trips 429 with `RATE_LIMITED` + `Retry-After`; `X-RateLimit-*` on every response |
+| Zod validation on every query param | ✅ | Every schema `.strict()` — `?catgory=fashion` is a 422, not a silently ignored typo; `min>max` rejected with field detail |
+| helmet · CORS allowlist · gzip · pino logging | ✅ | `app.ts`; gzip confirmed by `content-encoding: gzip` on `/homepage` |
+| `npm run lint && npx tsc --noEmit && npm test` | ✅ | 0 errors (1 pre-existing font warning) · exit 0 · 57/57 |
+| Server is actually linted | ✅ | `eslint.config.mjs` — the server was excluded from lint before this phase; a `server/**/*.ts` block was added |
+
 
 ### Phase 5 — gate evidence
 
