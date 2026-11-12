@@ -69,10 +69,13 @@ The reference files still carry the **old brand, OShoppingBD** — an `O` mark a
 | Name in copy, `<title>`, meta, aria-label | OShoppingBD | **SharkMart** |
 | Domain | `oshoppingbd.com` | `sharkmart.com.bd` |
 | Admin sidebar | `ShoppingBD` | **SharkMart** |
+| House brands | `OFashion`, `OBeauty`, `OFragrance`, `OGadgets`, `ONature`, `OHome`, `OFood`, `OBooks` | **`Fashion`, `Beauty`, `Fragrance`, `Gadgets`, `Nature`, `Home`, `Food`, `Books`** — the `O` prefix is dropped |
 
 Everything else stays byte-identical. The brand swap is **not** a licence to touch a colour, a radius, a shadow, a gap, or a breakpoint.
 
 When you read `oshoppingbd.html`, mentally substitute **SharkMart** for every `OShoppingBD` string. When you write code, the string is always `SharkMart` — sourced from one constant (`BRAND.name`), never typed inline.
+
+House-brand renames live in **one place**: the `HOUSE_RENAMES` map in `tools/extract-reference.mjs`. That map drives the generated catalog, the brand slugs and every product's brand reference together. Do not hand-edit brand names in `data/reference-catalog.json` — the next regeneration would undo it. Note the slug consequence: brand `fashion` and category `fashion` now share a slug. They live in separate tables and separate routes (`/brand/…` vs `/category/…`), so nothing collides, but **never resolve a brand slug and a category slug out of one map**.
 
 ---
 

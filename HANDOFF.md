@@ -30,6 +30,40 @@
 
 ---
 
+## 2026-11-12 · Brand rename · house brands drop the "O" prefix
+
+**What changed**
+- Owner decision: the house brands inherited an `O` prefix from the old OShoppingBD brand. Dropped: `OFashion`→`Fashion`, `OBeauty`→`Beauty`, `OFragrance`→`Fragrance`, `OGadgets`→`Gadgets`, `ONature`→`Nature`, `OHome`→`Home`, `OFood`→`Food`, `OBooks`→`Books`. Slugs follow the names (`ofashion`→`fashion`).
+- `tools/extract-reference.mjs` — added a single `HOUSE_RENAMES` map plus `brandName()`, and `brandSlug()` now derives from the renamed value. The map sits **above the product loop** on purpose: product rows reference `c.own`, so the slug, both display names and every product's brand reference come from one place.
+- `data/reference-catalog.json` — regenerated with `node tools/extract-reference.mjs`. 244 lines changed, brand fields only.
+- `src/lib/categories.ts` — 9 `houseBrand` values updated (`Nature` appears twice, for `herbal-natural` and `garden-plants`).
+- `src/components/layout/preview-strip.tsx` — `/brand/ofashion` → `/brand/fashion`.
+- `server/prisma/migrations/20261112063500_rename_house_brands/migration.sql` — renames the eight brand rows in place. `updatedAt` is set by hand because Prisma's `@updatedAt` is applied by the client, not the database.
+- `AGENTS.md` §2.1 — house brands added to the sanctioned-deviation table, with the slug-collision warning.
+- `STATUS.md` — D19, D20, and Q6 resolved.
+
+**Verified**
+- `npx prisma migrate deploy` → applied.
+- DB after the migration: same 25 brands, same 168 products, same per-brand counts (6/10/10/4/24/8/10/12). No orphans, no duplicates — which is the proof that renaming in place preserved the `brandId` foreign keys on 74 products.
+- `npm run db:seed` re-run → 25 brands, 168 products (168 upserted). The seed stays idempotent against the new slugs.
+- `npx tsc --noEmit` → PASS.
+- Homepage: 0 `OFashion`, 0 `OBeauty`. Brand links now `/brand/fashion`, `/brand/beauty`, `/brand/fragrance`, `/brand/gadgets`, `/brand/nature`, `/brand/home`, `/brand/food`, `/brand/books`.
+- `/category/fashion`: 0 O-names, featured brands link to the new slugs.
+- The generated catalog and the database agree on all nine own brands.
+- The diff of `reference-catalog.json` contains no non-brand field changes: 168 products, their names and prices are untouched.
+
+**Landmine**
+- **The dev server caches the imported JSON.** After regenerating `data/reference-catalog.json` you must restart `next dev`, or the storefront keeps serving the old brand names. This is exactly what made the first verification look like a failed rename.
+
+**Not done / notes**
+- `/brand/[slug]` does not exist yet, so every `/brand/...` link still 404s. Pre-existing, not a regression.
+- `oshoppingbd.html` still says `OFashion` in 17 places. Expected — it is frozen, and the rename lives at the brand layer.
+
+**Next step**
+- Continue Phase 7 part 2 (search + guest wishlist) per the approved plan.
+
+---
+
 ## 2026-11-12 · Phase 7 (part 1) · catalog flipped to the real API
 
 **Completed**

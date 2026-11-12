@@ -40,6 +40,39 @@ const OWN = eval(grab('const OWN=', '\nconst EXT='));
 // ─── EXT (external brands) ───────────────────────────────────────────────
 const EXT = eval(grab('const EXT=', '\nconst SLIDES='));
 
+// ─── House-brand rename map ──────────────────────────────────────────────
+// The reference's house brands carry an "O" prefix inherited from the old
+// OShoppingBD brand (OFashion, OBeauty, …). SharkMart drops it so each brand
+// reads as a plain noun. This lives above the product loop because the product
+// rows reference `c.own` too — one map keeps the slug, both display names and
+// the product's brand reference from ever disagreeing.
+//
+// AGENTS.md §2.1: the frozen HTML still says OFashion. That is expected; the
+// rename happens here, never in the reference file.
+const HOUSE_RENAMES = {
+  OShoppingBD: 'SharkMart',
+  OFashion: 'Fashion',
+  OBeauty: 'Beauty',
+  OFragrance: 'Fragrance',
+  OGadgets: 'Gadgets',
+  ONature: 'Nature',
+  OHome: 'Home',
+  OFood: 'Food',
+  OBooks: 'Books',
+};
+
+/** Reference brand name -> shipped brand name. Unknown names pass through. */
+const brandName = (name) => HOUSE_RENAMES[name] ?? name;
+
+/** Reference brand name -> url slug. Derived from the renamed value. */
+const brandSlug = (name) =>
+  brandName(name)
+    .toLowerCase()
+    .replace(/['’.]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+
 // ─── T (i18n) ────────────────────────────────────────────────────────────
 const T = eval('(' + grab('const T=', '\n/* state */').replace(/;\s*$/, '') + ')');
 const tEn = T.en;
@@ -68,7 +101,7 @@ for (const c of CATS) {
       priceTaka: price,
       discountPercent: d,
       originalPriceTaka: d ? Math.round(price / (1 - d / 100) / 10) * 10 : 0,
-      brandName: b[4] || c.own,
+      brandName: brandName(b[4] || c.own),
       rating: Math.min(4.9, +(3.9 + ((id * 37) % 11) / 10).toFixed(1)),
       reviewCount: 12 + ((id * 53) % 480),
       stock: id % 11 === 5 ? 0 : id % 7 === 3 ? 4 : 20 + (id % 40),
@@ -79,21 +112,13 @@ for (const c of CATS) {
 }
 
 // ─── Brand slug map ──────────────────────────────────────────────────────
-// The reference's parent house brand is OShoppingBD. SharkMart replaces it
-// at the brand layer only (AGENTS.md §2.1) — so the slug is sharkmart.
-const brandSlug = (name) =>
-  name === 'OShoppingBD'
-    ? 'sharkmart'
-    : name
-        .toLowerCase()
-        .replace(/['’.]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '');
+// `brandName` and `brandSlug` are defined at the top of this file, above the
+// product loop, so the product rows can use the same rename map.
 
 const ownBrands = OWN.map((b) => ({
   slug: brandSlug(b.n),
-  nameEn: b.n === 'OShoppingBD' ? 'SharkMart' : b.n,
-  nameBn: b.n === 'OShoppingBD' ? 'SharkMart' : b.n,
+  nameEn: brandName(b.n),
+  nameBn: brandName(b.n),
   color: b.c,
   taglineEn: b.e[0],
   taglineBn: b.e[1],

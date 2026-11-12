@@ -687,9 +687,9 @@
       "isOwnBrand": true
     },
     {
-      "slug": "ofashion",
-      "nameEn": "OFashion",
-      "nameBn": "OFashion",
+      "slug": "fashion",
+      "nameEn": "Fashion",
+      "nameBn": "Fashion",
       "color": "#A9805C",
       "taglineEn": "Wear your story.",
       "taglineBn": "নিজের গল্প পরুন।",
@@ -697,9 +697,9 @@
       "isOwnBrand": true
     },
     {
-      "slug": "obeauty",
-      "nameEn": "OBeauty",
-      "nameBn": "OBeauty",
+      "slug": "beauty",
+      "nameEn": "Beauty",
+      "nameBn": "Beauty",
       "color": "#B5708F",
       "taglineEn": "Glow, naturally yours.",
       "taglineBn": "আপনার স্বাভাবিক উজ্জ্বলতা।",
@@ -707,9 +707,9 @@
       "isOwnBrand": true
     },
     {
-      "slug": "ofragrance",
-      "nameEn": "OFragrance",
-      "nameBn": "OFragrance",
+      "slug": "fragrance",
+      "nameEn": "Fragrance",
+      "nameBn": "Fragrance",
       "color": "#8F7248",
       "taglineEn": "Scent that stays.",
       "taglineBn": "সুবাস যা থেকে যায়।",
@@ -717,9 +717,9 @@
       "isOwnBrand": true
     },
     {
-      "slug": "ogadgets",
-      "nameEn": "OGadgets",
-      "nameBn": "OGadgets",
+      "slug": "gadgets",
+      "nameEn": "Gadgets",
+      "nameBn": "Gadgets",
       "color": "#4E73A6",
       "taglineEn": "Smart tech, smart price.",
       "taglineBn": "স্মার্ট টেক, সাশ্রয়ী দাম।",
@@ -727,9 +727,9 @@
       "isOwnBrand": true
     },
     {
-      "slug": "onature",
-      "nameEn": "ONature",
-      "nameBn": "ONature",
+      "slug": "nature",
+      "nameEn": "Nature",
+      "nameBn": "Nature",
       "color": "#4F7A3F",
       "taglineEn": "Pure from the source.",
       "taglineBn": "উৎস থেকে খাঁটি।",
@@ -737,9 +737,9 @@
       "isOwnBrand": true
     },
     {
-      "slug": "ohome",
-      "nameEn": "OHome",
-      "nameBn": "OHome",
+      "slug": "home",
+      "nameEn": "Home",
+      "nameBn": "Home",
       "color": "#9A7B58",
       "taglineEn": "Make home feel right.",
       "taglineBn": "ঘরকে করুন আপন।",
@@ -747,9 +747,9 @@
       "isOwnBrand": true
     },
     {
-      "slug": "ofood",
-      "nameEn": "OFood",
-      "nameBn": "OFood",
+      "slug": "food",
+      "nameEn": "Food",
+      "nameBn": "Food",
       "color": "#C48A1F",
       "taglineEn": "Fresh to your door.",
       "taglineBn": "তাজা, আপনার দরজায়।",
@@ -757,9 +757,9 @@
       "isOwnBrand": true
     },
     {
-      "slug": "obooks",
-      "nameEn": "OBooks",
-      "nameBn": "OBooks",
+      "slug": "books",
+      "nameEn": "Books",
+      "nameBn": "Books",
       "color": "#566C8A",
       "taglineEn": "Read more. Grow more.",
       "taglineBn": "বেশি পড়ুন, বেশি শিখুন।",
@@ -938,13 +938,13 @@
       "priceTaka": 1890,
       "discountPercent": 40,
       "originalPriceTaka": 3150,
-      "brandName": "OFashion",
+      "brandName": "Fashion",
       "rating": 4.3,
       "reviewCount": 65,
       "stock": 21,
       "sold": 42,
       "sku": "OSB-1001",
-      "brandSlug": "ofashion"
+      "brandSlug": "fashion"
     },
     {
       "refId": 2,
@@ -956,13 +956,13 @@
       "priceTaka": 3200,
       "discountPercent": 20,
       "originalPriceTaka": 4000,
-      "brandName": "OFashion",
+      "brandName": "Fashion",
       "rating": 4.7,
       "reviewCount": 118,
       "stock": 22,
       "sold": 59,
       "sku": "OSB-1002",
-      "brandSlug": "ofashion"
+      "brandSlug": "fashion"
     },
     {
       "refId": 3,
@@ -1028,13 +1028,13 @@
       "priceTaka": 2100,
       "discountPercent": 28,
       "originalPriceTaka": 2920,
-      "brandName": "OFashion",
+      "brandName": "Fashion",
       "rating": 4.1,
       "reviewCount": 330,
       "stock": 26,
       "sold": 57,
       "sku": "OSB-1006",
-      "brandSlug": "ofashion"
+      "brandSlug": "fashion"
     },
     {
       "refId": 7,
@@ -1046,13 +1046,13 @@
       "priceTaka": 2460,
       "discountPercent": 40,
       "originalPriceTaka": 4100,
-      "brandName": "OFashion",
+      "brandName": "Fashion",
       "rating": 4.5,
       "reviewCount": 383,
       "stock": 27,
       "sold": 74,
       "sku": "OSB-1007",
-      "brandSlug": "ofashion"
+      "brandSlug": "fashion"
     },
     {
       "refId": 8,
@@ -1064,13 +1064,13 @@
       "priceTaka": 4160,
       "discountPercent": 20,
       "originalPriceTaka": 5200,
-      "brandName": "OFashion",
+      "brandName": "Fashion",
       "rating": 4.9,
       "reviewCount": 436,
       "stock": 28,
       "sold": 91,
       "sku": "OSB-1008",
-      "brandSlug": "ofashion"
+      "brandSlug": "fashion"
     },
     {
       "refId": 9,
@@ -1136,13 +1136,13 @@
       "priceTaka": 2730,
       "discountPercent": 28,
       "originalPriceTaka": 3790,
-      "brandName": "OFashion",
+      "brandName": "Fashion",
       "rating": 4.3,
       "reviewCount": 168,
       "stock": 32,
       "sold": 89,
       "sku": "OSB-1012",
-      "brandSlug": "ofashion"
+      "brandSlug": "fashion"
     },
     {
       "refId": 13,
@@ -1154,7 +1154,7 @@
       "priceTaka": 890,
       "discountPercent": 40,
       "originalPriceTaka": 1480,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.7,
       "reviewCount": 221,
       "stock": 33,
@@ -1172,7 +1172,7 @@
       "priceTaka": 750,
       "discountPercent": 20,
       "originalPriceTaka": 940,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4,
       "reviewCount": 274,
       "stock": 34,
@@ -1208,7 +1208,7 @@
       "priceTaka": 890,
       "discountPercent": 40,
       "originalPriceTaka": 1480,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.8,
       "reviewCount": 380,
       "stock": 0,
@@ -1226,7 +1226,7 @@
       "priceTaka": 1150,
       "discountPercent": 20,
       "originalPriceTaka": 1440,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.1,
       "reviewCount": 433,
       "stock": 4,
@@ -1262,7 +1262,7 @@
       "priceTaka": 1160,
       "discountPercent": 40,
       "originalPriceTaka": 1930,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.9,
       "reviewCount": 59,
       "stock": 39,
@@ -1280,7 +1280,7 @@
       "priceTaka": 980,
       "discountPercent": 20,
       "originalPriceTaka": 1230,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.2,
       "reviewCount": 112,
       "stock": 40,
@@ -1316,7 +1316,7 @@
       "priceTaka": 1160,
       "discountPercent": 40,
       "originalPriceTaka": 1930,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 3.9,
       "reviewCount": 218,
       "stock": 42,
@@ -1334,7 +1334,7 @@
       "priceTaka": 1500,
       "discountPercent": 20,
       "originalPriceTaka": 1880,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.3,
       "reviewCount": 271,
       "stock": 43,
@@ -1370,13 +1370,13 @@
       "priceTaka": 380,
       "discountPercent": 40,
       "originalPriceTaka": 630,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 4,
       "reviewCount": 377,
       "stock": 45,
       "sold": 30,
       "sku": "OSB-1025",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 26,
@@ -1388,13 +1388,13 @@
       "priceTaka": 1250,
       "discountPercent": 20,
       "originalPriceTaka": 1560,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 4.4,
       "reviewCount": 430,
       "stock": 46,
       "sold": 47,
       "sku": "OSB-1026",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 27,
@@ -1406,13 +1406,13 @@
       "priceTaka": 650,
       "discountPercent": 28,
       "originalPriceTaka": 900,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 4.8,
       "reviewCount": 483,
       "stock": 0,
       "sold": 64,
       "sku": "OSB-1027",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 28,
@@ -1442,13 +1442,13 @@
       "priceTaka": 340,
       "discountPercent": 20,
       "originalPriceTaka": 430,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 4.5,
       "reviewCount": 109,
       "stock": 49,
       "sold": 28,
       "sku": "OSB-1029",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 30,
@@ -1460,13 +1460,13 @@
       "priceTaka": 2400,
       "discountPercent": 28,
       "originalPriceTaka": 3330,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 4.9,
       "reviewCount": 162,
       "stock": 50,
       "sold": 45,
       "sku": "OSB-1030",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 31,
@@ -1478,13 +1478,13 @@
       "priceTaka": 490,
       "discountPercent": 40,
       "originalPriceTaka": 820,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 4.2,
       "reviewCount": 215,
       "stock": 4,
       "sold": 62,
       "sku": "OSB-1031",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 32,
@@ -1496,13 +1496,13 @@
       "priceTaka": 1630,
       "discountPercent": 20,
       "originalPriceTaka": 2040,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 4.6,
       "reviewCount": 268,
       "stock": 52,
       "sold": 79,
       "sku": "OSB-1032",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 33,
@@ -1514,13 +1514,13 @@
       "priceTaka": 850,
       "discountPercent": 28,
       "originalPriceTaka": 1180,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 3.9,
       "reviewCount": 321,
       "stock": 53,
       "sold": 26,
       "sku": "OSB-1033",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 34,
@@ -1550,13 +1550,13 @@
       "priceTaka": 440,
       "discountPercent": 20,
       "originalPriceTaka": 550,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 4.7,
       "reviewCount": 427,
       "stock": 55,
       "sold": 60,
       "sku": "OSB-1035",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 36,
@@ -1568,13 +1568,13 @@
       "priceTaka": 3120,
       "discountPercent": 28,
       "originalPriceTaka": 4330,
-      "brandName": "OBeauty",
+      "brandName": "Beauty",
       "rating": 4,
       "reviewCount": 480,
       "stock": 56,
       "sold": 77,
       "sku": "OSB-1036",
-      "brandSlug": "obeauty"
+      "brandSlug": "beauty"
     },
     {
       "refId": 37,
@@ -1586,13 +1586,13 @@
       "priceTaka": 1800,
       "discountPercent": 40,
       "originalPriceTaka": 3000,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 4.4,
       "reviewCount": 53,
       "stock": 57,
       "sold": 94,
       "sku": "OSB-1037",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 38,
@@ -1604,13 +1604,13 @@
       "priceTaka": 2200,
       "discountPercent": 20,
       "originalPriceTaka": 2750,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 4.8,
       "reviewCount": 106,
       "stock": 0,
       "sold": 41,
       "sku": "OSB-1038",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 39,
@@ -1622,13 +1622,13 @@
       "priceTaka": 650,
       "discountPercent": 28,
       "originalPriceTaka": 900,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 4.1,
       "reviewCount": 159,
       "stock": 59,
       "sold": 58,
       "sku": "OSB-1039",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 40,
@@ -1640,13 +1640,13 @@
       "priceTaka": 3500,
       "discountPercent": 40,
       "originalPriceTaka": 5830,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 4.5,
       "reviewCount": 212,
       "stock": 20,
       "sold": 75,
       "sku": "OSB-1040",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 41,
@@ -1658,13 +1658,13 @@
       "priceTaka": 280,
       "discountPercent": 20,
       "originalPriceTaka": 350,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 4.9,
       "reviewCount": 265,
       "stock": 21,
       "sold": 92,
       "sku": "OSB-1041",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 42,
@@ -1694,13 +1694,13 @@
       "priceTaka": 2340,
       "discountPercent": 40,
       "originalPriceTaka": 3900,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 4.6,
       "reviewCount": 371,
       "stock": 23,
       "sold": 56,
       "sku": "OSB-1043",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 44,
@@ -1712,13 +1712,13 @@
       "priceTaka": 2860,
       "discountPercent": 20,
       "originalPriceTaka": 3580,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 3.9,
       "reviewCount": 424,
       "stock": 24,
       "sold": 73,
       "sku": "OSB-1044",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 45,
@@ -1730,13 +1730,13 @@
       "priceTaka": 850,
       "discountPercent": 28,
       "originalPriceTaka": 1180,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 4.3,
       "reviewCount": 477,
       "stock": 4,
       "sold": 90,
       "sku": "OSB-1045",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 46,
@@ -1748,13 +1748,13 @@
       "priceTaka": 4550,
       "discountPercent": 40,
       "originalPriceTaka": 7580,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 4.7,
       "reviewCount": 50,
       "stock": 26,
       "sold": 37,
       "sku": "OSB-1046",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 47,
@@ -1766,13 +1766,13 @@
       "priceTaka": 360,
       "discountPercent": 20,
       "originalPriceTaka": 450,
-      "brandName": "OFragrance",
+      "brandName": "Fragrance",
       "rating": 4,
       "reviewCount": 103,
       "stock": 27,
       "sold": 54,
       "sku": "OSB-1047",
-      "brandSlug": "ofragrance"
+      "brandSlug": "fragrance"
     },
     {
       "refId": 48,
@@ -1838,13 +1838,13 @@
       "priceTaka": 2150,
       "discountPercent": 28,
       "originalPriceTaka": 2990,
-      "brandName": "OGadgets",
+      "brandName": "Gadgets",
       "rating": 4.5,
       "reviewCount": 315,
       "stock": 31,
       "sold": 52,
       "sku": "OSB-1051",
-      "brandSlug": "ogadgets"
+      "brandSlug": "gadgets"
     },
     {
       "refId": 52,
@@ -1874,13 +1874,13 @@
       "priceTaka": 1750,
       "discountPercent": 20,
       "originalPriceTaka": 2190,
-      "brandName": "OGadgets",
+      "brandName": "Gadgets",
       "rating": 4.2,
       "reviewCount": 421,
       "stock": 33,
       "sold": 86,
       "sku": "OSB-1053",
-      "brandSlug": "ogadgets"
+      "brandSlug": "gadgets"
     },
     {
       "refId": 54,
@@ -1946,13 +1946,13 @@
       "priceTaka": 2800,
       "discountPercent": 28,
       "originalPriceTaka": 3890,
-      "brandName": "OGadgets",
+      "brandName": "Gadgets",
       "rating": 4.7,
       "reviewCount": 153,
       "stock": 37,
       "sold": 84,
       "sku": "OSB-1057",
-      "brandSlug": "ogadgets"
+      "brandSlug": "gadgets"
     },
     {
       "refId": 58,
@@ -1982,13 +1982,13 @@
       "priceTaka": 2280,
       "discountPercent": 20,
       "originalPriceTaka": 2850,
-      "brandName": "OGadgets",
+      "brandName": "Gadgets",
       "rating": 4.4,
       "reviewCount": 259,
       "stock": 4,
       "sold": 48,
       "sku": "OSB-1059",
-      "brandSlug": "ogadgets"
+      "brandSlug": "gadgets"
     },
     {
       "refId": 60,
@@ -2018,13 +2018,13 @@
       "priceTaka": 650,
       "discountPercent": 40,
       "originalPriceTaka": 1080,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.1,
       "reviewCount": 365,
       "stock": 41,
       "sold": 82,
       "sku": "OSB-1061",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 62,
@@ -2036,13 +2036,13 @@
       "priceTaka": 480,
       "discountPercent": 20,
       "originalPriceTaka": 600,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.5,
       "reviewCount": 418,
       "stock": 42,
       "sold": 29,
       "sku": "OSB-1062",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 63,
@@ -2054,13 +2054,13 @@
       "priceTaka": 390,
       "discountPercent": 28,
       "originalPriceTaka": 540,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.9,
       "reviewCount": 471,
       "stock": 43,
       "sold": 46,
       "sku": "OSB-1063",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 64,
@@ -2072,13 +2072,13 @@
       "priceTaka": 320,
       "discountPercent": 40,
       "originalPriceTaka": 530,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.2,
       "reviewCount": 44,
       "stock": 44,
       "sold": 63,
       "sku": "OSB-1064",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 65,
@@ -2090,13 +2090,13 @@
       "priceTaka": 260,
       "discountPercent": 20,
       "originalPriceTaka": 330,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.6,
       "reviewCount": 97,
       "stock": 45,
       "sold": 80,
       "sku": "OSB-1065",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 66,
@@ -2108,13 +2108,13 @@
       "priceTaka": 340,
       "discountPercent": 28,
       "originalPriceTaka": 470,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 3.9,
       "reviewCount": 150,
       "stock": 4,
       "sold": 27,
       "sku": "OSB-1066",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 67,
@@ -2126,13 +2126,13 @@
       "priceTaka": 850,
       "discountPercent": 40,
       "originalPriceTaka": 1420,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.3,
       "reviewCount": 203,
       "stock": 47,
       "sold": 44,
       "sku": "OSB-1067",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 68,
@@ -2144,13 +2144,13 @@
       "priceTaka": 620,
       "discountPercent": 20,
       "originalPriceTaka": 780,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.7,
       "reviewCount": 256,
       "stock": 48,
       "sold": 61,
       "sku": "OSB-1068",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 69,
@@ -2162,13 +2162,13 @@
       "priceTaka": 510,
       "discountPercent": 28,
       "originalPriceTaka": 710,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4,
       "reviewCount": 309,
       "stock": 49,
       "sold": 78,
       "sku": "OSB-1069",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 70,
@@ -2180,13 +2180,13 @@
       "priceTaka": 420,
       "discountPercent": 40,
       "originalPriceTaka": 700,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.4,
       "reviewCount": 362,
       "stock": 50,
       "sold": 25,
       "sku": "OSB-1070",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 71,
@@ -2198,13 +2198,13 @@
       "priceTaka": 340,
       "discountPercent": 20,
       "originalPriceTaka": 430,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.8,
       "reviewCount": 415,
       "stock": 0,
       "sold": 42,
       "sku": "OSB-1071",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 72,
@@ -2216,13 +2216,13 @@
       "priceTaka": 440,
       "discountPercent": 28,
       "originalPriceTaka": 610,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.1,
       "reviewCount": 468,
       "stock": 52,
       "sold": 59,
       "sku": "OSB-1072",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 73,
@@ -2234,13 +2234,13 @@
       "priceTaka": 1450,
       "discountPercent": 40,
       "originalPriceTaka": 2420,
-      "brandName": "OHome",
+      "brandName": "Home",
       "rating": 4.5,
       "reviewCount": 41,
       "stock": 4,
       "sold": 76,
       "sku": "OSB-1073",
-      "brandSlug": "ohome"
+      "brandSlug": "home"
     },
     {
       "refId": 74,
@@ -2288,13 +2288,13 @@
       "priceTaka": 3900,
       "discountPercent": 40,
       "originalPriceTaka": 6500,
-      "brandName": "OHome",
+      "brandName": "Home",
       "rating": 4.6,
       "reviewCount": 200,
       "stock": 56,
       "sold": 57,
       "sku": "OSB-1076",
-      "brandSlug": "ohome"
+      "brandSlug": "home"
     },
     {
       "refId": 77,
@@ -2306,13 +2306,13 @@
       "priceTaka": 890,
       "discountPercent": 20,
       "originalPriceTaka": 1110,
-      "brandName": "OHome",
+      "brandName": "Home",
       "rating": 3.9,
       "reviewCount": 253,
       "stock": 57,
       "sold": 74,
       "sku": "OSB-1077",
-      "brandSlug": "ohome"
+      "brandSlug": "home"
     },
     {
       "refId": 78,
@@ -2324,13 +2324,13 @@
       "priceTaka": 1750,
       "discountPercent": 28,
       "originalPriceTaka": 2430,
-      "brandName": "OHome",
+      "brandName": "Home",
       "rating": 4.3,
       "reviewCount": 306,
       "stock": 58,
       "sold": 91,
       "sku": "OSB-1078",
-      "brandSlug": "ohome"
+      "brandSlug": "home"
     },
     {
       "refId": 79,
@@ -2342,13 +2342,13 @@
       "priceTaka": 1890,
       "discountPercent": 40,
       "originalPriceTaka": 3150,
-      "brandName": "OHome",
+      "brandName": "Home",
       "rating": 4.7,
       "reviewCount": 359,
       "stock": 59,
       "sold": 38,
       "sku": "OSB-1079",
-      "brandSlug": "ohome"
+      "brandSlug": "home"
     },
     {
       "refId": 80,
@@ -2396,13 +2396,13 @@
       "priceTaka": 5070,
       "discountPercent": 40,
       "originalPriceTaka": 8450,
-      "brandName": "OHome",
+      "brandName": "Home",
       "rating": 4.8,
       "reviewCount": 38,
       "stock": 0,
       "sold": 89,
       "sku": "OSB-1082",
-      "brandSlug": "ohome"
+      "brandSlug": "home"
     },
     {
       "refId": 83,
@@ -2414,13 +2414,13 @@
       "priceTaka": 1160,
       "discountPercent": 20,
       "originalPriceTaka": 1450,
-      "brandName": "OHome",
+      "brandName": "Home",
       "rating": 4.1,
       "reviewCount": 91,
       "stock": 23,
       "sold": 36,
       "sku": "OSB-1083",
-      "brandSlug": "ohome"
+      "brandSlug": "home"
     },
     {
       "refId": 84,
@@ -2432,13 +2432,13 @@
       "priceTaka": 2280,
       "discountPercent": 28,
       "originalPriceTaka": 3170,
-      "brandName": "OHome",
+      "brandName": "Home",
       "rating": 4.5,
       "reviewCount": 144,
       "stock": 24,
       "sold": 53,
       "sku": "OSB-1084",
-      "brandSlug": "ohome"
+      "brandSlug": "home"
     },
     {
       "refId": 85,
@@ -2450,13 +2450,13 @@
       "priceTaka": 480,
       "discountPercent": 40,
       "originalPriceTaka": 800,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4.9,
       "reviewCount": 197,
       "stock": 25,
       "sold": 70,
       "sku": "OSB-1085",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 86,
@@ -2468,13 +2468,13 @@
       "priceTaka": 260,
       "discountPercent": 20,
       "originalPriceTaka": 330,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4.2,
       "reviewCount": 250,
       "stock": 26,
       "sold": 87,
       "sku": "OSB-1086",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 87,
@@ -2486,13 +2486,13 @@
       "priceTaka": 950,
       "discountPercent": 28,
       "originalPriceTaka": 1320,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4.6,
       "reviewCount": 303,
       "stock": 4,
       "sold": 34,
       "sku": "OSB-1087",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 88,
@@ -2522,13 +2522,13 @@
       "priceTaka": 780,
       "discountPercent": 20,
       "originalPriceTaka": 980,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4.3,
       "reviewCount": 409,
       "stock": 29,
       "sold": 68,
       "sku": "OSB-1089",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 90,
@@ -2540,13 +2540,13 @@
       "priceTaka": 1100,
       "discountPercent": 28,
       "originalPriceTaka": 1530,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4.7,
       "reviewCount": 462,
       "stock": 30,
       "sold": 85,
       "sku": "OSB-1090",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 91,
@@ -2558,13 +2558,13 @@
       "priceTaka": 620,
       "discountPercent": 40,
       "originalPriceTaka": 1030,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4,
       "reviewCount": 35,
       "stock": 31,
       "sold": 32,
       "sku": "OSB-1091",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 92,
@@ -2576,13 +2576,13 @@
       "priceTaka": 340,
       "discountPercent": 20,
       "originalPriceTaka": 430,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4.4,
       "reviewCount": 88,
       "stock": 32,
       "sold": 49,
       "sku": "OSB-1092",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 93,
@@ -2594,13 +2594,13 @@
       "priceTaka": 1240,
       "discountPercent": 28,
       "originalPriceTaka": 1720,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4.8,
       "reviewCount": 141,
       "stock": 0,
       "sold": 66,
       "sku": "OSB-1093",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 94,
@@ -2630,13 +2630,13 @@
       "priceTaka": 1010,
       "discountPercent": 20,
       "originalPriceTaka": 1260,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4.5,
       "reviewCount": 247,
       "stock": 35,
       "sold": 30,
       "sku": "OSB-1095",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 96,
@@ -2648,13 +2648,13 @@
       "priceTaka": 1430,
       "discountPercent": 28,
       "originalPriceTaka": 1990,
-      "brandName": "OFood",
+      "brandName": "Food",
       "rating": 4.9,
       "reviewCount": 300,
       "stock": 36,
       "sold": 47,
       "sku": "OSB-1096",
-      "brandSlug": "ofood"
+      "brandSlug": "food"
     },
     {
       "refId": 97,
@@ -2666,13 +2666,13 @@
       "priceTaka": 450,
       "discountPercent": 40,
       "originalPriceTaka": 750,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.2,
       "reviewCount": 353,
       "stock": 37,
       "sold": 64,
       "sku": "OSB-1097",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 98,
@@ -2684,13 +2684,13 @@
       "priceTaka": 380,
       "discountPercent": 20,
       "originalPriceTaka": 480,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.6,
       "reviewCount": 406,
       "stock": 38,
       "sold": 81,
       "sku": "OSB-1098",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 99,
@@ -2702,13 +2702,13 @@
       "priceTaka": 220,
       "discountPercent": 28,
       "originalPriceTaka": 310,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 3.9,
       "reviewCount": 459,
       "stock": 39,
       "sold": 28,
       "sku": "OSB-1099",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 100,
@@ -2720,13 +2720,13 @@
       "priceTaka": 350,
       "discountPercent": 40,
       "originalPriceTaka": 580,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.3,
       "reviewCount": 32,
       "stock": 40,
       "sold": 45,
       "sku": "OSB-1100",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 101,
@@ -2738,13 +2738,13 @@
       "priceTaka": 690,
       "discountPercent": 20,
       "originalPriceTaka": 860,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.7,
       "reviewCount": 85,
       "stock": 4,
       "sold": 62,
       "sku": "OSB-1101",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 102,
@@ -2756,13 +2756,13 @@
       "priceTaka": 240,
       "discountPercent": 28,
       "originalPriceTaka": 330,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4,
       "reviewCount": 138,
       "stock": 42,
       "sold": 79,
       "sku": "OSB-1102",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 103,
@@ -2774,13 +2774,13 @@
       "priceTaka": 590,
       "discountPercent": 40,
       "originalPriceTaka": 980,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.4,
       "reviewCount": 191,
       "stock": 43,
       "sold": 26,
       "sku": "OSB-1103",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 104,
@@ -2792,13 +2792,13 @@
       "priceTaka": 490,
       "discountPercent": 20,
       "originalPriceTaka": 610,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.8,
       "reviewCount": 244,
       "stock": 0,
       "sold": 43,
       "sku": "OSB-1104",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 105,
@@ -2810,13 +2810,13 @@
       "priceTaka": 290,
       "discountPercent": 28,
       "originalPriceTaka": 400,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.1,
       "reviewCount": 297,
       "stock": 45,
       "sold": 60,
       "sku": "OSB-1105",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 106,
@@ -2828,13 +2828,13 @@
       "priceTaka": 460,
       "discountPercent": 40,
       "originalPriceTaka": 770,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.5,
       "reviewCount": 350,
       "stock": 46,
       "sold": 77,
       "sku": "OSB-1106",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 107,
@@ -2846,13 +2846,13 @@
       "priceTaka": 900,
       "discountPercent": 20,
       "originalPriceTaka": 1130,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.9,
       "reviewCount": 403,
       "stock": 47,
       "sold": 94,
       "sku": "OSB-1107",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 108,
@@ -2864,13 +2864,13 @@
       "priceTaka": 310,
       "discountPercent": 28,
       "originalPriceTaka": 430,
-      "brandName": "OBooks",
+      "brandName": "Books",
       "rating": 4.2,
       "reviewCount": 456,
       "stock": 4,
       "sold": 41,
       "sku": "OSB-1108",
-      "brandSlug": "obooks"
+      "brandSlug": "books"
     },
     {
       "refId": 109,
@@ -2900,7 +2900,7 @@
       "priceTaka": 1650,
       "discountPercent": 20,
       "originalPriceTaka": 2060,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 3.9,
       "reviewCount": 82,
       "stock": 50,
@@ -2936,7 +2936,7 @@
       "priceTaka": 680,
       "discountPercent": 40,
       "originalPriceTaka": 1130,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.7,
       "reviewCount": 188,
       "stock": 52,
@@ -2954,7 +2954,7 @@
       "priceTaka": 420,
       "discountPercent": 20,
       "originalPriceTaka": 530,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4,
       "reviewCount": 241,
       "stock": 53,
@@ -2972,7 +2972,7 @@
       "priceTaka": 1850,
       "discountPercent": 28,
       "originalPriceTaka": 2570,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.4,
       "reviewCount": 294,
       "stock": 54,
@@ -3008,7 +3008,7 @@
       "priceTaka": 2150,
       "discountPercent": 20,
       "originalPriceTaka": 2690,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.1,
       "reviewCount": 400,
       "stock": 56,
@@ -3044,7 +3044,7 @@
       "priceTaka": 880,
       "discountPercent": 40,
       "originalPriceTaka": 1470,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.9,
       "reviewCount": 26,
       "stock": 58,
@@ -3062,7 +3062,7 @@
       "priceTaka": 550,
       "discountPercent": 20,
       "originalPriceTaka": 690,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.2,
       "reviewCount": 79,
       "stock": 59,
@@ -3080,7 +3080,7 @@
       "priceTaka": 2410,
       "discountPercent": 28,
       "originalPriceTaka": 3350,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.6,
       "reviewCount": 132,
       "stock": 20,
@@ -3098,7 +3098,7 @@
       "priceTaka": 950,
       "discountPercent": 40,
       "originalPriceTaka": 1580,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 3.9,
       "reviewCount": 185,
       "stock": 21,
@@ -3116,7 +3116,7 @@
       "priceTaka": 2400,
       "discountPercent": 20,
       "originalPriceTaka": 3000,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.3,
       "reviewCount": 238,
       "stock": 4,
@@ -3134,7 +3134,7 @@
       "priceTaka": 850,
       "discountPercent": 28,
       "originalPriceTaka": 1180,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.7,
       "reviewCount": 291,
       "stock": 23,
@@ -3152,7 +3152,7 @@
       "priceTaka": 3200,
       "discountPercent": 40,
       "originalPriceTaka": 5330,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4,
       "reviewCount": 344,
       "stock": 24,
@@ -3170,7 +3170,7 @@
       "priceTaka": 2650,
       "discountPercent": 20,
       "originalPriceTaka": 3310,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.4,
       "reviewCount": 397,
       "stock": 25,
@@ -3188,7 +3188,7 @@
       "priceTaka": 4200,
       "discountPercent": 28,
       "originalPriceTaka": 5830,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.8,
       "reviewCount": 450,
       "stock": 0,
@@ -3206,7 +3206,7 @@
       "priceTaka": 1240,
       "discountPercent": 40,
       "originalPriceTaka": 2070,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.1,
       "reviewCount": 23,
       "stock": 27,
@@ -3224,7 +3224,7 @@
       "priceTaka": 3120,
       "discountPercent": 20,
       "originalPriceTaka": 3900,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.5,
       "reviewCount": 76,
       "stock": 28,
@@ -3242,7 +3242,7 @@
       "priceTaka": 1110,
       "discountPercent": 28,
       "originalPriceTaka": 1540,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.9,
       "reviewCount": 129,
       "stock": 4,
@@ -3260,7 +3260,7 @@
       "priceTaka": 4160,
       "discountPercent": 40,
       "originalPriceTaka": 6930,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.2,
       "reviewCount": 182,
       "stock": 30,
@@ -3278,7 +3278,7 @@
       "priceTaka": 3450,
       "discountPercent": 20,
       "originalPriceTaka": 4310,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.6,
       "reviewCount": 235,
       "stock": 31,
@@ -3296,7 +3296,7 @@
       "priceTaka": 5460,
       "discountPercent": 28,
       "originalPriceTaka": 7580,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 3.9,
       "reviewCount": 288,
       "stock": 32,
@@ -3314,7 +3314,7 @@
       "priceTaka": 780,
       "discountPercent": 40,
       "originalPriceTaka": 1300,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.3,
       "reviewCount": 341,
       "stock": 33,
@@ -3332,7 +3332,7 @@
       "priceTaka": 320,
       "discountPercent": 20,
       "originalPriceTaka": 400,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.7,
       "reviewCount": 394,
       "stock": 34,
@@ -3350,7 +3350,7 @@
       "priceTaka": 450,
       "discountPercent": 28,
       "originalPriceTaka": 630,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4,
       "reviewCount": 447,
       "stock": 35,
@@ -3368,7 +3368,7 @@
       "priceTaka": 2800,
       "discountPercent": 40,
       "originalPriceTaka": 4670,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.4,
       "reviewCount": 20,
       "stock": 4,
@@ -3386,7 +3386,7 @@
       "priceTaka": 1650,
       "discountPercent": 20,
       "originalPriceTaka": 2060,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.8,
       "reviewCount": 73,
       "stock": 0,
@@ -3404,7 +3404,7 @@
       "priceTaka": 1350,
       "discountPercent": 28,
       "originalPriceTaka": 1880,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.1,
       "reviewCount": 126,
       "stock": 38,
@@ -3422,7 +3422,7 @@
       "priceTaka": 1010,
       "discountPercent": 40,
       "originalPriceTaka": 1680,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.5,
       "reviewCount": 179,
       "stock": 39,
@@ -3440,7 +3440,7 @@
       "priceTaka": 420,
       "discountPercent": 20,
       "originalPriceTaka": 530,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.9,
       "reviewCount": 232,
       "stock": 40,
@@ -3458,7 +3458,7 @@
       "priceTaka": 590,
       "discountPercent": 28,
       "originalPriceTaka": 820,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.2,
       "reviewCount": 285,
       "stock": 41,
@@ -3476,7 +3476,7 @@
       "priceTaka": 3640,
       "discountPercent": 40,
       "originalPriceTaka": 6070,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.6,
       "reviewCount": 338,
       "stock": 42,
@@ -3494,7 +3494,7 @@
       "priceTaka": 2150,
       "discountPercent": 20,
       "originalPriceTaka": 2690,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 3.9,
       "reviewCount": 391,
       "stock": 4,
@@ -3512,7 +3512,7 @@
       "priceTaka": 1760,
       "discountPercent": 28,
       "originalPriceTaka": 2440,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.3,
       "reviewCount": 444,
       "stock": 44,
@@ -3530,7 +3530,7 @@
       "priceTaka": 6900,
       "discountPercent": 40,
       "originalPriceTaka": 11500,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.7,
       "reviewCount": 17,
       "stock": 45,
@@ -3548,7 +3548,7 @@
       "priceTaka": 520,
       "discountPercent": 20,
       "originalPriceTaka": 650,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4,
       "reviewCount": 70,
       "stock": 46,
@@ -3566,7 +3566,7 @@
       "priceTaka": 240,
       "discountPercent": 28,
       "originalPriceTaka": 330,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.4,
       "reviewCount": 123,
       "stock": 47,
@@ -3584,7 +3584,7 @@
       "priceTaka": 690,
       "discountPercent": 40,
       "originalPriceTaka": 1150,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.8,
       "reviewCount": 176,
       "stock": 0,
@@ -3602,7 +3602,7 @@
       "priceTaka": 650,
       "discountPercent": 20,
       "originalPriceTaka": 810,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.1,
       "reviewCount": 229,
       "stock": 49,
@@ -3620,7 +3620,7 @@
       "priceTaka": 1450,
       "discountPercent": 28,
       "originalPriceTaka": 2010,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.5,
       "reviewCount": 282,
       "stock": 4,
@@ -3638,7 +3638,7 @@
       "priceTaka": 8970,
       "discountPercent": 40,
       "originalPriceTaka": 14950,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.9,
       "reviewCount": 335,
       "stock": 51,
@@ -3656,7 +3656,7 @@
       "priceTaka": 680,
       "discountPercent": 20,
       "originalPriceTaka": 850,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.2,
       "reviewCount": 388,
       "stock": 52,
@@ -3674,7 +3674,7 @@
       "priceTaka": 310,
       "discountPercent": 28,
       "originalPriceTaka": 430,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.6,
       "reviewCount": 441,
       "stock": 53,
@@ -3692,7 +3692,7 @@
       "priceTaka": 900,
       "discountPercent": 40,
       "originalPriceTaka": 1500,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 3.9,
       "reviewCount": 14,
       "stock": 54,
@@ -3710,7 +3710,7 @@
       "priceTaka": 850,
       "discountPercent": 20,
       "originalPriceTaka": 1060,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.3,
       "reviewCount": 67,
       "stock": 55,
@@ -3728,7 +3728,7 @@
       "priceTaka": 1890,
       "discountPercent": 28,
       "originalPriceTaka": 2630,
-      "brandName": "OShoppingBD",
+      "brandName": "SharkMart",
       "rating": 4.7,
       "reviewCount": 120,
       "stock": 56,
@@ -3746,13 +3746,13 @@
       "priceTaka": 350,
       "discountPercent": 40,
       "originalPriceTaka": 580,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4,
       "reviewCount": 173,
       "stock": 4,
       "sold": 34,
       "sku": "OSB-1157",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 158,
@@ -3764,13 +3764,13 @@
       "priceTaka": 650,
       "discountPercent": 20,
       "originalPriceTaka": 810,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.4,
       "reviewCount": 226,
       "stock": 58,
       "sold": 51,
       "sku": "OSB-1158",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 159,
@@ -3782,13 +3782,13 @@
       "priceTaka": 480,
       "discountPercent": 28,
       "originalPriceTaka": 670,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.8,
       "reviewCount": 279,
       "stock": 0,
       "sold": 68,
       "sku": "OSB-1159",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 160,
@@ -3800,13 +3800,13 @@
       "priceTaka": 1250,
       "discountPercent": 40,
       "originalPriceTaka": 2080,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.1,
       "reviewCount": 332,
       "stock": 20,
       "sold": 85,
       "sku": "OSB-1160",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 161,
@@ -3818,13 +3818,13 @@
       "priceTaka": 280,
       "discountPercent": 20,
       "originalPriceTaka": 350,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.5,
       "reviewCount": 385,
       "stock": 21,
       "sold": 32,
       "sku": "OSB-1161",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 162,
@@ -3836,13 +3836,13 @@
       "priceTaka": 180,
       "discountPercent": 28,
       "originalPriceTaka": 250,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.9,
       "reviewCount": 438,
       "stock": 22,
       "sold": 49,
       "sku": "OSB-1162",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 163,
@@ -3854,13 +3854,13 @@
       "priceTaka": 460,
       "discountPercent": 40,
       "originalPriceTaka": 770,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.2,
       "reviewCount": 491,
       "stock": 23,
       "sold": 66,
       "sku": "OSB-1163",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 164,
@@ -3872,13 +3872,13 @@
       "priceTaka": 850,
       "discountPercent": 20,
       "originalPriceTaka": 1060,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.6,
       "reviewCount": 64,
       "stock": 4,
       "sold": 83,
       "sku": "OSB-1164",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 165,
@@ -3890,13 +3890,13 @@
       "priceTaka": 620,
       "discountPercent": 28,
       "originalPriceTaka": 860,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 3.9,
       "reviewCount": 117,
       "stock": 25,
       "sold": 30,
       "sku": "OSB-1165",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 166,
@@ -3908,13 +3908,13 @@
       "priceTaka": 1630,
       "discountPercent": 40,
       "originalPriceTaka": 2720,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.3,
       "reviewCount": 170,
       "stock": 26,
       "sold": 47,
       "sku": "OSB-1166",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 167,
@@ -3926,13 +3926,13 @@
       "priceTaka": 360,
       "discountPercent": 20,
       "originalPriceTaka": 450,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4.7,
       "reviewCount": 223,
       "stock": 27,
       "sold": 64,
       "sku": "OSB-1167",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     },
     {
       "refId": 168,
@@ -3944,13 +3944,13 @@
       "priceTaka": 230,
       "discountPercent": 28,
       "originalPriceTaka": 320,
-      "brandName": "ONature",
+      "brandName": "Nature",
       "rating": 4,
       "reviewCount": 276,
       "stock": 28,
       "sold": 81,
       "sku": "OSB-1168",
-      "brandSlug": "onature"
+      "brandSlug": "nature"
     }
   ]
 }

@@ -334,6 +334,8 @@ Facts settled. Do not reopen without the owner's word.
 | D16 | Storefront routes load data on the **server** and pass it to the client page component as `initialData` | 2026-11-11 | Before this, `/` and all 14 category pages shipped an empty skeleton (31 KB, 0 product cards) and the crawler saw nothing. Measured after: `/` 492 KB / 222 product cards, `/category/fashion` 96 KB / 60 product links. Client components stay client for the language toggle and carousels — they just no longer *start* empty |
 | D17 | `CategoryListing` sits inside a `<Suspense>` boundary | 2026-11-11 | It calls `useSearchParams()`, which cannot run during prerender; without the boundary `next build` fails with "useSearchParams() should be wrapped in a suspense boundary". Scoping it to the listing keeps the hero, breadcrumb and three product rails server-rendered |
 | D18 | Security rules consolidated in `prompts/security.md`; `frontend.md` §16 renamed to make "never authorize in the browser" explicit | 2026-11-12 | Rules were split across three files and one heading implied frontend-side security |
+| D19 | House brands drop the `O` prefix: `OFashion`→`Fashion`, `OBeauty`→`Beauty`, `OFragrance`→`Fragrance`, `OGadgets`→`Gadgets`, `ONature`→`Nature`, `OHome`→`Home`, `OFood`→`Food`, `OBooks`→`Books` | 2026-11-12 | Owner decision. The prefix was inherited from the old OShoppingBD brand. Slugs follow the names (`ofashion`→`fashion`), so brand `fashion` now shares a slug with category `fashion` — separate tables and separate routes, so nothing collides, but never resolve both out of one map |
+| D20 | The rename lives in `HOUSE_RENAMES` in `tools/extract-reference.mjs`, and the DB rows were renamed in place | 2026-11-12 | `data/reference-catalog.json` is generated; hand-editing it would be undone by the next run. Renaming in place (migration `20261112063500_rename_house_brands`) keeps `brandId` foreign keys on 74 products intact — deleting and re-seeding would orphan or duplicate 8 brand rows |
 
 ---
 
@@ -346,6 +348,6 @@ Facts settled. Do not reopen without the owner's word.
 | Q3 | Free-delivery threshold — keep ৳2,000 for launch? | Phase 8 | Yes |
 | Q4 | Payment gateways: which merchant accounts are live for sandbox keys? | Phase 8, 13 | Build to sandbox, stub creds |
 | Q5 | Keep "Everything you need. One place." as the marketing line, or switch to the logo tagline "Fast Delivery"? | Phase 3 | Keep the reference copy; use "Fast Delivery" only as a brand tagline |
-| Q6 | Rename the house sub-brands (`OFashion`, `OBeauty`, `OGadgets`, …) to match SharkMart, or keep them? | Phase 3 / 9 | Keep them — renaming 8 brands is content, not code |
+| Q6 | ~~Rename the house sub-brands (`OFashion`, `OBeauty`, `OGadgets`, …) to match SharkMart, or keep them?~~ **Answered: renamed, `O` prefix dropped — see D19** | — | Resolved |
 | Q7 | The logo PNG has a white-ish background — confirm the production asset is truly transparent for dark surfaces | Phase 2 | Transparent (RGBA confirmed); sits on white in both designs anyway |
 | Q8 | Production database: stay on MariaDB 10.4, or target MySQL 8 for deploy? | Phase 13 | MySQL 8 in production; the schema is portable between them |

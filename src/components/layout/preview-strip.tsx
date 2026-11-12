@@ -37,7 +37,7 @@ export function PreviewStrip() {
         <Link href="/">{t('home2')}</Link>
         <Link href="/category/fashion">Category</Link>
         <Link href="/product/4">Product</Link>
-        <Link href="/brand/ofashion">Brand</Link>
+        <Link href="/brand/fashion">Brand</Link>
         <button type="button" onClick={openCart}>
           {t('cart')}
         </button>

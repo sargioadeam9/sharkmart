@@ -7,9 +7,10 @@ import { BRAND } from './brand';
  * (line 540). Do not retype ids from prose — a wrong slug silently breaks
  * /category/[slug], the mega menu and the sitemap.
  *
- * NOTE: the house sub-brand names (OFashion, OBeauty, ...) are kept verbatim
- * from the reference. Only the parent brand was renamed to SharkMart.
- * Renaming the sub-brands is an owner decision — STATUS.md Q6.
+ * NOTE: the reference prefixes its house brands with "O" (OFashion, OBeauty, …).
+ * SharkMart drops the prefix, so each house brand reads as a plain noun
+ * (Fashion, Beauty, …). The rename lives in tools/extract-reference.mjs, so the
+ * generated catalog, the brand slugs and these values cannot drift apart.
  */
 
 export interface Category {
@@ -32,7 +33,7 @@ export const CATEGORIES: readonly Category[] = [
     accent: '#D9B99B',
     tint: '#F4E9DD',
     emoji: '👗',
-    houseBrand: 'OFashion',
+    houseBrand: 'Fashion',
   },
   {
     id: 'kids-baby',
@@ -50,7 +51,7 @@ export const CATEGORIES: readonly Category[] = [
     accent: '#D8B6C6',
     tint: '#F5EAF0',
     emoji: '💄',
-    houseBrand: 'OBeauty',
+    houseBrand: 'Beauty',
   },
   {
     id: 'perfumes-fragrance',
@@ -59,7 +60,7 @@ export const CATEGORIES: readonly Category[] = [
     accent: '#B89A72',
     tint: '#F1E9DB',
     emoji: '🌸',
-    houseBrand: 'OFragrance',
+    houseBrand: 'Fragrance',
   },
   {
     id: 'gadgets-electronics',
@@ -68,7 +69,7 @@ export const CATEGORIES: readonly Category[] = [
     accent: '#6386B6',
     tint: '#E7EFF9',
     emoji: '📱',
-    houseBrand: 'OGadgets',
+    houseBrand: 'Gadgets',
   },
   {
     id: 'herbal-natural',
@@ -77,7 +78,7 @@ export const CATEGORIES: readonly Category[] = [
     accent: '#668B55',
     tint: '#E8F0E3',
     emoji: '🌿',
-    houseBrand: 'ONature',
+    houseBrand: 'Nature',
   },
   {
     id: 'home-kitchen',
@@ -86,7 +87,7 @@ export const CATEGORIES: readonly Category[] = [
     accent: '#B89A7A',
     tint: '#F0E7DD',
     emoji: '🍳',
-    houseBrand: 'OHome',
+    houseBrand: 'Home',
   },
   {
     id: 'food-grocery',
@@ -95,7 +96,7 @@ export const CATEGORIES: readonly Category[] = [
     accent: '#D9A441',
     tint: '#FBF0D9',
     emoji: '🛒',
-    houseBrand: 'OFood',
+    houseBrand: 'Food',
   },
   {
     id: 'books-education',
@@ -104,7 +105,7 @@ export const CATEGORIES: readonly Category[] = [
     accent: '#6C82A0',
     tint: '#E9EEF5',
     emoji: '📚',
-    houseBrand: 'OBooks',
+    houseBrand: 'Books',
   },
   {
     id: 'automotive-motorbike',
@@ -149,7 +150,7 @@ export const CATEGORIES: readonly Category[] = [
     accent: '#4F8050',
     tint: '#E5F0E2',
     emoji: '🪴',
-    houseBrand: 'ONature',
+    houseBrand: 'Nature',
   },
 ];
 
