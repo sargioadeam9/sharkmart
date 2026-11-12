@@ -378,14 +378,22 @@
   border-radius: var(--r-pill);
   padding: 3px;
 }
-.admin-root .seg button {
+/* Tabs are rendered as <a> (real navigable links) or <button>; both must match. */
+.admin-root .seg button,
+.admin-root .seg a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px 14px;
   border-radius: var(--r-pill);
   font-weight: 600;
   color: var(--muted);
   min-height: 36px;
+  text-decoration: none;
+  white-space: nowrap;
 }
-.admin-root .seg button.on {
+.admin-root .seg button.on,
+.admin-root .seg a.on {
   background: var(--navy);
   color: #fff;
 }
@@ -1256,7 +1264,8 @@
     width: 100%;
     overflow-x: auto;
   }
-  .admin-root .seg button {
+  .admin-root .seg button,
+  .admin-root .seg a {
     flex: 1;
   }
   .admin-root .table-wrap {
@@ -1374,4 +1383,652 @@
     transition: none !important;
     animation: none !important;
   }
+}
+
+/* ==========================================================================
+   Phase 9 pass B1 — Products screen.
+
+   Everything here is prefixed `prod-` or `editor-`, or scoped under
+   `.admin-root`. That is not decoration: the storefront's home.css has
+   unscoped `.card`, `.badge` and `.grid` rules, and Pass A lost time to
+   exactly that collision. A prefixed name is a second lock on a door the
+   `.admin-root` scope already locks.
+
+   No new tokens. The palette, radii and breakpoints are the ones in the token
+   block at the top of this file: brand #c8143c, ink #16223d, bg #f6f7fa,
+   radii 20/14/10, breakpoints 1180/960/720/360.
+   ========================================================================== */
+
+/* ---------- Toolbar ---------- */
+.admin-root .prod-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.admin-root .prod-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 260px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  color: var(--muted);
+}
+
+.admin-root .prod-search:focus-within {
+  border-color: var(--brand-100);
+  box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+.admin-root .prod-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  color: var(--text);
+}
+
+.admin-root .prod-clear {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.admin-root .prod-clear:hover {
+  background: var(--mute-bg);
+  color: var(--text);
+}
+
+.admin-root .prod-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-root .prod-filters select {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  max-width: 190px;
+}
+
+.admin-root .prod-filters select:focus {
+  outline: 0;
+  border-color: var(--brand-100);
+  box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+/* ---------- Tabs ---------- */
+.admin-root .prod-tabs {
+  margin-bottom: 14px;
+}
+
+/* ---------- Table ---------- */
+.admin-root .prod-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-root .prod-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.admin-root .prod-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .prod-notice {
+  margin: 0;
+  padding: 10px 18px;
+  font-size: 13px;
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.admin-root .prod-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-root .prod-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.admin-root .prod-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.admin-root .prod-table tbody tr {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.admin-root .prod-table tbody tr:hover {
+  background: var(--brand-50);
+}
+
+.admin-root .prod-table tbody tr.prod-row-selected {
+  background: var(--brand-50);
+}
+
+.admin-root .prod-check {
+  width: 40px;
+  padding-left: 18px !important;
+}
+
+.admin-root .prod-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.admin-root .prod-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-root .prod-thumb {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+  background: var(--mute-bg);
+  border: 1px solid var(--line-2);
+}
+
+.admin-root .prod-thumb-empty {
+  display: block;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--mute-bg),
+    var(--mute-bg) 4px,
+    var(--line-2) 4px,
+    var(--line-2) 8px
+  );
+}
+
+.admin-root .prod-names {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+/* The product name is the one column a user actually reads; give it the room
+   and let Category absorb the squeeze instead. Without this the auto layout
+   hands 200px to Category and starves the name to ~95px. */
+.admin-root .prod-table th.prod-col-name {
+  width: 34%;
+  min-width: 210px;
+}
+.admin-root .prod-table th.prod-col-cat {
+  width: 14%;
+  max-width: 150px;
+}
+.admin-root .prod-table td.prod-col-cat {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-root .prod-names b {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-root .prod-names small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-root .prod-sku {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--mute-bg);
+  color: var(--navy-2);
+  white-space: nowrap;
+}
+
+/* ---------- Pager ---------- */
+.admin-root .prod-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+}
+
+.admin-root .prod-page-label {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Empty ---------- */
+.admin-root .prod-empty {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  padding: 32px 24px;
+  color: var(--muted);
+}
+
+/* ---------- Bulk bar ---------- */
+.admin-root .prod-bulk {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--navy);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: var(--shadow);
+}
+
+.admin-root .prod-bulk-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-root .prod-bulk .btn {
+  background: #fff;
+  color: var(--navy);
+}
+
+.admin-root .prod-bulk .btn.ghost {
+  background: transparent;
+  color: #c9d2e8;
+  border-color: rgba(255, 255, 255, 0.24);
+}
+
+/* ---------- Row drawer ---------- */
+.admin-root .prod-drawer {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-root .prod-drawer-img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  border-radius: var(--r-md);
+  margin-bottom: 14px;
+  background: var(--mute-bg);
+}
+
+.admin-root .prod-drawer-badges {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Editor layout ---------- */
+.admin-root .editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+  align-items: start;
+}
+
+.admin-root .editor-main {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.admin-root .editor-side {
+  display: grid;
+  gap: 16px;
+  position: sticky;
+  top: 84px;
+}
+
+.admin-root .editor-section {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-root .editor-section h2 {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.admin-root .editor-alert {
+  border-left: 3px solid var(--bad);
+  color: var(--bad);
+  font-size: 14px;
+  padding: 14px 16px;
+}
+
+.admin-root .editor-notice {
+  border-left: 3px solid var(--ok);
+  color: var(--ok);
+  font-size: 14px;
+  padding: 14px 16px;
+}
+
+.admin-root .editor-hint {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin: 0;
+}
+
+.admin-root .editor-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.admin-root .editor-back:hover {
+  color: var(--brand);
+}
+
+.admin-root .editor-link {
+  margin-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.admin-root .editor-payable {
+  display: grid;
+  gap: 2px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .editor-payable small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.admin-root .editor-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-root .editor-status small {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-root .editor-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.admin-root .editor-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+}
+
+/* ---------- Images ---------- */
+.admin-root .editor-img-add {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-root .editor-img-add input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: 14px;
+}
+
+.admin-root .editor-img-add input:focus {
+  outline: 0;
+  border-color: var(--brand-100);
+  box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+.admin-root .editor-imgs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.admin-root .editor-img {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+}
+
+.admin-root .editor-img img {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: var(--mute-bg);
+}
+
+.admin-root .editor-img-meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-root .editor-img-meta small {
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 0;
+}
+
+.admin-root .editor-img-actions {
+  display: flex;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.admin-root .editor-img-actions .icon-btn {
+  width: 30px;
+  height: 30px;
+}
+
+.admin-root .icon-btn.danger:hover {
+  color: var(--bad);
+  background: var(--bad-bg);
+}
+
+/* ---------- Variants ---------- */
+.admin-root .editor-variant-add {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-root .editor-variant-add input {
+  height: 38px;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-root .editor-variant-add input:focus {
+  outline: 0;
+  border-color: var(--brand-100);
+  box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1180px) {
+  .admin-root .editor-grid {
+    grid-template-columns: 1fr;
+  }
+  .admin-root .editor-side {
+    position: static;
+  }
+}
+
+@media (max-width: 960px) {
+  .admin-root .editor-variant-add {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-root .prod-toolbar {
+    padding: 12px;
+  }
+  .admin-root .prod-filters {
+    width: 100%;
+  }
+  .admin-root .prod-filters select {
+    flex: 1 1 140px;
+    max-width: none;
+  }
+  .admin-root .prod-table-head {
+    padding: 12px;
+  }
+  .admin-root .prod-pager {
+    padding: 12px;
+  }
+
+  /* The bulk bar sits above the mobile bottom nav, which is fixed at
+     `bottom: 10px + safe-area` and is 64px tall. Without the offset the bar
+     covers the nav and the operator cannot leave the screen. */
+  .admin-root .prod-bulk {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    z-index: 25;
+    margin: 0;
+  }
+
+  .admin-root .editor-variant-add {
+    grid-template-columns: 1fr;
+  }
+  .admin-root .editor-img-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-root .prod-filters select {
+    flex: 1 1 100%;
+  }
+  .admin-root .prod-bulk {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .admin-root .prod-bulk-actions .btn {
+    flex: 1;
+  }
+}
+
+/* ---------- Dark mode ---------- */
+.admin-root[data-theme='dark'] .prod-search,
+.admin-root[data-theme='dark'] .prod-filters select,
+.admin-root[data-theme='dark'] .editor-img-add input,
+.admin-root[data-theme='dark'] .editor-variant-add input {
+  background: #1b2740;
+  border-color: #2c3a58;
+  color: #e8ecf6;
+}
+
+.admin-root[data-theme='dark'] .prod-thumb,
+.admin-root[data-theme='dark'] .editor-img img,
+.admin-root[data-theme='dark'] .prod-drawer-img {
+  background: #1b2740;
+  border-color: #2c3a58;
+}
+
+.admin-root[data-theme='dark'] .prod-sku {
+  background: #1b2740;
+  color: #b9c6e4;
+}
+
+.admin-root[data-theme='dark'] .prod-table tbody tr:hover,
+.admin-root[data-theme='dark'] .prod-table tbody tr.prod-row-selected {
+  background: #1f2c47;
+}
+
+.admin-root[data-theme='dark'] .editor-img {
+  border-color: #2c3a58;
+}
+
+.admin-root[data-theme='dark'] .editor-payable {
+  color: #e8ecf6;
 }

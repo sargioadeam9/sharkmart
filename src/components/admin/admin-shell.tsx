@@ -26,7 +26,6 @@ import {
   BadgeCheck,
   Bell,
   Boxes,
-  ChevronDown,
   FolderTree,
   Gift,
   LayoutDashboard,
@@ -42,13 +41,12 @@ import {
   Sun,
   Tag,
   Users,
-  X,
   type LucideIcon,
 } from 'lucide-react';
 
 import { BRAND } from '@/lib/brand';
 import { formatMoneyAdmin } from '@/lib/format';
-import { bottomNavItems, labelForPath, visibleNav, type AdminNavItem } from '@/lib/admin/nav';
+import { bottomNavItems, visibleNav, type AdminNavItem } from '@/lib/admin/nav';
 
 /** Icon registry — the nav file stores names, this resolves them. */
 const ICONS: Record<string, LucideIcon> = {
@@ -144,9 +142,15 @@ export function AdminShell({
    * server, and reading it during render would make the server and client
    * markup disagree (a hydration error). The brief flash is avoided by the
    * inline script in the layout, which sets the attribute before paint.
+   *
+   * The setState here is a one-shot sync from an external system (localStorage)
+   * after mount, which is the documented use of an effect. The lint rule that
+   * flags it is suppressed deliberately rather than restructured: reading
+   * localStorage in a lazy initialiser would run on the server and crash.
    */
   useEffect(() => {
     const saved = window.localStorage.getItem(THEME_KEY);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot external read
     if (saved === 'dark') setDark(true);
   }, []);
 
@@ -193,10 +197,18 @@ export function AdminShell({
     return () => document.removeEventListener('mousedown', onPointerDown);
   }, []);
 
-  /** Close the mobile drawer whenever the route changes. */
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [pathname]);
+  /**
+   * Close the mobile drawer whenever the route changes.
+   *
+   * Adjusted during render rather than in an effect: this is React's documented
+   * pattern for "reset state when a value changes", and an effect would render
+   * the open drawer once more before closing it.
+   */
+  const [drawerPath, setDrawerPath] = useState(pathname);
+  if (drawerPath !== pathname) {
+    setDrawerPath(pathname);
+    if (drawerOpen) setDrawerOpen(false);
+  }
 
   function onSearchSubmit(event: React.FormEvent) {
     event.preventDefault();

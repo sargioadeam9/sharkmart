@@ -1,9 +1,10 @@
 /**
- * Admin API client — the two halves the panel needs.
+ * Admin API client — the server half, plus re-exports of the browser half.
  *
- * `adminFetchServer` runs in a server component (the layout) and forwards the
- * incoming cookies by hand. `adminFetch` runs in the browser and relies on
- * `credentials: 'include'` plus the CSRF double-submit.
+ * `adminFetchServer` runs in a server component (the layout, the products list,
+ * the editor pages) and forwards the incoming cookies by hand. The browser half
+ * lives in `admin-client.ts` because this file imports `next/headers`, which
+ * cannot be bundled into a Client Component.
  *
  * Why the server half cannot reuse `sessionFetch`: that function is written for
  * the browser and reads `document.cookie`, which does not exist on the server.
@@ -12,35 +13,18 @@
  * per-user admin call, and it would leak the internal token into an admin
  * request that does not need it.
  *
- * So this file is the third case, and it is small on purpose.
+ * **Import rule:** a client component imports `admin-client.ts`, never this
+ * file. A server component may import either.
  */
 
 import { cookies } from 'next/headers';
 import type { ApiResponse, ApiSuccess } from '@/types/api';
 import { API_BASE_URL, API_PREFIX } from './config';
+import { AdminApiError } from './admin-client';
 
-/** Mirrors `SessionClientError` so callers branch on `status` the same way. */
-export class AdminApiError extends Error {
-  readonly code: string;
-  readonly status: number;
-
-  constructor(code: string, message: string, status: number) {
-    super(message);
-    this.name = 'AdminApiError';
-    this.code = code;
-    this.status = status;
-  }
-
-  /** No session at all — the layout redirects to login. */
-  get isUnauthenticated(): boolean {
-    return this.status === 401;
-  }
-
-  /** Signed in, but not staff — the layout renders the 403 page. */
-  get isForbidden(): boolean {
-    return this.status === 403;
-  }
-}
+// The browser half, re-exported so a server component has one import.
+export { AdminApiError, adminFetch } from './admin-client';
+export type { AdminRequestOptions } from './admin-client';
 
 /**
  * Server-side admin call, forwarding the caller's cookies.
@@ -79,79 +63,20 @@ export async function adminFetchServer<T>(path: string): Promise<ApiSuccess<T>> 
   try {
     payload = (await response.json()) as ApiResponse<T>;
   } catch {
-    throw new AdminApiError('INTERNAL_ERROR', 'The API returned an unreadable response.', response.status);
-  }
-
-  if (!payload.success) {
-    throw new AdminApiError(payload.error.code, payload.error.message, response.status);
-  }
-
-  return payload;
-}
-
-/** Reads the CSRF cookie in the browser. Mirrors `session-client.ts`. */
-function readCsrfToken(): string {
-  if (typeof document === 'undefined') return '';
-  const match = document.cookie
-    .split(';')
-    .map((part) => part.trim())
-    .find((part) => part.startsWith('csrf_token='));
-  return match ? decodeURIComponent(match.slice('csrf_token='.length)) : '';
-}
-
-interface AdminRequestOptions {
-  method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
-  body?: unknown;
-  signal?: AbortSignal;
-}
-
-/**
- * Browser-side admin call.
- *
- * Same contract as `sessionFetch`, kept separate so the admin surface has one
- * import and cannot accidentally pick up the storefront's caching behaviour.
- */
-export async function adminFetch<T>(
-  path: string,
-  options: AdminRequestOptions = {},
-): Promise<ApiSuccess<T>> {
-  const { method = 'GET', body, signal } = options;
-  const url = `${API_BASE_URL}${API_PREFIX}${path}`;
-
-  const csrf = method !== 'GET' ? readCsrfToken() : '';
-
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      method,
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-        ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
-      },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-      signal,
-      cache: 'no-store',
-    });
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') throw error;
     throw new AdminApiError(
       'INTERNAL_ERROR',
-      `Cannot reach the API at ${API_BASE_URL}. Is the server running?`,
-      0,
+      'The API returned an unreadable response.',
+      response.status,
     );
   }
 
-  let payload: ApiResponse<T>;
-  try {
-    payload = (await response.json()) as ApiResponse<T>;
-  } catch {
-    throw new AdminApiError('INTERNAL_ERROR', 'The API returned an unreadable response.', response.status);
-  }
-
   if (!payload.success) {
-    throw new AdminApiError(payload.error.code, payload.error.message, response.status);
+    throw new AdminApiError(
+      payload.error.code,
+      payload.error.message,
+      response.status,
+      payload.error.details,
+    );
   }
 
   return payload;

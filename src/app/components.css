@@ -242,7 +242,11 @@
   transform: scale(1.12) rotate(-4deg);
 }
 
-.badge {
+/* Scoped to the product card on purpose. A bare `.badge` here leaked into the
+   admin panel (which has its own `.admin-root .badge` design) and, being later
+   in the cascade, absolutely-positioned every admin status pill at 10px/10px.
+   The storefront's Badge component uses Tailwind utilities, not this class. */
+.pc .badge {
   position: absolute;
   left: 10px;
   top: 10px;
