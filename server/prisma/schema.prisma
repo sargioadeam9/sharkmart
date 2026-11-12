@@ -148,6 +148,17 @@ model Product {
   discountPricePoisha  Int?
   flashSalePricePoisha Int?
 
+  /**
+   * The struck-through "was" price, stored rather than derived.
+   *
+   * Deriving it as basePrice / (1 - discountPercent/100) is wrong for 129 of
+   * the 168 catalog products: the reference rounds the original price to whole
+   * taka independently of the sale price, so 950 at 28% off shows ৳1,320, not
+   * the ৳1,319 the formula produces. The catalog carries the real number, so
+   * the database stores it. 0 means "no discount", matching the wire contract.
+   */
+  originalPricePoisha  Int  @default(0)
+
   isPublished    Boolean   @default(false)
   isDraft        Boolean   @default(true)
   isFeatured     Boolean   @default(false)
@@ -189,6 +200,18 @@ model Product {
   @@index([isPublished, isDraft])
   @@index([isFeatured])
   @@index([isFlashSale])
+
+  // ── Phase 6 composite indexes ─────────────────────────────────────────
+  // Every public listing filters on (isPublished, isDraft) first, so that
+  // pair leads each composite. Without these, MySQL scans the whole table
+  // and sorts in a filesort; with them the filter and the ORDER BY both
+  // come off one index. Proven by EXPLAIN in HANDOFF.md.
+  @@index([isPublished, isDraft, categoryId, createdAt])
+  @@index([isPublished, isDraft, brandId, createdAt])
+  @@index([isPublished, isDraft, createdAt])
+  @@index([isPublished, isDraft, basePricePoisha])
+  @@index([isPublished, isDraft, ratingAvg])
+  @@index([isFlashSale, flashSaleStart, flashSaleEnd])
 }
 
 model ProductImage {

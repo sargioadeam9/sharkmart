@@ -198,6 +198,13 @@ async function seedProducts(
 
   let written = 0;
 
+  /**
+   * One flash-sale window for the whole seed run: started an hour ago, ends in
+   * 24 hours. Anchored to the run so a reseed always produces a live sale.
+   */
+  const seedFlashStart = new Date(Date.now() - 60 * 60 * 1000);
+  const seedFlashEnd = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
   for (const p of catalog.products) {
     const categoryId = categoryIds.get(p.categoryId);
     if (!categoryId) throw new Error(`seed: unknown category ${p.categoryId}`);
@@ -209,6 +216,15 @@ async function seedProducts(
     const discountPricePoisha = p.discountPercent > 0 ? basePricePoisha : null;
     const isFlashSale = p.discountPercent >= 30;
 
+    /**
+     * The struck-through price comes from the catalog, never from a formula.
+     * `basePrice / (1 - discount/100)` disagrees with the reference on 129 of
+     * 168 products because the reference rounds the original to whole taka
+     * separately. Storing the real number is the only honest option.
+     */
+    const originalPricePoisha =
+      p.discountPercent > 0 ? poisha(p.originalPriceTaka) : 0;
+
     const data = {
       nameEn: p.nameEn,
       nameBn: p.nameBn,
@@ -219,11 +235,23 @@ async function seedProducts(
       basePricePoisha,
       discountPercent: p.discountPercent,
       discountPricePoisha,
+      originalPricePoisha,
       isPublished: true,
       isDraft: false,
       isFeatured: p.refId <= 14,
       isFlashSale,
       flashSalePricePoisha: isFlashSale ? basePricePoisha : null,
+      /**
+       * A flash sale with no window is not a flash sale — `/flash-sale` filters
+       * on `flashSaleStart <= now < flashSaleEnd`, so a null window would make
+       * every flagged product invisible to the endpoint that exists to show it.
+       *
+       * The seed anchors the window to the seed run rather than a fixed date,
+       * so a freshly seeded database always has a live sale to test against.
+       * It is demo data, not a business schedule.
+       */
+      flashSaleStart: isFlashSale ? seedFlashStart : null,
+      flashSaleEnd: isFlashSale ? seedFlashEnd : null,
       ratingAvg: p.rating,
       reviewCount: p.reviewCount,
       metaTitleEn: `${p.nameEn} — SharkMart`,
