@@ -19,7 +19,7 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 import { app, prisma, resetRateLimits } from './helpers.js';
-import { withAudit, audit, diffChanges } from '../src/services/audit.service.js';
+import { withAudit, diffChanges } from '../src/services/audit.service.js';
 import { can, permissionsFor, isAdminRole } from '../src/services/permissions.js';
 
 const PASSWORD = 'Admin@12345';

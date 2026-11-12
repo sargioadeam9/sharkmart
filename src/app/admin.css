@@ -2032,3 +2032,399 @@
 .admin-root[data-theme='dark'] .editor-payable {
   color: #e8ecf6;
 }
+
+/* ---------- Orders module (Phase 9 pass B2) ----------
+   Everything here is prefixed `ord-` for the same reason the products screen
+   prefixed `prod-`: a second lock on the same door. The rules below reuse the
+   existing .card / .badge / .btn / .table-wrap primitives and only add what the
+   orders screen needs on top of them. */
+
+.admin-root .ord-tab-count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--line-2);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 700;
+}
+
+.admin-root .seg a.on .ord-tab-count {
+  background: var(--brand-100);
+  color: var(--brand-600);
+}
+
+.admin-root .ord-toolbar {
+  flex-wrap: wrap;
+}
+
+.admin-root .ord-date {
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-root .ord-date:focus {
+  outline: none;
+  border-color: var(--brand-100);
+  box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+/* The order number is the identifier an operator reads aloud on a call. */
+.admin-root .ord-number {
+  display: block;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.admin-root .ord-date-cell {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.admin-root .ord-table td {
+  vertical-align: middle;
+}
+
+.admin-root .ord-col-check {
+  width: 40px;
+}
+
+.admin-root .ord-col-district,
+.admin-root .ord-col-items {
+  white-space: nowrap;
+}
+
+.admin-root .ord-table tbody tr {
+  cursor: pointer;
+}
+
+/* ---------- Bulk bar ---------- */
+
+.admin-root .ord-bulk {
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admin-root .ord-bulk select,
+.admin-root .ord-bulk-note {
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-root .ord-bulk-note {
+  flex: 1;
+  min-width: 180px;
+}
+
+.admin-root .ord-bulk-error {
+  color: var(--bad);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* ---------- Drawer ---------- */
+
+.admin-root .ord-drawer .m-body {
+  overflow-y: auto;
+}
+
+.admin-root .ord-section-title {
+  margin: 20px 0 8px;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.admin-root .ord-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.admin-root .ord-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+}
+
+.admin-root .ord-item-thumb {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  background: var(--line-2);
+  overflow: hidden;
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.admin-root .ord-item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-root .ord-item-name b {
+  display: block;
+  font-size: 13.5px;
+}
+
+.admin-root .ord-item-name small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.admin-root .ord-totals {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.admin-root .ord-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-root .ord-grand {
+  font-weight: 800;
+  font-size: 14.5px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.admin-root .ord-address {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+/* ---------- Status flow / payment / courier rows ---------- */
+
+.admin-root .ord-flow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-root .ord-flow select,
+.admin-root .ord-flow input {
+  flex: 1;
+  min-width: 120px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.admin-root .ord-flow select:focus,
+.admin-root .ord-flow input:focus,
+.admin-root .ord-full-input:focus {
+  outline: none;
+  border-color: var(--brand-100);
+  box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+.admin-root .ord-full-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+
+/* ---------- Timeline ---------- */
+
+.admin-root .ord-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 14px;
+  border-left: 2px solid var(--line);
+  display: grid;
+  gap: 14px;
+}
+
+.admin-root .ord-timeline li {
+  position: relative;
+  font-size: 13px;
+}
+
+.admin-root .ord-timeline li::before {
+  content: '';
+  position: absolute;
+  left: -21px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.admin-root .ord-timeline small {
+  display: block;
+  color: var(--muted);
+  font-size: 11.5px;
+  margin-top: 4px;
+}
+
+.admin-root .ord-timeline p {
+  margin: 6px 0 0;
+  color: var(--text);
+}
+
+.admin-root .ord-actor {
+  font-weight: 600;
+}
+
+.admin-root .ord-spin {
+  animation: ord-spin 0.9s linear infinite;
+}
+
+@keyframes ord-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Orders at 720 and below: the table stacks ---------- */
+
+@media (max-width: 720px) {
+  .admin-root .ord-col-check,
+  .admin-root .ord-col-district,
+  .admin-root .ord-col-items {
+    display: none;
+  }
+
+  .admin-root .ord-table thead {
+    display: none;
+  }
+
+  .admin-root .ord-table tbody tr {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 10px;
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--line-2);
+  }
+
+  .admin-root .ord-table tbody td {
+    display: block;
+    padding: 0;
+    border: none;
+  }
+
+  /* The label is the data-label attribute, so a stacked row still says what
+     each value is — the reference's rule for tables under 720px. */
+  .admin-root .ord-table tbody td[data-label]:not([data-label=''])::before {
+    content: attr(data-label) ': ';
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 600;
+  }
+
+  .admin-root .ord-date {
+    width: 100%;
+  }
+}
+
+/* ---------- Dark mode ---------- */
+
+.admin-root[data-theme='dark'] .ord-date,
+.admin-root[data-theme='dark'] .ord-bulk select,
+.admin-root[data-theme='dark'] .ord-bulk-note,
+.admin-root[data-theme='dark'] .ord-flow select,
+.admin-root[data-theme='dark'] .ord-flow input,
+.admin-root[data-theme='dark'] .ord-full-input {
+  background: #1b2740;
+  border-color: #2c3a58;
+  color: #e8ecf6;
+}
+
+.admin-root[data-theme='dark'] .ord-item {
+  border-color: #2c3a58;
+}
+
+.admin-root[data-theme='dark'] .ord-item-thumb {
+  background: #1b2740;
+}
+
+.admin-root[data-theme='dark'] .ord-timeline {
+  border-color: #2c3a58;
+}
+
+/* Notice bar: icon, message and dismiss sit on one line. The shared
+   `prod-notice` rule only sets colour and padding, so the orders screen
+   carries its own layout instead of inheriting a broken stack. */
+.admin-root .ord-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  font-size: 13px;
+  border-radius: var(--r-sm);
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.admin-root .ord-notice span {
+  flex: 1;
+}
+
+.admin-root .ord-notice button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: inherit;
+  opacity: 0.75;
+}
+
+.admin-root .ord-notice button:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.admin-root .ord-notice.is-warn {
+  color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.admin-root .ord-notice.is-error {
+  color: var(--bad);
+  background: var(--bad-bg);
+}
