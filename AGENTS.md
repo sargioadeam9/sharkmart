@@ -41,6 +41,21 @@ Then, and only then, open code.
 
 **Rule:** if `STATUS.md` and your instinct disagree, `STATUS.md` wins until you prove it wrong with a command.
 
+### 1.1 Three commands before your first edit
+
+```bash
+git log --oneline -5          # is this phase already committed?
+git status --porcelain        # is there uncommitted work I would collide with?
+```
+
+And if the task touches the UI:
+
+```bash
+Get-NetTCPConnection -LocalPort 3000 | Select-Object OwningProcess
+```
+
+If that process is `next start`, the page you are about to debug is a **stale build**, not your code. In this repo's history, skipping these three checks has produced both failure modes: rebuilding work that was already merged, and debugging a build that was hours old. §6.4 has the rest of the pattern list.
+
 ---
 
 ## 2. Frozen contracts — read-only, never edit
@@ -258,6 +273,26 @@ Do not burn a frontier model on renaming a variable. Do not hand payment verific
 - Build failing for a reason unrelated to your change → report it, do not "fix" it silently.
 - A task needs a decision the owner must make → ask once, with a recommended default, then proceed on that default if no answer.
 
+### 6.4 Wasted-turn patterns
+
+Every one of these has already cost this project a session. They are cheap to avoid and expensive to repeat.
+
+| Symptom | What people do | What to do instead |
+| --- | --- | --- |
+| A change "didn't apply" | Edit the code again, restart the app, clear `.next` | Find out what is serving the port **first**: `Get-NetTCPConnection -LocalPort 3000`. If it says `next start`, you are looking at a stale build — see landmine 15. |
+| A form submits nothing, console clean | Read the component, add logs, suspect hydration | Check the URL bar and `CORS_ORIGINS`. `127.0.0.1` and `localhost` are different origins; a blocked POST looks exactly like a broken form. |
+| "React isn't hydrating" | Probe for React fibers in the browser | A probe that runs in an isolated world cannot see React's DOM expandos and returns 0 on a working page. Prove interactivity by clicking a toggle and reading the DOM. |
+| "Is this done?" | Re-read the phase prompt and explore the tree | `git log --oneline -5` and `git status`. If the commit exists and the tree is clean, the work is in. |
+| "What fields does Product have?" | Read `schema.prisma` end to end | `awk '/^model Product /,/^}/' server/prisma/schema.prisma`. It is 900+ lines; never read it whole. |
+| "Do the tests pass?" | `npm test` (33 s) after every edit | `npx tsc --noEmit` for types, and one targeted file for logic: `npm test -- adminOrder`. Full suite once, before committing. |
+| "Does it build?" | `npm run build` as a type check | `tsc` answers types in seconds. Build is for the final gate, not for iterating. |
+| "The numbers are wrong" | Recompute the aggregate in a script | Ask the endpoint that already computes it (`/counts`, `/dashboard`). If it is missing, add it server-side — never in the browser. |
+| "The UI looks broken" | Delete `.next`, then `node_modules` | The two most expensive guesses available. Check the served build, then the computed style, then the CSS cascade — in that order. |
+
+**Cheapest tool that answers the question**, in order: `grep` → `Read` with an offset → `tsc` → one test file → `curl` the endpoint → the browser. Start at the left.
+
+**Read `STATUS.md`'s newest entry and the top of `HANDOFF.md` before exploring.** They exist so you do not rediscover what the last session already proved. One read there routinely saves ten.
+
 ---
 
 ## 7. Security floor — non-negotiable, every PR
@@ -349,6 +384,12 @@ Verified facts that have already tripped someone. Read once, save hours.
 | 12 | The reference seeds 2 cart items at boot (line 872) | Demo only. Never ship pre-filled carts. |
 | 13 | Logo red ≠ token red | The SharkMart logo's crimson is brighter than the storefront token `#C51F4B`. Do **not** retune the tokens to match the artwork — the owner locked the reference palette. Place the logo asset as-is and leave tokens alone. |
 | 14 | The reference file is named `oshoppingbd.html` | The filename is historical. Do **not** rename or move it — every doc, phase prompt and gate references that exact path. |
+| 15 | `next start` left running on port 3000 | It serves the last **build**, not your edits. Every "the fix didn't apply" session in this repo traces back to it. Dev is always `npm run dev`. Before debugging a UI change, check what owns the port. |
+| 16 | Prisma `String` is `VARCHAR(191)` in MySQL | A `data:` URI placeholder is longer and MySQL truncates it **silently** — the row looks fine, the image is broken. Any URL/text column that can exceed 191 chars needs `@db.Text`. Widening it with `db push` is not a fix: it makes the database right and the migration history lie. |
+| 17 | Storefront CSS leaks into admin | `components.css` has bare `.badge`, `home.css` has bare `.hero`. Admin reuses those names, and the later rule wins — an unscoped `.badge` absolutely-positioned every admin status pill at 10px/10px. Prefix admin classes or scope them under `.admin-root`. |
+| 18 | `Product` has no `stock` column | Stock is `ProductVariant.stock` and `WarehouseStock.quantity`. Public availability is computed by `stockStatusOf()` in `services/mappers.ts` (0 → out, ≤5 → low). Any admin stock figure is an aggregate over `WarehouseStock`, never a column read. |
+| 19 | Order tabs ≠ order statuses | The enum has nine; the reference tabs show five. CONFIRMED and RETURNED are produced by the normal flow, so they need a reachable control — the status select in the toolbar, not a tab. Do not "simplify" it away because the tabs look complete. |
+| 20 | A code comment is not evidence | Twice now a comment asserted something false ("the reference shows four tabs", "reachable through the status filter") and the code disagreed. When a comment states a fact about behaviour, verify it before building on it — and fix the comment in the same commit that proves it wrong. |
 
 ---
 
