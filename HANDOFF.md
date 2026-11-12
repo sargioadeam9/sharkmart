@@ -3,6 +3,54 @@
 > **Append-only.** Newest entry at the top. Never rewrite or delete a previous agent's entry — the next agent needs the history of what was tried and rejected.
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
+## 2026-11-12 · Phase 7 (part 2) · Saffron · ~2h
+
+**Completed**
+- `src/lib/api/products.ts` — added `searchProducts(term, { limit, sort, page, signal })`. Goes through `resolve()`, so the mock switch still works; `limit` is clamped to `MAX_PAGE_LIMIT`, and `signal` is passed to `fetch` so a keystroke can abort an in-flight suggestion request.
+- `src/components/shared/search-bar.tsx` — suggestions now come from the API, not the mock catalog. Debounced 220ms, `AbortController` per term, `cancelled` flag for the resolve-after-abort race. A failed or aborted request clears the list and leaves the box fully usable. Categories stay local (14 fixed reference records). `products` prop kept but marked `@deprecated` and ignored, so callers still compile.
+- `src/app/(shop)/search/page.tsx` — server component, reads `?q=` and `?sort=`, loads results on the server, passes them as `initialData`. `generateMetadata` titles from the query and sets `robots: { index: false, follow: true }`. Missing or 1-character query renders the prompt, never a 404. An API failure renders the empty state rather than a 500.
+- `src/components/search/search-results.tsx` — grid via the existing `ProductCard`, result count, the category listing's own `SortSelect` reused. Empty state has three escapes: browse-all, popular products, category links.
+- `src/app/(shop)/wishlist/page.tsx` + `src/components/wishlist/wishlist-page.tsx` — guest wishlist, localStorage only, no server call, no auth. Grid, move-to-cart, remove, empty state with an action. `PHASE 8:` comment marks the exact merge hook point.
+- `src/lib/i18n/ui.ts` — 8 new keys in both languages (search prompt, too-short, no-results with `{q}`, browse all/categories, results-for).
+- `server/src/middleware/rateLimiter.ts` — search bucket 30 → 90 per 60s, with the reasoning in the comment.
+- `prompts/security.md` §3 — table updated to 90 in the same commit, plus a paragraph explaining why.
+- `prompts/masterbuild.md` — Phase 7 rescoped to search + guest wishlist; the auth-dependent items and the IDOR gate item moved to Phase 8's BUILD block with a one-line note on why.
+- `STATUS.md` — Phase 7 = PARTIAL, deferred list explicit, decisions D21/D22 added.
+
+**Verified** (real output)
+- `npx tsc --noEmit` → clean, both apps.
+- `npm run build` → green. 189 pages; `/search` is dynamic, `/wishlist` is static.
+- `curl localhost:3000/search?q=panjabi` → 1 line containing the taka sign, 0 `aria-busy`, 2 product cards.
+- `curl localhost:3000/search?q=<bangla panjabi>` → same: 1 taka line, 2 cards.
+- `curl localhost:3000/search?q=zzzzzz` → `aria-busy` 0, `Nothing matched` present, 0 cards.
+- `curl localhost:3000/search?q=panjabi` → `noindex` exactly once.
+- `/search` with no query → 200 + "Type at least 2 characters"; `?q=a` → 200, 0 cards.
+- Rate limit, no token: 95 requests → **90×200, 5×429**.
+- Rate limit, valid `X-Internal-Token`: 120 requests → **120×200**. Wrong token → 429. Bypass intact.
+- Browser: 12 characters typed key-by-key into the header box → no 429, 2 live suggestions from the API.
+- Browser: API stopped, `panjabi` typed → value retained, no throw, list closed, Enter still navigated.
+- Browser: card heart → count 1; PDP heart → count 1; reload → still 1, product rendered; remove → empty state with action; count matched the list throughout.
+
+**Not done / partial**
+- The whole account surface: `/login`, `/register`, `/profile`, `/profile/addresses`, `/orders`, `/orders/[id]`, `/track`. Deferred to Phase 8 — they need a session.
+- Guest → login wishlist merge. Hook point marked, not built.
+- Term highlighting in results. The reference does not have it and it was not in the gate; skipped deliberately rather than half-built.
+- Recent searches from localStorage. Also not in the gate; not built.
+
+**Assumptions**
+- Search results go through `/products?q=`, not `/api/v1/search`. Both hit the same service; `/products` keeps one query shape for the results page and the type-ahead. `searchQuery` in `catalog.schema.ts` is NOT dead — it is wired to `/api/v1/search` in `discovery.ts`, so it was left alone.
+- Sorting on `/search` is applied client-side over the loaded set, same trade the category listing makes. The server also accepts `sort` and the initial load passes it.
+- `MAX_PAGE_LIMIT` (100) is a server cap, not a catalog size. Anything reading "the whole catalog" must page.
+
+**Landmines**
+- **The pagination cap bit twice.** The catalog is 168 products; a single `listProducts({ limit: 100 })` silently returns only the first 100. A wishlist item or search match on page 2 rendered as "empty" with no error. Both `/search` and `/wishlist` now page to the server's `total` with a hard ceiling.
+- **Stale ids inflate the header badge.** `prd_osb-1001` is a mock-era id that does not exist in the real catalog. The page dropped it; the badge still counted it, so the count disagreed with the list. `/wishlist` now prunes ids a *complete* read proves are gone. Pruning changes `ids.length`, which re-runs the effect once — it converges, but do not "fix" that by removing the dependency.
+- **`useStoreHydrated` takes the store as an argument.** Calling it with no args is a type error, not a silent default.
+- PowerShell has no `grep`; use the grep tool or `Select-String`. `git commit -F -` from PowerShell writes a BOM into the subject — write the message to a file with `UTF8Encoding($false)`.
+
+**Next step**
+- Phase 8: build auth first (`POST /auth/*`, HttpOnly cookies, session middleware), then the deferred account routes and the wishlist merge at the marked hook point.
+
 **Template** (copy this for each session):
 
 ```markdown

@@ -532,14 +532,21 @@ THEN: update STATUS.md, append to HANDOFF.md with the measured p95 latency of
 
 # PHASE 7 — Search, wishlist, account (real API)
 
-**Goal:** replace the mock layer with real data for everything already built, then add the account surface.
+**Goal:** replace the mock layer with real data for everything already built, then add search and the guest wishlist.
 **Cost tier:** Standard.
+
+> **Scope note (2026-11-12):** this phase was split. `/login`, `/register`, `/profile`,
+> `/orders`, `/track`, the address book and the guest→login wishlist merge all need a
+> session, and sessions are Phase 8. Building them here would mean inventing auth
+> twice. They now sit in Phase 8's scope, listed explicitly. The IDOR gate item moved
+> with them — it asserts "cannot read another customer's order", which cannot be
+> tested before orders and sessions exist.
 
 ### Master prompt
 
 ```text
-You are starting Phase 7 of SharkMart: search, wishlist and customer account,
-now backed by the real API (Phase 6) instead of the mock layer.
+You are starting Phase 7 of SharkMart: search and the guest wishlist, now backed
+by the real API (Phase 6) instead of the mock layer.
 
 READ FIRST:
 1. prompts/frontend.md sections 6.5, 6.6, 6.7, 11
@@ -547,42 +554,40 @@ READ FIRST:
 3. oshoppingbd.html search() and the search-suggestion handler
 
 BUILD:
-/search page: query from URL, result count, same filters/sort as category,
-term highlighting, real no-results state (suggestions + popular products +
-category links), recent searches from localStorage.
-Autocomplete: debounced 200ms, grouped (categories / brands / products),
-keyboard navigable (↑↓ Enter Esc), aborts in-flight requests.
-/wishlist: grid, remove, move-to-cart, empty state; guests use localStorage,
-logged-in users sync to the server on login.
-/login, /register: field-level validation, password strength, show/hide,
-Bangladesh phone format (01XXXXXXXXX), rate-limit-aware error copy.
-/profile, /profile/addresses (division → district → area cascade, set default),
-/orders (status badges, date, total), /orders/[id] (timeline, items, invoice
-download, cancel/return when the status allows), /track (order number + phone).
+/search page: query from URL, result count, same sort as category, real
+no-results state (spelling hint + popular products + category links + browse all),
+server-rendered results via the initialData pattern.
+Autocomplete: debounced 200-250ms, sourced from the API (not the mock catalog),
+keyboard navigable (↑↓ Enter Esc), aborts in-flight requests, ignores stale
+responses, stays usable when a request fails.
+/wishlist: grid, remove, move-to-cart, empty state; guests use localStorage only.
 
 CONSTRAINTS:
-- Flip USE_MOCK=false for these routes only. Do not change component APIs.
-- Auth tokens in HttpOnly cookies. No token in localStorage, ever.
-- Every account route: server-side session check + redirect, not just a
-  client-side guard.
-- Optimistic UI for wishlist toggle, with rollback on failure.
+- Flip USE_MOCK=false. Do not change component APIs.
+- No auth, no sessions, no server call for the wishlist. Leave the merge as a
+  marked hook point for Phase 8.
+- Do not add a second search endpoint: /products?q= already searches bilingually.
 
 VERIFY:
 npm run lint && npx tsc --noEmit && npm run build
-Test: search "পাঞ্জাবি" and "panjabi" both return results; wishlist survives
-logout/login; address cascade rejects an invalid district; /orders/:id of
-another user returns 403/404, not data.
+Test: search "পাঞ্জাবি" and "panjabi" both return results; a 12-character query in
+the header box does not 429; wishlist survives reload; count matches the list.
 
-THEN: update STATUS.md, append to HANDOFF.md.
+THEN: update STATUS.md, prepend to HANDOFF.md.
 ```
 
 ### Gate
 
 - [ ] Mock layer off for these routes; zero component signature changes
-- [ ] Search works in both scripts; keyboard-complete autocomplete
-- [ ] IDOR test passes: cannot read another customer's order or address
-- [ ] Guest → login cart/wishlist merge does not duplicate items
-- [ ] Every account page handles expired session gracefully
+- [ ] Search works in both scripts; results present in the first HTML response
+- [ ] Keyboard-complete autocomplete, suggestions come from the API
+- [ ] Type-ahead does not trip the rate limit at a normal typing speed
+- [ ] Guest wishlist persists across reload; header count matches the list
+
+### Deferred to Phase 8 (needs a session)
+
+`/login` · `/register` · `/profile` · `/profile/addresses` · `/orders` ·
+`/orders/[id]` · `/track` · guest→login cart/wishlist merge · the IDOR gate item.
 
 ---
 
@@ -619,6 +624,15 @@ BUILD (frontend):
 /checkout: address step (saved or new, BD divisions), delivery method + charge,
 payment method (COD, bKash, Nagad, SSLCommerz), review + coupon, place order.
 /checkout/success with order number and tracking info. Full cart page.
+
+CARRIED OVER FROM PHASE 7 (deferred because they need a session):
+/login, /register: field-level validation, password strength, show/hide,
+Bangladesh phone format (01XXXXXXXXX), rate-limit-aware error copy.
+/profile, /profile/addresses (division -> district -> area cascade, set default),
+/orders (status badges, date, total), /orders/[id] (timeline, items, invoice
+download, cancel/return when the status allows), /track (order number + phone).
+Guest -> login cart/wishlist merge, without duplicating items.
+The IDOR gate item: /orders/:id of another user returns 403/404, not data.
 
 CHECKOUT MUST, in one transaction:
 1. Re-read every line item's price and stock from the DB. Ignore client prices.

@@ -13,10 +13,10 @@
 | Field | Value |
 | --- | --- |
 | Active phase | **Phase 7 — Search, wishlist, account (real API)** |
-| Phase status | 🟡 **Catalog flip complete — search/wishlist/account not started** |
-| Build state | Server: `npm test` 57/57 · `tsc --noEmit` clean · `eslint .` 0 errors. Storefront: `npm run build` green (187 static pages, all from the live API) · `tsc --noEmit` clean · `eslint .` 0 errors (1 pre-existing font warning) |
+| Phase status | 🟡 **PARTIAL — catalog flip + `/search` + guest wishlist done; account surface deferred to Phase 8** |
+| Build state | Server: `npm test` 57/57 · `tsc --noEmit` clean · `eslint .` 0 errors. Storefront: `npm run build` green (189 static pages + `/search` dynamic, all from the live API) · `tsc --noEmit` clean · `eslint .` 0 errors (1 pre-existing font warning) |
 | Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only) |
-| Next action | Phase 7 remainder — `/search`, `/wishlist`, `/login`, `/register`, `/profile`, `/orders`, `/track` |
+| Next action | Phase 8 — auth first, then the deferred account surface (`/login`, `/register`, `/profile`, `/orders`, `/track`, wishlist merge) |
 
 ### Phase 6 — gate evidence
 
@@ -138,23 +138,46 @@
 | `tsc` / `lint` / `build` all pass | ✅ | exit 0 / 0 errors / 3 routes prerendered |
 | Console clean in the browser | ✅ | 0 errors, 0 warnings |
 
-### Phase 7 — catalog flip gate evidence
+### Phase 7 — search + guest wishlist gate evidence
 
-Scope note: Phase 7 in `masterbuild.md` covers search, wishlist and account **plus** "replace the mock layer with real data for everything already built". This session completed the catalog flip half. The account surface (`/search`, `/wishlist`, `/login`, `/register`, `/profile`, `/orders`, `/track`) is not started.
+Scope note: Phase 7 in `masterbuild.md` covers search, wishlist and account **plus** "replace the mock layer with real data for everything already built". The catalog flip half landed earlier. This session completed `/search` and the guest wishlist. The account surface needs a session and is deferred to Phase 8 — see the deferred list below.
 
 | Gate requirement | State | Evidence |
 | --- | --- | --- |
-| Mock layer off for the catalog routes | ✅ | `.env.local` `NEXT_PUBLIC_USE_MOCK=false`; `npm run build` prerendered all 187 pages from `http://localhost:4000/api/v1` |
-| Zero component signature changes | ✅ | No file under `src/components/**` touched. Only `src/lib/api/*` and the three data loaders changed |
+| Mock layer off for the catalog routes | ✅ | `.env.local` `NEXT_PUBLIC_USE_MOCK=false`; `npm run build` prerendered 189 pages from `http://localhost:4000/api/v1` |
+| Zero component signature changes | ✅ | No existing component's props changed. `SearchBar`'s `products` prop is now documented `@deprecated` and ignored, not removed — callers keep compiling |
 | Five surfaces match the frontend DTOs | ✅ | `node tools/parity-check.mjs` → **611 field assertions, 5/5 PASS** |
-| Detail endpoint serves the flat `ProductDetailDto` | ✅ | Server now returns `variantGroups`/`reviews`/`ratingBreakdown`/`featuresEn`/`featuresBn`/`specs`/`tintColor`/`accentColor` directly; nested `{product, specifications, categoryColors}` removed |
-| Seeded content is real, not just declared | ✅ | 588 variants · 840 specifications · 168 feature blocks. `osb-1009` returns 5 specs, 2 variant groups (Size button + Colour swatch), 4 features |
-| Variant stock agrees with warehouse stock | ✅ | All 168 products: `Σ variant.stock === WarehouseStock.quantity`, 0 mismatches. All 15 sold-out products have every option at 0 |
-| Seed still idempotent | ✅ | Ran twice → identical counts (14/84/25/168/168/588/840/168) |
-| Rendered HTML carries the content | ✅ | `.next/server/app/product/osb-1009.html` contains the spec rows, feature bullets, `>S<`/`>M<`/`>L<`/`>XL<` pills and colour swatches |
-| Build, typecheck, lint, tests green | ✅ | `next build` 187 pages · `tsc --noEmit` clean both apps · `eslint .` 0 errors · server `npm test` 57/57 |
+| Detail endpoint serves the flat `ProductDetailDto` | ✅ | `variantGroups`/`reviews`/`ratingBreakdown`/`featuresEn`/`featuresBn`/`specs`/`tintColor`/`accentColor` on the wire; nested shape removed |
+| Seeded content is real, not just declared | ✅ | 588 variants · 840 specifications · 168 feature blocks |
+| Variant stock agrees with warehouse stock | ✅ | All 168 products: `Σ variant.stock === WarehouseStock.quantity`, 0 mismatches |
+| `/search` renders results in the first HTML response | ✅ | `curl localhost:3000/search?q=panjabi` → 2 product cards, 1 line containing `৳`, 0 `aria-busy`. Server component loads via `initialData`, no effect |
+| Search works in both scripts | ✅ | `?q=panjabi` → 2 results · `?q=পাঞ্জাবি` → 2 results, both 1 `৳` line |
+| Empty state, not a skeleton | ✅ | `?q=zzzzzz` → `aria-busy` count 0, `Nothing matched` present, 0 product cards, 3 escapes (browse all, popular, category links) |
+| Missing/1-char query is not a 404 | ✅ | `/search` → 200 with the "Type at least 2 characters" prompt; `?q=a` → 200, 0 cards |
+| Result pages are not indexed | ✅ | `robots: { index: false, follow: true }` → `noindex` present exactly once |
+| Autocomplete sources from the API | ✅ | Header box, `panjabi` → 2 live products (`Cotton Panjabi`, `Premium Cotton Panjabi`); the mock-era product set is no longer consulted |
+| Type-ahead does not trip the limit | ✅ | 12-character query typed key-by-key → no 429; bucket raised 30→90/min |
+| Failed request leaves the box usable | ✅ | API stopped, `panjabi` typed → value retained, no throw, list closed, Enter still navigated to `/search?q=panjabi` |
+| Guest wishlist toggles from card and PDP | ✅ | Card heart → count 1; PDP `♥ Wishlist` → count 1 |
+| Wishlist persists across reload | ✅ | Reload → `sharkmart.wishlist` intact, count 1, product rendered |
+| Header count matches the list | ✅ | After pruning a stale id: count `1`, exactly 1 product rendered |
+| Remove works, empty state has an action | ✅ | Remove → empty state with "Browse all products" |
+| Build, typecheck, lint green | ✅ | `next build` green · `tsc --noEmit` clean both apps |
 
-**Deliberate omission — reviews are not seeded.** A fabricated customer review with a person's name on it is not demo data, it is a lie. `reviewCount` still carries the catalog's aggregate, so the rating badge renders; the review list shows its empty state until real reviews exist. The mock layer's generated reviews must never reach the database.
+**Bug found and fixed during the gate — pagination cap.** The catalog is 168 products and `MAX_PAGE_LIMIT` is 100, so a single `listProducts` read silently omitted every product past the first hundred. A wishlist item or a search match living on page 2 rendered as "empty". Both `/search` and `/wishlist` now page through to the server's own `total`, bounded by a hard ceiling.
+
+**Bug found and fixed during the gate — stale ids inflate the count.** A saved id can outlive its product (the mock-era `prd_osb-1001` is one). The page dropped the unresolvable id but the header badge still counted it, so the badge said 2 while one product showed. `/wishlist` now prunes ids that a *complete* catalog read proves are gone.
+
+**Deliberate omission — reviews are not seeded.** A fabricated customer review with a person's name on it is not demo data, it is a lie. `reviewCount` still carries the catalog's aggregate, so the rating badge renders; the review list shows its empty state until real reviews exist.
+
+#### Deferred to Phase 8 (needs a session)
+
+`/login` · `/register` · `/profile` · `/profile/addresses` · `/orders` ·
+`/orders/[id]` · `/track` · guest→login cart/wishlist merge · the IDOR gate item.
+
+The wishlist merge hook point is marked in `src/components/wishlist/wishlist-page.tsx`
+with a `PHASE 8:` comment at the exact place the local list must be POSTed and
+cleared only after the server confirms.
 
 ---
 
@@ -183,8 +206,8 @@ Scope note: Phase 7 in `masterbuild.md` covers search, wishlist and account **pl
 | 3 | Homepage | ✅ | build + tsc + lint + live browser gates (16 sections, order, Bangla, carousels, empty states) | 12 home components, `home.css`; preview strip env-gated |
 | 4 | Category pages ×14 | ✅ | build + tsc + lint + 14 live slugs + 404 + filter round-trip | 1 template, 14 instances |
 | 5 | Product detail | ✅ | build + tsc + lint + live browser (variant price, tabs, add-to-cart, 404, 5-angle gallery) | 168 product pages prerendered |
-| 6 | API — catalog | ⬜ | — | Flip `NEXT_PUBLIC_USE_MOCK=false` here |
-| 7 | Search, wishlist, account | ⬜ | — | — |
+| 6 | API — catalog | ✅ | build + tsc + lint + `npm test` 57/57 + parity-check 611 assertions | Flip `NEXT_PUBLIC_USE_MOCK=false` done here |
+| 7 | Search, wishlist, account | 🟡 | build + tsc + live browser (both scripts, type-ahead, wishlist toggle/reload/remove) | **PARTIAL** — `/search` + guest wishlist done; account surface deferred to Phase 8 |
 | 8 | Auth, cart, orders, checkout | ⬜ | — | — |
 | 9 | Admin — core | ⬜ | — | — |
 | 10 | Admin — business | ⬜ | — | — |
@@ -336,6 +359,8 @@ Facts settled. Do not reopen without the owner's word.
 | D18 | Security rules consolidated in `prompts/security.md`; `frontend.md` §16 renamed to make "never authorize in the browser" explicit | 2026-11-12 | Rules were split across three files and one heading implied frontend-side security |
 | D19 | House brands drop the `O` prefix: `OFashion`→`Fashion`, `OBeauty`→`Beauty`, `OFragrance`→`Fragrance`, `OGadgets`→`Gadgets`, `ONature`→`Nature`, `OHome`→`Home`, `OFood`→`Food`, `OBooks`→`Books` | 2026-11-12 | Owner decision. The prefix was inherited from the old OShoppingBD brand. Slugs follow the names (`ofashion`→`fashion`), so brand `fashion` now shares a slug with category `fashion` — separate tables and separate routes, so nothing collides, but never resolve both out of one map |
 | D20 | The rename lives in `HOUSE_RENAMES` in `tools/extract-reference.mjs`, and the DB rows were renamed in place | 2026-11-12 | `data/reference-catalog.json` is generated; hand-editing it would be undone by the next run. Renaming in place (migration `20261112063500_rename_house_brands`) keeps `brandId` foreign keys on 74 products intact — deleting and re-seeding would orphan or duplicate 8 brand rows |
+| D21 | Search rate limit raised **30 → 90 per 60s** | 2026-11-12 | The bucket also serves the header type-ahead, and a 12-character query is ~12 requests on its own. At 30 a normal shopper got a 429 mid-word — the limiter blocking the user it exists to protect. 90 still bounds a `contains` scan at 1.5 req/s per IP. `prompts/security.md` §3 updated in the same commit |
+| D22 | `SearchBar` suggestions come from `searchProducts` (the API), not the local mock catalog | 2026-11-12 | `USE_MOCK` is false, so the mock catalog and the live catalog are no longer the same set. The header was suggesting products the real catalog might not contain, and clicking one landed on a 404. The server's bilingual `contains` is the only source that agrees with what `/search` returns. Categories stay local — they are the 14 fixed reference records, not catalog data |
 
 ---
 
