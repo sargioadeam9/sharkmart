@@ -202,6 +202,13 @@ export const ADMIN_NAV: AdminNavGroup[] = [
         permission: 'inventory:read',
       },
       {
+        href: '/admin/hrm',
+        labelEn: 'HRM',
+        labelBn: 'কর্মী ব্যবস্থাপনা',
+        icon: 'UserCog',
+        permission: 'staff:manage',
+      },
+      {
         href: '/admin/expenses',
         labelEn: 'Expenses',
         labelBn: 'খরচ',

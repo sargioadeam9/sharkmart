@@ -45,6 +45,7 @@ import {
   Tag,
   Users,
   Truck,
+  UserCog,
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
