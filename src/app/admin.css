@@ -4820,3 +4820,132 @@
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ─────────────────────── Suppliers (Phase 10 pass D) ────────────────────── */
+
+.admin-root .sup-drawer {
+  width: min(620px, 100%);
+}
+
+.admin-root .sup-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.admin-root .sup-section {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-root .sup-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.admin-root .sup-section h3 {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+}
+
+.admin-root .sup-list,
+.admin-root .sup-orders {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-root .sup-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+}
+
+.admin-root .sup-list-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.admin-root .sup-add {
+  margin-top: 2px;
+}
+
+.admin-root .sup-order-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.admin-root .sup-order-row b {
+  margin-left: auto;
+}
+
+.admin-root .sup-order-row:hover {
+  background: var(--brand-50);
+}
+
+.admin-root .sup-order-body {
+  padding: 10px 4px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-root .sup-order-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-root .sup-receive-input {
+  width: 84px;
+  height: 34px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.admin-root .sup-new-po {
+  border: 1px dashed var(--line);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-root .sup-new-po-submit {
+  justify-content: flex-end;
+}
+
+@media (max-width: 720px) {
+  .admin-root .sup-drawer {
+    width: 100%;
+  }
+}

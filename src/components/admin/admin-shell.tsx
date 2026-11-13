@@ -41,6 +41,7 @@ import {
   Sun,
   Tag,
   Users,
+  Truck,
   Wallet,
   type LucideIcon,
 } from 'lucide-react';
@@ -64,6 +65,7 @@ const ICONS: Record<string, LucideIcon> = {
   Settings,
   Lock,
   Wallet,
+  Truck,
 };
 
 const THEME_KEY = 'sm_admin_theme';
