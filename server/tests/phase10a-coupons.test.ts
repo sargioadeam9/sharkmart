@@ -275,9 +275,21 @@ describe('category scoping at checkout', () => {
   it('rejects a cart whose products are outside the coupon category', async () => {
     const admin = await signIn('super@sharkmart.test');
 
-    // A real product and a real category it does not belong to.
+    /**
+     * Start from a variant that actually has stock, then take its product.
+     *
+     * The first version picked the first published product and then looked for a
+     * variant with stock, which fails once repeated checkout tests have drained
+     * that product — a test that degrades as the suite runs is a test that fails
+     * for a reason unrelated to the code.
+     */
+    const seedVariant = await prisma.productVariant.findFirstOrThrow({
+      where: { stock: { gt: 0 }, product: { isPublished: true, isDraft: false } },
+      select: { id: true, productId: true },
+    });
+
     const product = await prisma.product.findFirstOrThrow({
-      where: { isPublished: true, isDraft: false },
+      where: { id: seedVariant.productId },
       select: { id: true, categoryId: true, basePricePoisha: true },
     });
     const otherCategory = await prisma.category.findFirstOrThrow({
@@ -301,10 +313,7 @@ describe('category scoping at checkout', () => {
     });
     expect(registered.status).toBe(201);
 
-    const variant = await prisma.productVariant.findFirstOrThrow({
-      where: { productId: product.id, stock: { gt: 0 } },
-      select: { id: true },
-    });
+    const variant = { id: seedVariant.id };
 
     const cookies = agent.jar.getCookies({ domain: '127.0.0.1', path: '/', secure: false, script: false }) as unknown as Array<{
       name: string;

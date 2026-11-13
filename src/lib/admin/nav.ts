@@ -140,6 +140,13 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     headingBn: 'প্রবৃদ্ধি',
     items: [
       {
+        href: '/admin/landing',
+        labelEn: 'Landing pages',
+        labelBn: 'ল্যান্ডিং পেজ',
+        icon: 'LayoutTemplate',
+        permission: 'marketing:read',
+      },
+      {
         href: '/admin/marketing',
         labelEn: 'SMS and email',
         labelBn: 'SMS ও ইমেইল',

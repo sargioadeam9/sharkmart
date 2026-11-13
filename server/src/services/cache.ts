@@ -36,7 +36,15 @@ export const TTL = {
   settings: 300,
 } as const;
 
-export type CacheTag = 'products' | 'categories' | 'brands' | 'homepage' | 'flash-sale' | 'settings';
+export type CacheTag =
+  | 'products'
+  | 'categories'
+  | 'brands'
+  | 'homepage'
+  | 'flash-sale'
+  | 'settings'
+  /** Landing pages: a deactivated campaign must stop serving immediately. */
+  | 'landing';
 
 const keyPrefix = 'cache:';
 const tagPrefix = 'tag:';

@@ -95,6 +95,13 @@ export const LIMITS = {
   cart: { scope: 'cart', limit: 60, windowSeconds: 60 },
   /** Checkout attempts per user. */
   checkout: { scope: 'checkout', limit: 10, windowSeconds: 300 },
+
+  /**
+   * Landing-page order form. Its own bucket rather than sharing `checkout`:
+   * a campaign page can be hit by people who are not shopping, and a busy ad
+   * must not consume the budget that real checkouts need.
+   */
+  landing: { scope: 'landing', limit: 20, windowSeconds: 300 },
   /** Refresh rotation — generous, because a tab reload can legitimately burst. */
   refresh: { scope: 'refresh', limit: 30, windowSeconds: 60 },
 

@@ -89,3 +89,23 @@ export const categoryProductsQuery = z
   .strict();
 
 export const landingParams = z.object({ slug }).strict();
+
+/**
+ * The landing page's one-page order form.
+ *
+ * No price field on purpose: the product's current price is the price, and a
+ * campaign page that could name its own would be an unaudited discount path.
+ */
+export const landingOrderBody = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    phone: z
+      .string()
+      .trim()
+      .min(6)
+      .max(20)
+      .regex(/^[+0-9][0-9\s-]{5,19}$/, 'phone must be digits, spaces, dashes, optional leading +'),
+    address: z.string().trim().min(5).max(400),
+    quantity: z.number().int().min(1).max(10).default(1),
+  })
+  .strict();

@@ -187,14 +187,13 @@ describe('the delivery fee reaches checkout', () => {
       .send({ name: 'Fee Test', email, phone, password: CUSTOMER_PASSWORD });
     expect(registered.status).toBe(201);
 
-    const product = await prisma.product.findFirstOrThrow({
-      where: { isPublished: true, isDraft: false, basePricePoisha: { lt: 99999999 } },
-      select: { id: true },
-    });
+    // Start from a variant with stock, then its product — see the note in
+    // phase10a: picking the first product first degrades as the suite drains it.
     const variant = await prisma.productVariant.findFirstOrThrow({
-      where: { productId: product.id, stock: { gt: 0 } },
-      select: { id: true },
+      where: { stock: { gt: 0 }, product: { isPublished: true, isDraft: false } },
+      select: { id: true, productId: true },
     });
+    const product = { id: variant.productId };
 
     const cookies = agent.jar.getCookies({
       domain: '127.0.0.1',

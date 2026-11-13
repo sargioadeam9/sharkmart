@@ -10,12 +10,12 @@ import { Router } from 'express';
 import { validate } from '../../middleware/validate.js';
 import { rateLimit, LIMITS } from '../../middleware/rateLimiter.js';
 import { ok, paginationMeta } from '../../types/api.js';
-import { notFound } from '../../middleware/errorHandler.js';
+import { HttpError, notFound } from '../../middleware/errorHandler.js';
 import { cached, TTL } from '../../services/cache.js';
 import { listProducts } from '../../services/product.service.js';
 import { getFlashSale, getHomepage } from '../../services/homepage.service.js';
 import { prisma } from '../../config/database.js';
-import { landingParams, searchQuery } from '../../validators/catalog.schema.js';
+import { landingParams, landingOrderBody, searchQuery } from '../../validators/catalog.schema.js';
 
 export const searchRouter: Router = Router();
 
@@ -99,7 +99,7 @@ landingRouter.get(
     try {
       const { slug } = req.params as unknown as { slug: string };
 
-      const page = await cached(`landing:${slug}`, TTL.landing, ['products'], () =>
+      const page = await cached(`landing:${slug}`, TTL.landing, ['landing'], () =>
         prisma.landingPage.findFirst({
           where: { slug, isActive: true },
           select: {
@@ -117,6 +117,70 @@ landingRouter.get(
       if (!page) throw notFound('Landing page');
 
       res.json(ok(page));
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+/**
+ * POST /api/v1/landing/:slug/order
+ *
+ * The one-page order form's endpoint. A campaign page points at one product, so
+ * the body carries the buyer's details and the quantity — not a price. The price
+ * is whatever the product says at the moment of the order, which is why this does
+ * not accept one: a landing page that could name its own price is a discount
+ * engine nobody audited.
+ *
+ * The order is recorded as PENDING. It is a lead, not a paid order; converting it
+ * into an `Order` is the shop's normal checkout, and pretending otherwise would
+ * create a second, unaudited order path.
+ */
+landingRouter.post(
+  '/:slug/order',
+  rateLimit(LIMITS.landing),
+  validate({ params: landingParams, body: landingOrderBody }),
+  async (req, res, next) => {
+    try {
+      const { slug } = req.params as unknown as { slug: string };
+      const body = req.body as { name: string; phone: string; address: string; quantity: number };
+
+      const page = await prisma.landingPage.findFirst({
+        where: { slug, isActive: true },
+        select: { id: true, productId: true },
+      });
+
+      if (!page) throw notFound('Landing page');
+      if (!page.productId) {
+        throw new HttpError(
+          422,
+          'VALIDATION_ERROR',
+          'This landing page is not linked to a product yet.',
+        );
+      }
+
+      const product = await prisma.product.findUnique({
+        where: { id: page.productId },
+        select: { id: true, isPublished: true, isDraft: true },
+      });
+      if (!product || !product.isPublished || product.isDraft) {
+        throw new HttpError(422, 'VALIDATION_ERROR', 'That product is not available.');
+      }
+
+      const created = await prisma.landingPageOrder.create({
+        data: {
+          landingPageId: page.id,
+          name: body.name,
+          phone: body.phone,
+          address: body.address,
+          productId: page.productId,
+          quantity: body.quantity,
+          status: 'PENDING',
+        },
+        select: { id: true },
+      });
+
+      res.status(201).json(ok({ id: created.id, status: 'PENDING' }));
     } catch (error) {
       next(error);
     }
