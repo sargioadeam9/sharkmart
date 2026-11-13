@@ -489,6 +489,22 @@ model Review {
   helpfulCount       Int      @default(0)
   createdAt          DateTime @default(now())
 
+  /**
+   * Moderation stamps. Added in Phase 9 pass B4.
+   *
+   * Without these, "never moderated" and "rejected" are the same row state —
+   * both are `isApproved = false` — so a rejected review reappears in the
+   * pending queue forever and the moderator sees the same item twice. Two
+   * nullable columns answer the only question the queue asks, which is why
+   * there is no status enum here: a third state would have to be kept in sync
+   * with these two and would eventually disagree with them.
+   *
+   * `moderatedBy` is a User.id with no FK, matching AuditLog: a deleted staff
+   * account must not cascade-delete the record of who moderated what.
+   */
+  moderatedAt        DateTime?
+  moderatedBy        String?
+
   product Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   media   ReviewMedia[]

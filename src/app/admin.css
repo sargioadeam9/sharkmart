@@ -3123,3 +3123,669 @@
 .admin-root[data-theme='dark'] .inv-intake li b {
   color: #e8ecf6;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Reviews — /admin/reviews (Phase 9 pass B4)
+   ══════════════════════════════════════════════════════════════════════════
+
+   Everything here is prefixed `rev-` and scoped under `.admin-root`. The
+   storefront's home.css has unscoped `.card`, `.badge` and `.grid` rules and
+   Pass A lost time to exactly that collision (AGENTS.md landmine 17); the
+   prefix is a second lock on the same door.
+
+   The drawer reuses the shared `.overlay.side` + `.drawer` primitive rather
+   than inventing a scrim, so the entry transform, the focus trap and the
+   off-canvas bug fixed at admin.css:1009-1024 all apply here for free.
+   ──────────────────────────────────────────────────────────────────────── */
+
+/* ---------- Tabs ---------- */
+.admin-root .rev-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.admin-root .rev-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.admin-root .rev-tab:hover {
+  background: var(--brand-50);
+  color: var(--text);
+}
+
+.admin-root .rev-tab.on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.admin-root .rev-tab-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.admin-root .rev-tab.on .rev-tab-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+/* ---------- Table ---------- */
+.admin-root .rev-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-root .rev-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.admin-root .rev-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .rev-notice {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ok);
+}
+
+.admin-root .rev-table tbody tr {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.admin-root .rev-table tbody tr:hover {
+  background: var(--brand-50);
+}
+
+.admin-root .rev-table tbody tr:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+.admin-root .rev-col-check {
+  width: 38px;
+  padding-right: 0;
+}
+
+.admin-root .rev-col-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.admin-root .rev-col-rating {
+  width: 108px;
+}
+
+.admin-root .rev-col-date {
+  width: 110px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* The excerpt is the only cell allowed to wrap; every other cell is a short
+   token and a wrapped date column reads as a layout bug. */
+.admin-root .rev-col-excerpt {
+  white-space: normal;
+  min-width: 220px;
+  max-width: 420px;
+}
+
+.admin-root .rev-excerpt {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.admin-root .rev-excerpt b {
+  display: block;
+  color: var(--text);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.admin-root .rev-media-count {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--info);
+}
+
+/* ---------- Stars ---------- */
+.admin-root .rev-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The inner wrapper must be a row itself: the SVG icons are block-level, so a
+   plain inline span stacks them vertically. Caught in the live drawer. */
+.admin-root .rev-stars > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.admin-root .rev-star {
+  color: var(--line);
+  flex: none;
+}
+
+.admin-root .rev-star.on {
+  color: #e0a008;
+  /* Lucide icons are stroke-only by default, so an "on" star was the same
+     outline as an "off" one with a different hue — at a glance a 5 and a 1
+     looked identical. Fill is what makes the rating readable. */
+  fill: currentColor;
+}
+
+/* The number is the accessible channel; the glyphs are decoration. Rule 6. */
+.admin-root .rev-rating-num {
+  font-variant-numeric: tabular-nums;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.admin-root .rev-reviewer {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.admin-root .rev-reviewer b {
+  font-weight: 600;
+}
+
+.admin-root .rev-verified {
+  font-size: 11.5px;
+  color: var(--ok);
+  font-weight: 600;
+}
+
+/* ---------- Empty state ---------- */
+.admin-root .rev-empty {
+  padding: 46px 24px;
+  text-align: center;
+}
+
+.admin-root .rev-empty-icon {
+  color: var(--line);
+  margin-bottom: 10px;
+}
+
+.admin-root .rev-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.admin-root .rev-empty-body {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+/* ---------- Pager ---------- */
+.admin-root .rev-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line-2);
+}
+
+.admin-root .rev-page-btn {
+  padding: 8px 14px;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.admin-root .rev-page-btn:hover {
+  background: var(--brand-50);
+}
+
+.admin-root .rev-page-btn.off {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.admin-root .rev-page-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Bulk bar ---------- */
+.admin-root .rev-bulk-bar {
+  position: sticky;
+  bottom: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: var(--r-md);
+  background: var(--navy);
+  color: #fff;
+  box-shadow: var(--sh2);
+}
+
+.admin-root .rev-bulk-count {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .rev-bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-root .rev-bulk-bar .btn {
+  background: #fff;
+  color: var(--navy);
+  border-color: transparent;
+}
+
+.admin-root .rev-bulk-bar .btn.ghost {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.admin-root .rev-bulk-bar .btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+/* ---------- Drawer ---------- */
+.admin-root .rev-drawer .m-body,
+.admin-root .rev-drawer-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 4px 24px 24px;
+  overflow: auto;
+}
+
+.admin-root .rev-detail-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-root .rev-detail-title {
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.admin-root .rev-detail-body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.admin-root .rev-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 16px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
+}
+
+.admin-root .rev-meta dt {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+.admin-root .rev-meta dd {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.admin-root .rev-media h3,
+.admin-root .rev-aggregate h3 {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--faint);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.admin-root .rev-media ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-root .rev-media img {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line-2);
+}
+
+.admin-root .rev-media a {
+  font-size: 13px;
+  color: var(--info);
+  text-decoration: underline;
+}
+
+/* ---------- The aggregate note ---------- */
+.admin-root .rev-aggregate {
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+}
+
+.admin-root .rev-aggregate-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 6px;
+}
+
+.admin-root .rev-aggregate-row b {
+  color: var(--text);
+}
+
+.admin-root .rev-aggregate-note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--faint);
+}
+
+/* ---------- Actions ---------- */
+.admin-root .rev-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line-2);
+}
+
+.admin-root .rev-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.admin-root .rev-danger {
+  color: var(--bad);
+  margin-left: auto;
+}
+
+.admin-root .rev-danger:hover {
+  background: var(--bad-bg);
+}
+
+.admin-root .rev-readonly {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 10px 0;
+}
+
+.admin-root .rev-error {
+  margin: 0 24px 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--bad-bg);
+  color: var(--bad);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-root .rev-loading {
+  padding: 24px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 960px) {
+  .admin-root .rev-col-excerpt {
+    min-width: 160px;
+  }
+}
+
+/**
+ * Below 720 the table stacks into cards.
+ *
+ * Every cell that was a column becomes a labelled row, using `data-label` —
+ * the same technique the inventory and orders tables use, so the three screens
+ * behave identically when an operator is on a phone.
+ */
+@media (max-width: 720px) {
+  .admin-root .rev-table thead {
+    display: none;
+  }
+
+  .admin-root .rev-table,
+  .admin-root .rev-table tbody,
+  .admin-root .rev-table tr,
+  .admin-root .rev-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-root .rev-table {
+    min-width: 0;
+  }
+
+  .admin-root .rev-table tr {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line-2);
+  }
+
+  .admin-root .rev-table td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 4px 0;
+    border: 0;
+    white-space: normal;
+    text-align: left;
+  }
+
+  .admin-root .rev-table td[data-label]:not([data-label=''])::before {
+    content: attr(data-label);
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex: none;
+  }
+
+  .admin-root .rev-col-check {
+    width: auto;
+    padding: 0 0 8px;
+    justify-content: flex-start;
+  }
+
+  /**
+   * The checkbox cell has an empty `data-label`, so the generic rule above skips
+   * it and it renders as a bare control floating at the row's right edge with
+   * nothing to say what it belongs to. Give it a real label at this width.
+   */
+  .admin-root .rev-col-check::before {
+    content: 'Select';
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .admin-root .rev-col-check input {
+    margin-left: auto;
+  }
+
+  .admin-root .rev-col-excerpt {
+    max-width: none;
+    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .admin-root .rev-bulk-bar {
+    /**
+     * The mobile bottom nav is `position: fixed; z-index: 30` at
+     * `bottom: calc(10px + safe-area)` with ~64px of height (admin.css:1330).
+     * A bar at `bottom: 8px; z-index: 20` therefore sits UNDERNEATH it and its
+     * buttons are unreachable — caught in the 360px screenshot, where "1
+     * selected" was half-hidden behind the nav.
+     *
+     * Lifted above the nav and pushed up clear of it, so the actions are
+     * tappable on the screen where bulk selection actually matters.
+     */
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .admin-root .rev-bulk-actions {
+    justify-content: stretch;
+  }
+
+  .admin-root .rev-bulk-actions .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .admin-root .rev-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-root .rev-danger {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-root .rev-tab {
+    padding: 8px 11px;
+    font-size: 12.5px;
+  }
+
+  .admin-root .rev-table tr {
+    padding: 12px;
+  }
+}
+
+/* ---------- Dark mode ---------- */
+.admin-root[data-theme='dark'] .rev-tab {
+  background: #1b2740;
+  border-color: #2c3a58;
+  color: #a8b3cc;
+}
+
+.admin-root[data-theme='dark'] .rev-tab.on {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.admin-root[data-theme='dark'] .rev-tab-count {
+  background: rgba(255, 255, 255, 0.08);
+  color: #a8b3cc;
+}
+
+.admin-root[data-theme='dark'] .rev-tab.on .rev-tab-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.admin-root[data-theme='dark'] .rev-star {
+  color: #33415f;
+}
+
+.admin-root[data-theme='dark'] .rev-star.on {
+  color: #f0b429;
+}
+
+.admin-root[data-theme='dark'] .rev-rating-num,
+.admin-root[data-theme='dark'] .rev-detail-body,
+.admin-root[data-theme='dark'] .rev-meta dd {
+  color: #e8ecf6;
+}
+
+.admin-root[data-theme='dark'] .rev-aggregate {
+  background: #1b2740;
+  border-color: #2c3a58;
+}
+
+.admin-root[data-theme='dark'] .rev-aggregate-row b {
+  color: #e8ecf6;
+}
+
+.admin-root[data-theme='dark'] .rev-page-btn {
+  background: #1b2740;
+  border-color: #2c3a58;
+  color: #e8ecf6;
+}
+
+.admin-root[data-theme='dark'] .rev-empty-icon {
+  color: #33415f;
+}
+
+.admin-root[data-theme='dark'] .rev-table tbody tr:hover {
+  background: #1b2740;
+}

@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-13 · **Updated by:** Phase 9 pass B3 follow-up — intake quantity no longer presented as availability; permissions matrix audited against `security.md` §6 and upheld
+**Last updated:** 2026-11-13 · **Updated by:** Phase 9 pass B4 — Reviews module shipped (API + screen + tests); test-runner flake root-caused and fixed in `vitest.config.ts`
 
 ---
 
@@ -13,10 +13,10 @@
 | Field | Value |
 | --- | --- |
 | Active phase | **Phase 9 — Admin panel: core modules** |
-| Phase status | 🟡 **Phase 9 PASS B3 COMPLETE** — products (B1), orders (B2) and inventory (B3) green. B4–B5 (Reviews, Categories, Brands) not started |
-| Build state | Server: `npm test` **182/182** (9 files) · `tsc --noEmit` clean · `npm run lint` 0 errors (15 pre-existing warnings). Storefront: `npm run build` green · `tsc --noEmit` clean. `prisma migrate status` clean, 7 migrations |
-| Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so neither the reference's "Estimated profit" KPI nor a stock-value column is computable (see HANDOFF). `cache-and-limits.test.ts` "exceeding the search limit" is **flaky under parallel file execution** (passes alone, passed on re-run of the full suite) — the in-process limiter is shared across files. **`WarehouseStock` is written by nothing except the new inventory adjust endpoint** — checkout decrements `ProductVariant.stock` only, so the two totals drift (**5,183 vs 4,736, a 447-unit gap** as of the B3 follow-up; it widens per checkout, so re-measure rather than trusting this figure). The intake number is no longer shown as availability in the admin table — it is collapsed under "Received at intake" in the drawer. See HANDOFF for the exact reconciliation |
-| Next action | Phase 9 pass B4 — Reviews module |
+| Phase status | 🟡 **Phase 9 PASS B4 COMPLETE** — products (B1), orders (B2), inventory (B3) and reviews (B4) green. B5 (Categories, Brands) not started |
+| Build state | Server: `npm test` **201/201** (10 files, three consecutive green runs) · `tsc --noEmit` clean · `npm run lint` 0 errors (15 pre-existing warnings). Storefront: `npm run build` green (`ƒ /admin/reviews`) · `tsc --noEmit` clean. `prisma migrate status` clean, 8 migrations |
+| Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so neither the reference's "Estimated profit" KPI nor a stock-value column is computable (see HANDOFF). **The "flaky under parallel execution" note is resolved** — `vitest.config.ts` used `poolOptions.threads.singleThread`, a silent no-op since Vitest 4; suites were racing on shared MySQL rows. Now `fileParallelism: false`, three consecutive 201/201 runs. **`WarehouseStock` is written by nothing except the inventory adjust endpoint** — checkout decrements `ProductVariant.stock` only, so the two totals drift (**5,183 vs 4,736, a 447-unit gap** as of the B3 follow-up; it widens per checkout, so re-measure rather than trusting this figure). The intake number is no longer shown as availability in the admin table — it is collapsed under "Received at intake" in the drawer. See HANDOFF for the exact reconciliation |
+| Next action | Phase 9 pass B5 — Categories and Brands modules |
 
 ### Phase 6 — gate evidence
 
@@ -224,6 +224,32 @@ cleared only after the server confirms.
 
 ---
 
+### Phase 9 pass B4 — reviews gate evidence
+
+| Gate requirement | State | Evidence |
+| --- | --- | --- |
+| "Never moderated" and "rejected" are distinguishable | ✅ | Two nullable columns, `Review.moderatedAt` + `moderatedBy` — migration `20261113103358_phase9_review_moderation`, applied by hand-written SQL then `migrate resolve` (landmine 16: history stays honest, no `db push`). No status enum: a third state would have to be kept in sync with these two and would eventually disagree |
+| `moderatedBy` survives a deleted staff account | ✅ | `String?` with **no FK**, matching `AuditLog` — a cascade would erase the record of who moderated what. Documented in the schema comment |
+| Pending queue is exactly "unmoderated" | ✅ | Live: 6 pending in the fixture → approve one → 5 pending / 2 rejected. A rejected review does not reappear in the queue |
+| Approve / reject / delete / bulk, all four live | ✅ | Approve moved counts 6→5 pending, 1→2 rejected over real HTTP. Bulk approve from the UI: "1 updated", pending 5→4, approved 2→3 |
+| Delete removes the row and writes an audit row | ✅ | Live DELETE + audit row verified against the DB, not just the response |
+| Permission gates are real, both directions | ✅ | `phase9e-reviews.test.ts` asserts **both** ways because a gate that only proves one direction is untested: MARKETING_STAFF **can** moderate (200, state `approved`); INVENTORY_STAFF **can** read list/counts/detail but gets 403 on approve, reject, flag and delete, and the row is still `isApproved:false / isFlagged:false / moderatedAt:null` afterwards; CUSTOMER is refused at the staff gate. Note this is the *opposite* split from inventory, where MARKETING_STAFF has no `inventory:read` — the matrix is per-permission, not per-role |
+| Rating aggregate is honest about what is stored | ✅ | Drawer shows "Stored: 4.30 · 65, Actually approved: 3" with the explanation. Under the shipped decision nothing writes `Product.ratingAvg`, so the stored figure can disagree with the approved-review average — the screen says so instead of hiding it |
+| Screen renders at 360 / 720 / 1024 / 1440 | ✅ | `scrollWidth - clientWidth = 0` at all four widths; table stacks to cards at 720 |
+| Bulk bar reachable at 360 | ✅ | **Defect found and fixed:** the bar sat at `bottom: 8px` / `z-index: 20` under the `fixed` bottom nav (`z-index: 30`). Lifted above it; buttons now tappable |
+| Star rating reads as filled | ✅ | **Defect found and fixed:** "on" stars were stroke-only, so a 5-rating looked identical to an empty one. Now filled |
+| Stars stay inline | ✅ | **Defect found and fixed:** stars stacked vertically in the drawer; now inline |
+| No orphaned control in the stacked layout | ✅ | **Defect found and fixed:** the row checkbox floated unlabelled at top-right; now carries a "Select" label |
+| Server → client boundary is legal | ✅ | **Defect found and fixed:** a `hrefFor` function was passed from a server component into a client component, which threw at runtime. Replaced with precomputed hrefs |
+| Dark mode readable | ✅ | Verified visually; no surface under 3:1 |
+| `npx tsc --noEmit` both packages | ✅ | exit 0, no output |
+| `npm test` | ✅ | **201/201**, 10 files, three consecutive green runs |
+| `npm run build` | ✅ | `✓ Compiled successfully`; `ƒ /admin/reviews` present as a dynamic route |
+| `npm run lint` | ✅ | 0 errors, 15 pre-existing warnings |
+| Test-runner flake root-caused, not worked around | ✅ | `vitest.config.ts` set `poolOptions.threads.singleThread` — **a silent no-op since Vitest 4** (still type-valid, so it fails quietly). Files were running in parallel against one MySQL database. Replaced with `fileParallelism: false`; the "different test fails each run" pattern stopped |
+
+---
+
 ## Phase status
 
 | # | Phase | Status | Verified by | Notes |
@@ -237,7 +263,7 @@ cleared only after the server confirms.
 | 6 | API — catalog | ✅ | build + tsc + lint + `npm test` 57/57 + parity-check 611 assertions | Flip `NEXT_PUBLIC_USE_MOCK=false` done here |
 | 7 | Search, wishlist, account | ✅ | build + tsc + live browser (both scripts, type-ahead, wishlist toggle/reload/remove) | `/search` + guest wishlist; account surface landed in Phase 8 |
 | 8 | Auth, cart, orders, checkout | ✅ | `npm test` 89/89 · tsc clean (both) · build green · live browser (merge, badge, drawer, `/cart` agree) | 747 variants (cartesian) · 3 follow-ups closed 2026-11-12 |
-| 9 | Admin — core | 🟡 | B1 products + B2 orders + B3 inventory: `npm test` **183/183** (9 files) · tsc clean (both) · build green · live browser (KPI strip, filters, adjust drawer, movements tab, 4 widths, dark mode) | B4–B5 remain |
+| 9 | Admin — core | 🟡 | B1 products + B2 orders + B3 inventory + B4 reviews: `npm test` **201/201** (10 files, 3 consecutive runs) · tsc clean (both) · build green · live browser (tabs, drawer, approve, bulk bar, 4 widths, dark mode) | B5 (categories, brands) remains |
 | 10 | Admin — business | ⬜ | — | — |
 | 11 | SEO & analytics | ⬜ | — | — |
 | 12 | Testing & polish | ⬜ | — | — |

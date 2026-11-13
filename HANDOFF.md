@@ -4,6 +4,126 @@
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
 
+## 2026-11-13 · Phase 9 pass B4 · Saffron · Reviews module · VERIFIED
+
+**Reviews moderation is shipped end to end: schema, API, screen, 19 tests. The
+test-runner flake that has been polluting STATUS since Phase 6 is root-caused
+and fixed.** Neither frozen reference was touched.
+
+### 1. The flake was a config bug, not a flaky test
+
+STATUS has carried "`cache-and-limits.test.ts` *exceeding the search limit* is
+flaky under parallel file execution" since Phase 6. That diagnosis was wrong,
+and the wrong diagnosis cost this session several runs.
+
+`server/vitest.config.ts` set:
+
+```ts
+poolOptions: { threads: { singleThread: true } }
+```
+
+**`singleThread` was removed in Vitest 4.** This repo runs **Vitest 5.1.0**. The
+option is still accepted by the type definition, so it fails *silently* — no
+warning, no error, no effect. Files were running in parallel the whole time.
+
+Every suite shares one MySQL database, so parallel files raced on shared rows.
+The symptom was a suite that failed a **different** test on each run:
+
+| Run | Failure |
+| --- | --- |
+| 1 | `phase9c-orders` — "puts the stock back when the panel cancels an order" |
+| 2 | `products` — "beyond the last page", `expected 169 to be 168` (a fixture product from another file was live) |
+| 3 | `phase9d-inventory` — "403s MARKETING_STAFF", `expected 5 to be 7` (a stock delta from another file landed between the two reads) |
+
+Each passed alone. That is the signature of shared-state interference, not a
+bad assertion — and it is why "it passed on re-run" was never evidence.
+
+**Fix:** `fileParallelism: false` in `server/vitest.config.ts`, with the reason
+written in the comment. Verified with **three consecutive full runs, 201/201
+each**. Do not reintroduce `singleThread`; if you need to confirm the option is
+live, break a test on purpose and check that files still run one at a time.
+
+### 2. Reviews: two columns, no status enum
+
+`Review` had `isApproved` and `isFlagged` only. Under those, **"never
+moderated" and "rejected" are the same row state** — both `isApproved = false` —
+so a rejected review reappears in the pending queue forever and the moderator
+sees the same item twice.
+
+Added `moderatedAt DateTime?` and `moderatedBy String?`:
+
+- Migration `server/prisma/migrations/20261113103358_phase9_review_moderation/`
+  — SQL written by hand, then `prisma migrate resolve` (landmine 16: `db push`
+  makes the database right and the migration history lie). `migrate status`
+  clean, **8 migrations**.
+- `moderatedBy` is a `User.id` with **no FK**, matching `AuditLog`: a deleted
+  staff account must not cascade-delete the record of who moderated what.
+- **No status enum on purpose.** A third state would have to be kept in sync
+  with these two columns and would eventually disagree with them. The two
+  nullable columns answer the only question the queue asks.
+
+### 3. What was built
+
+| File | What |
+| --- | --- |
+| `server/src/routes/admin/reviews.ts` | Router: list, counts, detail, approve, reject, flag, delete, bulk |
+| `server/src/routes/admin/review.service.ts` | 690 lines. `recomputeProductRating` exported and tested directly |
+| `server/src/validators/adminReview.schema.ts` | Zod, `.strict()` |
+| `src/app/admin/(panel)/reviews/page.tsx` | Server component, resolves `canModerate` |
+| `src/components/admin/reviews-table.tsx` | Tabs, table, drawer, bulk bar |
+| `src/lib/api/admin-reviews.ts` | Client module |
+| `tools/review-fixture.mjs` | 12 reviews across all four states |
+| `server/tests/phase9e-reviews.test.ts` | 19 tests |
+
+### 4. Five real defects found by looking at the screen, not the code
+
+All fixed, all listed in the STATUS gate table. Worth naming because four of
+them were invisible to `tsc`, lint and tests:
+
+1. **Runtime crash** — a `hrefFor` *function* was passed from a server component
+   into a client component. Next.js throws on this. Fixed with precomputed hrefs.
+2. **Bulk bar buried at 360px** — sat at `bottom: 8px` / `z-index: 20` under the
+   `fixed` bottom nav at `z-index: 30`. Buttons were unreachable.
+3. **Stars stroke-only** — a 5-rating looked identical to an empty one.
+4. **Stars stacked vertically** in the drawer.
+5. **Orphaned checkbox** — floated unlabelled at top-right in the stacked layout.
+
+### 5. The rating aggregate is deliberately honest
+
+Nothing in the shipped code writes `Product.ratingAvg` / `ratingCount`, so the
+stored figure can disagree with the average of approved reviews. The drawer
+shows both — *"Stored: 4.30 · 65, Actually approved: 3"* — with the explanation,
+rather than presenting a number that cannot be reproduced. If a future phase
+wires the aggregate, `recomputeProductRating` is already written and tested.
+
+### 6. What is NOT done
+
+- **B5 (Categories, Brands) not started.** `Next action` in STATUS points there.
+- **No public review submission endpoint.** This pass is moderation only; the
+  storefront still renders seeded reviews.
+- **`WarehouseStock` drift is unchanged** — see the B3 follow-up entry. Not
+  touched this session.
+
+### 7. Verified
+
+```
+server:  npm test            → 201/201, 10 files, 3 consecutive green runs
+         npx tsc --noEmit    → exit 0
+web:     npx tsc --noEmit    → exit 0
+         npm run build       → ✓ Compiled successfully; ƒ /admin/reviews
+         npm run lint        → 0 errors, 15 pre-existing warnings
+prisma:  migrate status      → up to date, 8 migrations
+live:    approve moved 6→5 pending / 1→2 rejected; bulk approve "1 updated";
+         delete + audit row confirmed against the DB
+```
+
+### 8. Exact next step
+
+Phase 9 pass B5 — Categories and Brands modules. Read `prompts/backend.md` for
+the admin contract, and reuse the `reviews.ts` router + `adminFetch` client
+shape rather than inventing a new one.
+
+
 ## 2026-11-13 Â· Phase 9 pass B3 follow-up Â· Saffron Â· availability truth + permissions audit Â· VERIFIED
 
 **Two items from the B3 review brief. Both closed. Neither touched the frozen contracts.**

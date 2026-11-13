@@ -26,6 +26,7 @@ import { dashboardRouter } from './dashboard.js';
 import { productsRouter } from './products.js';
 import { ordersRouter } from './orders.js';
 import { inventoryRouter } from './inventory.js';
+import { reviewsRouter } from './reviews.js';
 
 export const adminRouter: Router = Router();
 
@@ -149,3 +150,4 @@ adminRouter.use('/dashboard', dashboardRouter);
 adminRouter.use('/products', productsRouter);
 adminRouter.use('/orders', ordersRouter);
 adminRouter.use('/inventory', inventoryRouter);
+adminRouter.use('/reviews', reviewsRouter);
