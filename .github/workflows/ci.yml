@@ -2,9 +2,9 @@ name: CI
 
 # Two independent jobs, deliberately not chained.
 #
-# The API suite is the one that matters: 260 integration tests against a real
+# The API suite is the one that matters: the integration tests run against a real
 # MySQL database, which is where every bug in this project has actually been
-# caught. The web job is typecheck plus a mock-mode build — a compile check, not
+# caught. The count is deliberately not in the job name — it drifted once already. The web job is typecheck plus a mock-mode build — a compile check, not
 # a behaviour check.
 #
 # They are separate so a red web build never hides a red API suite, and so the
@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   api:
-    name: API — typecheck + 260 integration tests
+    name: API — typecheck + integration tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
