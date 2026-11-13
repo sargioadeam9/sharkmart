@@ -31,6 +31,7 @@ import { categoriesRouter } from './categories.js';
 import { brandsRouter } from './brands.js';
 import { couponsRouter } from './coupons.js';
 import { settingsRouter } from './settings.js';
+import { expensesRouter } from './expenses.js';
 
 export const adminRouter: Router = Router();
 
@@ -159,3 +160,4 @@ adminRouter.use('/categories', categoriesRouter);
 adminRouter.use('/brands', brandsRouter);
 adminRouter.use('/coupons', couponsRouter);
 adminRouter.use('/settings', settingsRouter);
+adminRouter.use('/expenses', expensesRouter);

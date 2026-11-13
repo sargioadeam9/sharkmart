@@ -166,6 +166,13 @@ export const ADMIN_NAV: AdminNavGroup[] = [
         permission: 'audit:read',
       },
       {
+        href: '/admin/expenses',
+        labelEn: 'Expenses',
+        labelBn: 'খরচ',
+        icon: 'Wallet',
+        permission: 'settings:read',
+      },
+      {
         href: '/admin/settings',
         labelEn: 'Settings',
         labelBn: 'সেটিংস',
