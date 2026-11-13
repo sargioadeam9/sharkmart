@@ -3,6 +3,133 @@
 > **Append-only.** Newest entry at the top. Never rewrite or delete a previous agent's entry â€” the next agent needs the history of what was tried and rejected.
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
+
+## 2026-11-13 Â· Phase 9 pass B3 follow-up Â· Saffron Â· availability truth + permissions audit Â· VERIFIED
+
+**Two items from the B3 review brief. Both closed. Neither touched the frozen contracts.**
+
+### 1. The bare "Warehouse" number is gone from the inventory table
+
+The table showed a `Warehouse` column beside `Stock of record` with nothing
+explaining that they measure different things. It was `warehouseQty` â€”
+`SUM(WarehouseStock.quantity)` â€” which is the quantity recorded **at intake**.
+Nothing maintains it: checkout decrements `ProductVariant.stock`
+(`order.service.ts:282`) and never writes the warehouse row, so the intake figure
+is frozen while the real count falls with every order.
+
+Measured at the start of this session, not quoted from the brief:
+
+| Figure | Value |
+| --- | --- |
+| `SUM(WarehouseStock.quantity)` | **5,183** |
+| `SUM(ProductVariant.stock)` | **4,736** |
+| Gap | **447** units |
+
+The brief's 4,776 / 407 was an earlier snapshot. The gap widens per checkout, so
+any number either of us writes down is stale by the next order. Do not treat
+4,736 as canonical â€” re-measure.
+
+**What changed:**
+- `src/components/admin/inventory-table.tsx` â€” the `Warehouse` column is removed
+  from both the `<th>` and the `<td>`. The table now shows `Variant` and
+  `Stock of record` only, which are the two numbers that actually answer "how
+  many do we have".
+- The same file, `AdjustDrawer` â€” `detail.warehouses` was already in the API
+  response and was never rendered. It is now a collapsed `<details>` block
+  labelled **"Received at intake"** with the line *"Recorded when stock was
+  received. Sales do not reduce it, so it is not availability."* Bengali
+  equivalent included. The data is preserved; the misreading is not.
+- `server/src/routes/admin/inventory.service.ts` â€” the `warehouseQty` field
+  carries a doc comment stating what it is, what it is not, the measured gap, and
+  an explicit instruction **not** to one-time-sync it (without a receiving flow
+  it drifts again by the next order).
+- `src/app/admin.css` â€” `.inv-intake` / `.inv-intake-note` styles, dark-mode
+  included.
+
+**Deliberately not done:** no schema change, no backfill, no sync job. The field
+is real and a receiving flow will need it. Making the two numbers agree today
+would hide the fact that nothing writes the warehouse row, which is the actual
+defect and belongs to a later phase.
+
+### 2. Permissions audit against `security.md` Â§6 â€” matrix stands, brief was wrong
+
+The B3 brief required "MARKETING_STAFF can GET, cannot POST" on inventory. The
+shipped matrix does not grant that role `inventory:read` (`permissions.ts:88-96`
+gives it dashboard, catalog, marketing, reviews). So GET is 403, not 200.
+
+I audited the full role Ã— permission matrix against Â§6 rather than just the one
+row. **The matrix matches Â§6.** The brief was the thing that was wrong.
+
+**Decision: no permission was widened.** Widening a role to make a test line pass
+is a security change and belongs to the owner, not to an admin phase. Practical
+cost is nil â€” MARKETING_STAFF holds `catalog:read` and can already see stock
+numbers on `/admin/products`.
+
+The decision is now enforced, not just noted: `phase9d-inventory.test.ts` has one
+explicit test asserting 403 on all four inventory endpoints for
+`marketing@sharkmart.test` (`GET /inventory`, `GET /inventory/alerts`,
+`GET /inventory/movements`, `POST /inventory/:id/adjust`), and asserting the
+variant stock did not move. It supersedes the two weaker tests it replaced. If
+someone genuinely wants the brief's behaviour they must edit that test on
+purpose, which is the point.
+
+### Verification â€” exact commands and results
+
+```
+npm test                     â†’ 182/182 passing, 9 files
+npx tsc --noEmit             â†’ clean
+npm run lint                 â†’ 0 errors (15 pre-existing warnings)
+npm run build                â†’ green
+```
+
+**182, not 183.** The suite was 183 at B3 close. This session removed two
+overlapping marketing tests and added one stronger one: 183 âˆ’ 2 + 1 = 182. No
+coverage was lost; the new test asserts strictly more.
+
+**Live, in the browser (real HTTP, not a fetch that hides `set-cookie`):**
+- Port 3100 was serving `next start -p 3100` from a stale build â€” killed the
+  process tree, left 3000 untouched (landmine 15). 3000 still returns 200.
+- Inventory table renders with no `Warehouse` column; `Variant` and
+  `Stock of record` only.
+- Drawer shows `Current quantity 23` (variant) with the collapsed
+  **"Received at intake"** section reading 46 below it â€” the drift, now visibly
+  labelled as two different measurements rather than one contradictory number.
+- Zero horizontal overflow at 360, 720, 1024 and 1440. Drawer at 720 spans
+  left 263 â†’ right 703 inside a 703 client width.
+- All four inventory endpoints return 403 for the marketing user over real HTTP.
+
+### What is NOT done
+
+- `WarehouseStock` is still written by nothing except the adjust endpoint.
+  Checkout still decrements the variant only. **The drift continues** â€” 447 units
+  today, more tomorrow. The real fix is a receiving flow that writes both, and
+  that is a later phase, not B3.
+- No reconciliation backfill. Deliberate, see above.
+- B4â€“B5 (Reviews, Categories, Brands) not started.
+
+### Assumed
+
+- That `ProductVariant.stock` remains the stock of record for variant products.
+  This is the B3 decision and it is unchanged â€” `cart.service.ts:191-200` and
+  `totalStock()` in `mappers.ts:277-282` both already implement it, so the
+  storefront badge and the admin number agree. Verified both call sites.
+- That hiding the intake number from the table is better than relabelling it in
+  place. A column that says "Intake (not availability)" in a table of
+  availability numbers is still a column operators will read wrong.
+
+### Landmines hit
+
+- `Get-Content -Raw` + `IndexOf` on `HANDOFF.md` failed to match a marker that
+  `Select-String` found â€” the file's encoding does not round-trip through a raw
+  string read. Splice by line number, not by string index.
+- The brief's stock figures (4,776 / 407) were already stale when I started.
+  Measure the gap yourself; do not inherit it.
+
+### Exact next step
+
+Phase 9 pass B4 â€” Reviews module. Before that, if anyone touches stock: re-measure
+the warehouse-vs-variant gap first, because it has moved since this entry.
+
 ## 2026-11-13 Â· Phase 9 pass B3 Â· Saffron Â· inventory API + list + adjust drawer + movement log Â· PASS B3 DONE
 
 **Read this first â€” the stock decision is the whole pass**

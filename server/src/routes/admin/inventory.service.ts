@@ -81,7 +81,20 @@ export interface InventoryListItem {
   categoryNameBn: string;
   imageUrl: string | null;
   variantCount: number;
-  /** SUM(WarehouseStock.quantity) for this product. */
+  /**
+   * SUM(WarehouseStock.quantity) for this product — the quantity recorded at
+   * INTAKE, not availability.
+   *
+   * Nothing maintains this field. Checkout decrements `ProductVariant.stock`
+   * and never touches the warehouse row, so this number is frozen at whatever
+   * was received while the real count falls with every order. It is kept in the
+   * response because the field is real and a receiving flow will need it, but
+   * it must never be presented as "how many we have" — see `stockOfRecord`.
+   *
+   * At the time of writing: warehouse sum 5,183 vs variant sum 4,736, a 447-unit
+   * gap that widens per checkout. Do not "fix" it with a one-time sync; without
+   * a receiving flow it drifts again by the next order.
+   */
   warehouseQty: number;
   /** SUM(ProductVariant.stock) for this product. */
   variantStock: number;

@@ -532,42 +532,56 @@ describe('adjust guards', () => {
 
 describe('permission gates', () => {
   /**
-   * ── A conflict worth recording ────────────────────────────────────────────
+   * ══════════════════════════════════════════════════════════════════════════
+   * MARKETING_STAFF AND INVENTORY — THE DECISION, ENFORCED BY THIS TEST
+   * ══════════════════════════════════════════════════════════════════════════
    *
-   * The B3 brief lists "MARKETING_STAFF can GET, cannot POST" as a required
-   * test. The shipped matrix does not grant MARKETING_STAFF `inventory:read`
-   * (permissions.ts:88-96), so GET is a 403 today and this suite asserts that.
+   * The Phase 9 pass B3 brief said "MARKETING_STAFF can GET, cannot POST" on
+   * inventory. The shipped matrix disagrees: `permissions.ts:88-96` grants that
+   * role dashboard, catalog, marketing and reviews — and no `inventory:read`.
+   * The nav reads the same map, so the sidebar hides Inventory and the API 403s
+   * on both verbs. The system is internally consistent; the brief was wrong.
    *
-   * The matrix was left alone deliberately. It is transcribed from security.md
-   * §6, and widening a role's permissions to make a test line pass is a
-   * security decision that belongs to the owner, not to an admin phase. The
-   * practical cost is nil: MARKETING_STAFF holds `catalog:read` and can already
-   * see stock numbers on /admin/products. Recorded in HANDOFF.md.
+   * DECISION: NO. The matrix stands. `security.md` §6 is the source of truth and
+   * a phase brief does not outrank it. Widening a role to make a test line pass
+   * is a security change, and the practical cost of not doing it is nil —
+   * MARKETING_STAFF holds `catalog:read` and can already see stock numbers on
+   * /admin/products.
+   *
+   * This test is the tiebreaker. Without it, the next agent reads the brief,
+   * sees the mismatch, and "fixes" it by granting the permission. If someone
+   * genuinely wants the brief's behaviour, they must change this test
+   * deliberately — which is the point.
+   *
+   * Do not edit security.md or the B3 brief to match. Note the divergence.
    */
-  it('403s MARKETING_STAFF on the read endpoints, because they hold no inventory:read', async () => {
+  it('403s MARKETING_STAFF on GET and POST inventory — the matrix wins over the brief', async () => {
     const agent = await signIn('marketing@sharkmart.test');
+    const { productId, variantId, stock } = await variantProduct();
 
+    // GET /admin/inventory
     const list = await agent.get('/api/v1/admin/inventory?limit=1');
     expect(list.status).toBe(403);
     expect(list.body.error.code).toBe('FORBIDDEN');
 
+    // GET /admin/inventory/alerts
     const alerts = await agent.get('/api/v1/admin/inventory/alerts');
     expect(alerts.status).toBe(403);
-  });
 
-  it('403s MARKETING_STAFF on an adjustment, because they hold inventory:read only', async () => {
-    const agent = await signIn('marketing@sharkmart.test');
-    const { productId, variantId, stock } = await variantProduct();
+    // GET /admin/inventory/movements
+    const movements = await agent.get('/api/v1/admin/inventory/movements');
+    expect(movements.status).toBe(403);
 
-    const res = await agent
+    // POST /admin/inventory/:id/adjust
+    const adjust = await agent
       .post(`/api/v1/admin/inventory/${productId}/adjust`)
       .set('X-CSRF-Token', csrfOf(agent))
-      .send({ quantity: 1, mode: 'delta', reason: 'Marketing should not move stock', variantId });
+      .send({ quantity: 1, mode: 'delta', reason: 'Marketing must not move stock', variantId });
 
-    expect(res.status).toBe(403);
-    expect(res.body.error.code).toBe('FORBIDDEN');
+    expect(adjust.status).toBe(403);
+    expect(adjust.body.error.code).toBe('FORBIDDEN');
 
-    // And nothing moved.
+    // And the refusal is real, not just a status code: nothing moved.
     const variant = await prisma.productVariant.findUnique({
       where: { id: variantId },
       select: { stock: true },

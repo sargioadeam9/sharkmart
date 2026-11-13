@@ -3044,3 +3044,82 @@
 .admin-root[data-theme='dark'] .inv-current b {
   color: #e8ecf6;
 }
+
+/* ---------- Intake quantity (collapsed) ----------
+   `WarehouseStock.quantity` is the number recorded at intake. Nothing
+   maintains it — checkout decrements ProductVariant.stock and never touches
+   this row — so it is frozen while the real count falls. It is folded away
+   here and named for what it is, rather than sitting beside the real number
+   as if it were availability. */
+.admin-root .inv-intake {
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-sm);
+  background: var(--bg);
+}
+
+.admin-root .inv-intake > summary {
+  padding: 10px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.admin-root .inv-intake > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-root .inv-intake > summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 6px;
+  color: var(--faint);
+  transition: transform 0.15s ease;
+}
+
+.admin-root .inv-intake[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.admin-root .inv-intake > summary:hover {
+  color: var(--text);
+}
+
+.admin-root .inv-intake-note {
+  margin: 0;
+  padding: 0 12px 8px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--faint);
+}
+
+.admin-root .inv-intake ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0 12px 10px;
+}
+
+.admin-root .inv-intake li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.admin-root .inv-intake li b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root[data-theme='dark'] .inv-intake {
+  background: #1b2740;
+  border-color: #2c3a58;
+}
+
+.admin-root[data-theme='dark'] .inv-intake li b {
+  color: #e8ecf6;
+}

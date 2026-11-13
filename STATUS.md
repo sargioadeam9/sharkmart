@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-13 · **Updated by:** Phase 9 pass B3 — inventory API, list, adjust drawer and movement log shipped and verified
+**Last updated:** 2026-11-13 · **Updated by:** Phase 9 pass B3 follow-up — intake quantity no longer presented as availability; permissions matrix audited against `security.md` §6 and upheld
 
 ---
 
@@ -14,8 +14,8 @@
 | --- | --- |
 | Active phase | **Phase 9 — Admin panel: core modules** |
 | Phase status | 🟡 **Phase 9 PASS B3 COMPLETE** — products (B1), orders (B2) and inventory (B3) green. B4–B5 (Reviews, Categories, Brands) not started |
-| Build state | Server: `npm test` **183/183** (9 files) · `tsc --noEmit` clean · `npm run lint` 0 errors (15 pre-existing warnings). Storefront: `npm run build` green · `tsc --noEmit` clean. `prisma migrate status` clean, 7 migrations |
-| Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so neither the reference's "Estimated profit" KPI nor a stock-value column is computable (see HANDOFF). `cache-and-limits.test.ts` "exceeding the search limit" is **flaky under parallel file execution** (passes alone, passed on re-run of the full suite) — the in-process limiter is shared across files. **`WarehouseStock` is written by nothing except the new inventory adjust endpoint** — checkout decrements `ProductVariant.stock` only, so the two totals drift (5,183 vs 4,966 at B3 close). See HANDOFF for the exact reconciliation |
+| Build state | Server: `npm test` **182/182** (9 files) · `tsc --noEmit` clean · `npm run lint` 0 errors (15 pre-existing warnings). Storefront: `npm run build` green · `tsc --noEmit` clean. `prisma migrate status` clean, 7 migrations |
+| Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so neither the reference's "Estimated profit" KPI nor a stock-value column is computable (see HANDOFF). `cache-and-limits.test.ts` "exceeding the search limit" is **flaky under parallel file execution** (passes alone, passed on re-run of the full suite) — the in-process limiter is shared across files. **`WarehouseStock` is written by nothing except the new inventory adjust endpoint** — checkout decrements `ProductVariant.stock` only, so the two totals drift (**5,183 vs 4,736, a 447-unit gap** as of the B3 follow-up; it widens per checkout, so re-measure rather than trusting this figure). The intake number is no longer shown as availability in the admin table — it is collapsed under "Received at intake" in the drawer. See HANDOFF for the exact reconciliation |
 | Next action | Phase 9 pass B4 — Reviews module |
 
 ### Phase 6 — gate evidence

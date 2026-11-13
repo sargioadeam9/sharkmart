@@ -242,7 +242,6 @@ export function InventoryTable({
                 <th className="inv-col-name">{lang === 'bn' ? 'পণ্য' : 'Product'}</th>
                 <th className="inv-col-sku">SKU</th>
                 <th className="inv-col-cat">{lang === 'bn' ? 'ক্যাটাগরি' : 'Category'}</th>
-                <th className="num">{lang === 'bn' ? 'গুদাম' : 'Warehouse'}</th>
                 <th className="num">{lang === 'bn' ? 'ভ্যারিয়েন্ট' : 'Variant'}</th>
                 <th className="num">{lang === 'bn' ? 'প্রকৃত স্টক' : 'Stock of record'}</th>
                 <th>{lang === 'bn' ? 'অবস্থা' : 'Status'}</th>
@@ -286,9 +285,6 @@ export function InventoryTable({
                   </td>
                   <td className="inv-col-cat" data-label={lang === 'bn' ? 'ক্যাটাগরি' : 'Category'}>
                     {lang === 'bn' ? item.categoryNameBn : item.categoryNameEn}
-                  </td>
-                  <td className="num" data-label={lang === 'bn' ? 'গুদাম' : 'Warehouse'}>
-                    {num(item.warehouseQty, lang)}
                   </td>
                   <td className="num" data-label={lang === 'bn' ? 'ভ্যারিয়েন্ট' : 'Variant'}>
                     {num(item.variantStock, lang)}
@@ -612,6 +608,43 @@ function AdjustDrawer({ lang, item, canWrite, onClose, onSaved }: DrawerProps) {
 
           {error && <p className="inv-error">{error}</p>}
           {notice && <p className="inv-notice">{notice}</p>}
+
+          {/**
+           * ── Intake quantity, collapsed and labelled ────────────────────────
+           *
+           * `WarehouseStock.quantity` is the number recorded when stock was
+           * received. Nothing maintains it: checkout decrements
+           * `ProductVariant.stock` and never touches this row, so it is frozen
+           * at intake while the real count falls with every order. At the time
+           * of writing it summed to 5,183 against a variant total of 4,736 — a
+           * 447-unit gap that widens per checkout.
+           *
+           * It was previously a bare "Warehouse" column in the table, sitting
+           * beside the real number with nothing to say which was true. An
+           * operator reading 46 when 31 exist promises stock that does not.
+           * It is kept — the field is real and the receiving flow will need it —
+           * but folded away and named for what it is.
+           */}
+          {detail && detail.warehouses.length > 0 && (
+            <details className="inv-intake">
+              <summary>
+                {lang === 'bn' ? 'গ্রহণের সময়ের সংখ্যা' : 'Received at intake'}
+              </summary>
+              <p className="inv-intake-note">
+                {lang === 'bn'
+                  ? 'এটি গ্রহণের সময় রেকর্ড করা সংখ্যা। বিক্রয় এটি কমায় না, তাই প্রকৃত স্টক নয়।'
+                  : 'Recorded when stock was received. Sales do not reduce it, so it is not availability.'}
+              </p>
+              <ul>
+                {detail.warehouses.map((row) => (
+                  <li key={row.warehouseId}>
+                    <span>{row.warehouseName}</span>
+                    <b>{num(row.quantity, lang)}</b>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
 
           {detail && detail.movements.length > 0 && (
             <div className="inv-recent">
