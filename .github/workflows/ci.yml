@@ -1,0 +1,126 @@
+name: CI
+
+# Two independent jobs, deliberately not chained.
+#
+# The API suite is the one that matters: 260 integration tests against a real
+# MySQL database, which is where every bug in this project has actually been
+# caught. The web job is typecheck plus a mock-mode build — a compile check, not
+# a behaviour check.
+#
+# They are separate so a red web build never hides a red API suite, and so the
+# slow job can be re-run on its own.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# A second push to the same branch cancels the first: the old run's result is
+# already irrelevant, and the API job holds a MySQL service for ~6 minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API — typecheck + 260 integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      mysql:
+        image: mysql:8
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sharkmart
+        ports:
+          - 3306:3306
+        # Without a health check the first `prisma migrate deploy` races the
+        # server's startup and fails with "Can't reach database server".
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/sharkmart
+      # Test-only values. Never reused anywhere real; the suite signs in with
+      # the accounts created by seed-test-users.ts, so these must be long enough
+      # for env.ts's 32-character floor.
+      JWT_ACCESS_SECRET: ci-access-secret-not-used-anywhere-real-000000
+      JWT_REFRESH_SECRET: ci-refresh-secret-not-used-anywhere-real-0000
+      INTERNAL_API_TOKEN: ci-internal-token-not-used-anywhere-real-0000
+      CORS_ORIGINS: http://localhost:3000
+      LOG_LEVEL: warn
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            server/package-lock.json
+            package-lock.json
+
+      - name: Install API dependencies
+        working-directory: server
+        run: npm ci
+
+      - name: Generate the Prisma client
+        working-directory: server
+        run: npx prisma generate
+
+      - name: Apply migrations
+        working-directory: server
+        run: npx prisma migrate deploy
+
+      # The suite asserts against seeded rows (product counts, category slugs,
+      # the three "Accessories"). Base mode is not enough — the catalogue is what
+      # the listing and search tests read.
+      - name: Seed the reference catalogue
+        working-directory: server
+        run: npm run db:seed:catalog
+
+      - name: Create the staff test accounts
+        working-directory: server
+        run: npx tsx prisma/seed-test-users.ts
+
+      - name: Typecheck
+        working-directory: server
+        run: npx tsc --noEmit
+
+      - name: Test
+        working-directory: server
+        run: npm test
+
+  web:
+    name: Web — typecheck + build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install storefront dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # No `.env.local` in CI, so `USE_MOCK` defaults to true and the build reads
+      # fixtures instead of the API. That is what makes this job independent of a
+      # running backend — it proves the app compiles and every route can be
+      # generated, not that the API integration works (the api job covers that).
+      - name: Build
+        run: npm run build
