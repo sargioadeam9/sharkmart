@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `product` ADD COLUMN `originalPricePoisha` INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE `Product` ADD COLUMN `originalPricePoisha` INTEGER NOT NULL DEFAULT 0;
 
 -- CreateIndex
 CREATE INDEX `Product_isPublished_isDraft_categoryId_createdAt_idx` ON `Product`(`isPublished`, `isDraft`, `categoryId`, `createdAt`);

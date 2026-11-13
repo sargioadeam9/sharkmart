@@ -1,5 +1,5 @@
 -- AlterTable
-ALTER TABLE `order` ADD COLUMN `idempotencyKey` VARCHAR(191) NULL,
+ALTER TABLE `Order` ADD COLUMN `idempotencyKey` VARCHAR(191) NULL,
     ADD COLUMN `paymentGateway` VARCHAR(191) NULL,
     ADD COLUMN `paymentTxnId` VARCHAR(191) NULL;
 
