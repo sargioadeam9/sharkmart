@@ -140,6 +140,13 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     headingBn: 'প্রবৃদ্ধি',
     items: [
       {
+        href: '/admin/marketing',
+        labelEn: 'SMS and email',
+        labelBn: 'SMS ও ইমেইল',
+        icon: 'Megaphone',
+        permission: 'marketing:write',
+      },
+      {
         href: '/admin/reviews',
         labelEn: 'Reviews',
         labelBn: 'পর্যালোচনা',

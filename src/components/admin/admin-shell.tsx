@@ -32,6 +32,7 @@ import {
   LayoutDashboard,
   Lock,
   LogOut,
+  Megaphone,
   Menu,
   Moon,
   ScrollText,
@@ -66,6 +67,7 @@ const ICONS: Record<string, LucideIcon> = {
   ScrollText,
   Settings,
   Lock,
+  Megaphone,
   Wallet,
   Truck,
 };
