@@ -30,11 +30,64 @@ keys in `SETTINGS`, and keeps the constants as the fallback.
 
 | Consumer | Wired? |
 | --- | --- |
-| Checkout delivery charge | **Yes** - `deliveryChargeFor()` is async and reads `getDeliveryFees()` |
+| Checkout delivery charge (server) | **Yes** - `deliveryChargeFor()` is async and reads `getDeliveryFees()` |
 | Admin sidebar wordmark | **Yes** - layout fetches `/admin/settings/profile`, shell falls back to BRAND |
-| Storefront metadata, header, footer | **No** - static rendering. Belongs to Phase 11 (SEO), which is already tasked with DB-backed metadata |
-| Homepage `freeDeliveryThresholdPoisha` | **No** - `homepage.service.ts:84` has its own copy of the constant. Two sources now. Wire it when the homepage is next touched |
-| Emails, SMS, invoices | **No** - there is no email or SMS sending code in this repo yet, only `SMTP_*` env vars |
+| Storefront footer, top bar, cart drawer, cart page, checkout page | **Yes** - see the audit below |
+| Storefront `<title>` / description / admin metadata template | **No** - hardcoded strings. Phase 11 owns DB-backed metadata |
+| Homepage `freeDeliveryThresholdPoisha` | **No** - `homepage.service.ts:84` keeps its own copy of the constant |
+| Emails, SMS, invoices | **No** - no sending code and no invoice generator exist yet |
+
+### The audit that produced this table
+
+The first version of this pass wired only checkout and the admin sidebar. That was
+not enough, and the gap was money: `src/lib/commerce.ts` held a **third** copy of
+the delivery numbers, used by the cart drawer, the cart page and the checkout
+page. Raising the flat fee to ৳77 would have charged ৳77 while the cart still
+quoted ৳60.
+
+What was added to close it:
+
+- `GET /api/v1/settings` - public, no session, `Cache-Control: public, max-age=300`,
+  returns the display profile plus the three delivery numbers. It is the only
+  read the storefront makes.
+- `src/lib/api/public-settings.ts` - server-side fetch with
+  `next: { revalidate: 60 }`. Never throws; falls back to `FALLBACK_STORE`, which
+  mirrors `BRAND` and the reference rules, so a failed read renders yesterday's
+  site rather than a broken one.
+- `StoreProvider` / `useStore()` - the profile is fetched once in
+  `(shop)/layout.tsx` and passed down, so no client component fetches and no
+  price flashes from the old value to the new one.
+- `commerce.ts` functions now take `DeliveryRules`; `cartTotals` threads it.
+  Defaults are the reference numbers, so an unwired caller still behaves.
+- Footer, top bar, cart drawer, cart page and checkout page read `useStore()`.
+
+**Verified end to end, not just typechecked**: setting `contact.phone` to a
+sentinel in the admin panel made the storefront footer render that number after
+the 60-second revalidation window, then it was reverted. A settings write that
+does not reach the storefront is the failure mode this whole pass exists to
+prevent.
+
+`revalidate` started at 300s and was cut to 60s for a practical reason: an
+operator who renames the shop, refreshes the storefront, sees the old name and
+concludes the save failed is a support ticket. A minute is a reasonable ceiling.
+
+### Still open, and deliberately not fixed here
+
+- **`homepage.service.ts:84` has its own `FREE_DELIVERY_THRESHOLD_POISHA`.** It
+  feeds the homepage payload the storefront renders above the fold. Two sources
+  now disagree if the threshold changes. Wire it when the homepage is next
+  touched; it is one import.
+- **`/help`, `/return`, `/privacy`, `/terms` do not exist.** The footer links to
+  them and they 404. Not a settings concern, but it is visible on the same page,
+  and it is a content phase's job.
+- **No contact or about page exists**, so the address and email have nowhere to
+  go beyond the footer.
+- **No invoice exists** in this codebase. When one is built it must read
+  `getStoreProfile()` for its header rather than the constants.
+- **Metadata titles** still contain the literal name (root layout description,
+  admin `%s | SharkMart Admin`). Phase 11.
+
+
 
 **Design rules that keep it safe**
 - Only registered keys exist. An unknown key in a PATCH is a 422, not a stored

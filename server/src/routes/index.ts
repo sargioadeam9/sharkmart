@@ -9,6 +9,7 @@
 import { Router } from 'express';
 import { healthRouter } from './health.js';
 import { productsRouter } from './public/products.js';
+import { settingsPublicRouter } from './public/settings.js';
 import { brandsRouter, categoriesRouter } from './public/categories.js';
 import {
   flashSaleRouter,
@@ -40,6 +41,7 @@ apiV1.use('/search', searchRouter);
 apiV1.use('/flash-sale', flashSaleRouter);
 apiV1.use('/homepage', homepageRouter);
 apiV1.use('/landing', landingRouter);
+apiV1.use('/settings', settingsPublicRouter);
 
 // ── Customer (Phase 8) ──────────────────────────────────────────────────
 apiV1.use('/auth', authRouter);

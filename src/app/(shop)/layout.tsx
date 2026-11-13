@@ -11,6 +11,8 @@
 import type { ReactNode } from 'react';
 import { StorefrontShell } from '@/components/layout/storefront-shell';
 import { SessionProvider } from '@/components/providers/session-provider';
+import { StoreProvider } from '@/components/providers/store-provider';
+import { fetchStoreProfile } from '@/lib/api/public-settings';
 
 /**
  * `SessionProvider` wraps the whole storefront, not just the account routes.
@@ -20,10 +22,22 @@ import { SessionProvider } from '@/components/providers/session-provider';
  * a shopper lands on after signing in — not only if they happen to open
  * `/profile`.
  */
-export default function ShopLayout({ children }: { children: ReactNode }) {
+export default async function ShopLayout({ children }: { children: ReactNode }) {
+  /**
+   * One fetch, at the top of the tree, so the header, footer, cart drawer and
+   * checkout all read the same store name and the same delivery numbers.
+   *
+   * `fetchStoreProfile` never throws and falls back to the constants, and the
+   * request is revalidated rather than `no-store`, so the storefront stays
+   * static/ISR instead of going dynamic for every visitor.
+   */
+  const store = await fetchStoreProfile();
+
   return (
-    <SessionProvider>
-      <StorefrontShell>{children}</StorefrontShell>
-    </SessionProvider>
+    <StoreProvider value={store}>
+      <SessionProvider>
+        <StorefrontShell>{children}</StorefrontShell>
+      </SessionProvider>
+    </StoreProvider>
   );
 }

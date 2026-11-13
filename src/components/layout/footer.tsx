@@ -18,7 +18,7 @@ import Link from 'next/link';
 import type { CategoryDto } from '@/types/catalog';
 import { localized } from '@/types/catalog';
 import { useLang } from '@/lib/hooks';
-import { BRAND } from '@/lib/brand';
+import { useStore } from '@/components/providers/store-provider';
 import { Logo } from '@/components/brand/logo';
 
 export interface FooterProps {
@@ -28,6 +28,7 @@ export interface FooterProps {
 const PAYMENT_METHODS = ['COD', 'bKash', 'Nagad', 'Visa', 'Mastercard'];
 
 export function Footer({ categories }: FooterProps) {
+  const store = useStore();
   const { lang, t } = useLang();
 
   const shopCategories = categories.slice(0, 5);
@@ -102,18 +103,18 @@ export function Footer({ categories }: FooterProps) {
           <div>
             <h4>{lang === 'bn' ? 'যোগাযোগ' : 'Contact'}</h4>
             <ul>
-              <li>📞 {BRAND.phone}</li>
-              <li>✉️ {BRAND.supportEmail}</li>
-              <li>📍 {lang === 'bn' ? 'ঢাকা, বাংলাদেশ' : BRAND.address}</li>
+              <li>📞 {store.phone}</li>
+              <li>✉️ {store.supportEmail}</li>
+              <li>📍 {lang === 'bn' ? 'ঢাকা, বাংলাদেশ' : store.address}</li>
             </ul>
           </div>
         </div>
 
         <div className="copy">
           <span>
-            © 2026 {BRAND.name}. All rights reserved.
+            © 2026 {store.name}. All rights reserved.
           </span>
-          <span>{BRAND.tagline}</span>
+          <span>{store.tagline}</span>
         </div>
       </div>
     </footer>

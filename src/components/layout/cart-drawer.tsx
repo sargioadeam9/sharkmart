@@ -35,6 +35,7 @@ import { useLang, useBodyScrollLock, useEscapeKey, useFocusReturn } from '@/lib/
 import { useEffectiveCart } from '@/lib/hooks/use-effective-cart';
 import { removeCartItem, updateCartItem } from '@/lib/api/account';
 import { cartTotals } from '@/lib/cart-totals';
+import { useStore } from '@/components/providers/store-provider';
 import {
   amountToFreeDeliveryPoisha,
   freeDeliveryProgressPercent,
@@ -52,6 +53,7 @@ import { CartIcon } from '@/components/ui/icons';
 const MAX_RELATED = 10;
 
 export function CartDrawer() {
+  const store = useStore();
   const { lang, t, tu } = useLang();
 
   const open = useUiStore((s) => s.cartOpen);
@@ -75,7 +77,7 @@ export function CartDrawer() {
    */
   const { capture, restore } = useFocusReturn();
 
-  const totals = useMemo(() => cartTotals(lines), [lines]);
+  const totals = useMemo(() => cartTotals(lines, store.delivery), [lines, store.delivery]);
 
   /**
    * Related products: in-stock items not already in the cart, ranked the way
@@ -175,8 +177,8 @@ export function CartDrawer() {
     return () => restore();
   }, [open, capture, restore]);
 
-  const remaining = amountToFreeDeliveryPoisha(totals.subtotalPoisha);
-  const progress = freeDeliveryProgressPercent(totals.subtotalPoisha);
+  const remaining = amountToFreeDeliveryPoisha(totals.subtotalPoisha, store.delivery);
+  const progress = freeDeliveryProgressPercent(totals.subtotalPoisha, store.delivery);
   const qualifies = remaining === 0 && totals.lineCount > 0;
 
   return (

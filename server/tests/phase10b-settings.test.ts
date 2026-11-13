@@ -229,3 +229,31 @@ describe('the delivery fee reaches checkout', () => {
     await prisma.order.deleteMany({ where: { id: order.body.data.id } });
   });
 });
+
+// ── The storefront's read ──────────────────────────────────────────────────
+
+describe('the public endpoint', () => {
+  it('serves the profile and delivery rules without a session', async () => {
+    // No agent, no cookie: a guest's header has to render.
+    const res = await request(app).get('/api/v1/settings');
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.name).toBeTruthy();
+    expect(res.body.data.phone).toBeTruthy();
+    expect(res.body.data.delivery.feePoisha).toBeGreaterThanOrEqual(0);
+    expect(res.body.data.delivery.freeThresholdPoisha).toBeGreaterThanOrEqual(0);
+    expect(res.headers['cache-control']).toMatch(/max-age=\d+/);
+  });
+
+  it('reflects a fee change immediately, so the cart cannot quote a stale price', async () => {
+    await remember('delivery.standardFeePoisha');
+    const admin = await signIn('super@sharkmart.test');
+
+    await admin
+      .patch('/api/v1/admin/settings')
+      .send({ values: { 'delivery.standardFeePoisha': '4321' } });
+
+    const res = await request(app).get('/api/v1/settings');
+    expect(res.body.data.delivery.feePoisha).toBe(4_321);
+  });
+});

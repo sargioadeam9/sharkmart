@@ -10,17 +10,18 @@
 
 import Link from 'next/link';
 import { useLang } from '@/lib/hooks';
-import { BRAND } from '@/lib/brand';
+import { useStore } from '@/components/providers/store-provider';
 import { LanguageToggle } from './language-toggle';
 
 export function TopBar() {
   const { t } = useLang();
+  const store = useStore();
 
   return (
     <div className="topbar">
       <div className="wrap">
         <span>
-          📞 {BRAND.phone} &nbsp;·&nbsp; {t('inc')}
+          📞 {store.phone} &nbsp;·&nbsp; {t('inc')}
         </span>
         <nav>
           <Link href="/track">{t('track')}</Link>

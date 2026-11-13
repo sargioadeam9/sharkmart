@@ -36,6 +36,7 @@ import {
 } from '@/lib/api/account';
 import { cartTotals } from '@/lib/cart-totals';
 import { deliveryFeePoisha } from '@/lib/commerce';
+import { useStore } from '@/components/providers/store-provider';
 import { formatMoney } from '@/lib/format';
 import { localized } from '@/types/catalog';
 import { toast } from '@/components/shared/toast';
@@ -47,6 +48,7 @@ import { cn } from '@/lib/utils';
 type Status = 'loading' | 'ready' | 'failed';
 
 export function CartPage() {
+  const store = useStore();
   const { lang, t, tu } = useLang();
 
   const sessionStatus = useSessionStore((s) => s.status);
@@ -102,11 +104,11 @@ export function CartPage() {
   const status: Status = signedIn ? serverStatus : 'ready';
 
   // ── derived money ──────────────────────────────────────────────────────
-  const localTotals = useMemo(() => cartTotals(localLines), [localLines]);
+  const localTotals = useMemo(() => cartTotals(localLines, store.delivery), [localLines, store.delivery]);
 
   const subtotal = signedIn ? (serverCart?.subtotalPoisha ?? 0) : localTotals.subtotalPoisha;
   const itemCount = signedIn ? (serverCart?.itemCount ?? 0) : localTotals.itemCount;
-  const delivery = deliveryFeePoisha(subtotal);
+  const delivery = deliveryFeePoisha(subtotal, store.delivery);
   const total = subtotal + delivery;
 
   const hasIssues = signedIn ? Boolean(serverCart?.hasIssues) : false;

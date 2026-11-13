@@ -21,9 +21,12 @@
  */
 
 import type { CartLine, CartTotals } from '@/lib/store/cart-store';
-import { deliveryFeePoisha } from '@/lib/commerce';
+import { DEFAULT_DELIVERY_RULES, deliveryFeePoisha, type DeliveryRules } from '@/lib/commerce';
 
-export function cartTotals(lines: CartLine[]): CartTotals {
+export function cartTotals(
+  lines: CartLine[],
+  rules: DeliveryRules = DEFAULT_DELIVERY_RULES,
+): CartTotals {
   let subtotalPoisha = 0;
   let discountPoisha = 0;
   let itemCount = 0;
@@ -41,7 +44,7 @@ export function cartTotals(lines: CartLine[]): CartTotals {
     }
   }
 
-  const deliveryFee = deliveryFeePoisha(subtotalPoisha);
+  const deliveryFee = deliveryFeePoisha(subtotalPoisha, rules);
 
   return {
     subtotalPoisha,

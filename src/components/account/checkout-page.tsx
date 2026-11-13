@@ -47,7 +47,8 @@ import {
   listAddresses,
   placeOrder,
 } from '@/lib/api/account';
-import { deliveryFeePoisha, FREE_DELIVERY_THRESHOLD_POISHA } from '@/lib/commerce';
+import { deliveryFeePoisha } from '@/lib/commerce';
+import { useStore } from '@/components/providers/store-provider';
 import { formatMoney } from '@/lib/format';
 import {
   isValidBdPhone,
@@ -61,8 +62,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Field, SelectField, TextAreaField, FormAlert } from '@/components/account/form-fields';
 import { cn } from '@/lib/utils';
 
-/** Express surcharge, mirroring `EXPRESS_SURCHARGE_POISHA` on the server. */
-const EXPRESS_SURCHARGE_POISHA = 10_000;
 
 type Step = 'address' | 'delivery' | 'payment' | 'review';
 
@@ -89,6 +88,7 @@ const EMPTY_ADDRESS: AddressForm = {
 };
 
 export function CheckoutPage() {
+  const store = useStore();
   const { lang, t, tu } = useLang();
   const router = useRouter();
 
@@ -195,10 +195,10 @@ export function CheckoutPage() {
     [lines],
   );
 
-  const baseDelivery = deliveryFeePoisha(subtotal);
+  const baseDelivery = deliveryFeePoisha(subtotal, store.delivery);
   const delivery =
     deliveryMethod === 'EXPRESS' && subtotal > 0
-      ? baseDelivery + EXPRESS_SURCHARGE_POISHA
+      ? baseDelivery + store.delivery.expressSurchargePoisha
       : baseDelivery;
 
   const total = subtotal + delivery;
@@ -554,7 +554,7 @@ export function CheckoutPage() {
                       <div className="acct-option-title">
                         <span>{tu('deliveryExpress')}</span>
                         <em>
-                          {formatMoney(baseDelivery + EXPRESS_SURCHARGE_POISHA, lang)}
+                          {formatMoney(baseDelivery + store.delivery.expressSurchargePoisha, lang)}
                         </em>
                       </div>
                       <div className="acct-option-note">{tu('deliveryExpressEta')}</div>
@@ -562,10 +562,10 @@ export function CheckoutPage() {
                   </label>
                 </div>
 
-                {subtotal < FREE_DELIVERY_THRESHOLD_POISHA && (
+                {subtotal < store.delivery.freeThresholdPoisha && (
                   <p className="acct-muted" style={{ marginTop: 14 }}>
                     {t('moreMsg', {
-                      n: Math.round((FREE_DELIVERY_THRESHOLD_POISHA - subtotal) / 100),
+                      n: Math.round((store.delivery.freeThresholdPoisha - subtotal) / 100),
                     })}
                   </p>
                 )}
