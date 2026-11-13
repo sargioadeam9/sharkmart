@@ -5067,3 +5067,100 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ─────────────────────── Barcodes (Phase 10 pass L) ─────────────────────── */
+
+.admin-root .barcode-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.admin-root .barcode-pick {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+
+.admin-root .barcode-pick small {
+  display: block;
+  color: var(--faint);
+  font-size: 11px;
+}
+
+.admin-root .barcode-sheet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  background: #fff;
+  padding: 10px;
+  border-radius: var(--r-md);
+}
+
+.admin-root .barcode-label {
+  border: 1px dashed #d8d8d8;
+  padding: 4px 4px 2px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #fff;
+  break-inside: avoid;
+}
+
+.admin-root .barcode-label svg {
+  display: block;
+}
+
+.admin-root .barcode-value {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: #000;
+  letter-spacing: 0.04em;
+}
+
+.admin-root .barcode-error {
+  font-size: 10px;
+  color: var(--bad);
+  padding: 8px 4px;
+  text-align: center;
+}
+
+/**
+ * Printing.
+ *
+ * The admin shell is a sidebar plus a scrolling main; on paper both are noise.
+ * Only the label sheet survives, and the labels flow across the page.
+ */
+@media print {
+  .admin-root .no-print,
+  .admin-root .sidebar,
+  .admin-root .topbar,
+  .admin-root .bottom-nav {
+    display: none !important;
+  }
+
+  .admin-root,
+  .admin-root .main,
+  .admin-root .content {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #fff !important;
+  }
+
+  .admin-root .barcode-sheet {
+    padding: 0;
+    gap: 4px;
+  }
+
+  .admin-root .barcode-label {
+    border-color: #ccc;
+  }
+}
