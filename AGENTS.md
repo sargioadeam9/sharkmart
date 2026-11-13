@@ -167,6 +167,27 @@ The shop's name, contact details and the three delivery numbers are **store sett
 
 **A partial update is validated against the patch, not the merged row.** A PATCH of `{ isFeatured: true }` must not be rejected because of a stored price the client never sent. That was a P0: every product was read-only for four phases. Apply the same shape to any new cross-field rule — check only when the request touches one of the fields involved.
 
+#### Re-selling this install (white-label)
+
+Each client gets their own deployment: own domain, own database, own `.env`. That is what the single-tenant architecture supports, and it is the model to keep. A per-client setup is:
+
+```
+1. new database + new .env (regenerate every secret: JWT, gateway, SMTP, internal token)
+2. server/.env     CORS_ORIGINS=https://client.com
+   web/.env.local  NEXT_PUBLIC_API_BASE_URL=https://api.client.com
+                   NEXT_PUBLIC_SITE_URL=https://client.com      <- metadataBase, canonical, OG
+3. npm run db:seed          base only: categories, brands, attributes, warehouse, settings
+                            (never `db:seed:catalog` on a client - that is 168 demo products)
+4. create the first SUPER_ADMIN with a real password; never ship seed-test-users.ts
+5. admin -> Settings: name, tagline, domain, phone, email, address, wordmark halves, logo URL, fees
+6. replace public/brand/icon.png and public/brand/sharkmart-logo.png
+7. verify: login, checkout, view-source og:url, footer phone
+```
+
+Two things a rebrand must **not** touch: `oshoppingbd.html` / `admin panel.html` (§2) and the frozen prompts.
+
+`db:seed` is create-only for settings on purpose. It fills in defaults for keys that have no row and never overwrites a value an operator chose — re-running it after a migration must not rename a client's shop back to SharkMart.
+
 ---
 
 ## 4. Working standard — the Opus-class bar

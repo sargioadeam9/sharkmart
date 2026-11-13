@@ -794,6 +794,17 @@ async function seedWarehouse(): Promise<void> {
   });
 }
 
+/**
+ * Defaults for a fresh install. **Create-only.**
+ *
+ * These used to be upserted with `update: { value }`, which meant re-running the
+ * seed silently reverted every setting an operator had changed — rename the shop,
+ * run a migration, and the name goes back to SharkMart. A seed provides defaults;
+ * it must never overwrite a value somebody chose.
+ *
+ * Keys absent here still work: `settings.service.ts` falls back to its registry
+ * defaults for anything with no row.
+ */
 async function seedSettings(): Promise<void> {
   const settings = [
     { key: 'site.name', value: 'SharkMart', group: 'general' },
@@ -801,16 +812,24 @@ async function seedSettings(): Promise<void> {
     { key: 'site.domain', value: 'sharkmart.com.bd', group: 'general' },
     { key: 'site.currency', value: 'BDT', group: 'general' },
     { key: 'site.defaultLanguage', value: 'bn', group: 'general' },
+    { key: 'contact.supportEmail', value: 'support@sharkmart.com.bd', group: 'contact' },
+    { key: 'contact.phone', value: '09XX-XXXXXX', group: 'contact' },
+    { key: 'contact.address', value: 'Dhaka, Bangladesh', group: 'contact' },
     { key: 'delivery.freeThresholdPoisha', value: '200000', group: 'commerce' },
     { key: 'delivery.standardFeePoisha', value: '6000', group: 'commerce' },
+    { key: 'delivery.expressSurchargePoisha', value: '10000', group: 'commerce' },
     { key: 'delivery.dhakaEta', value: '24-48 hours', group: 'commerce' },
     { key: 'delivery.nationalEta', value: '3-5 days', group: 'commerce' },
+    { key: 'brand.nameFirst', value: 'Shark', group: 'branding' },
+    { key: 'brand.nameSecond', value: 'Mart', group: 'branding' },
+    { key: 'brand.logoUrl', value: '/brand/sharkmart-logo.png', group: 'branding' },
   ];
 
   for (const s of settings) {
     await prisma.setting.upsert({
       where: { key: s.key },
-      update: { value: s.value, group: s.group },
+      // Never overwrite an operator's value — see the note above.
+      update: {},
       create: s,
     });
   }
@@ -819,11 +838,32 @@ async function seedSettings(): Promise<void> {
 async function main(): Promise<void> {
   const started = Date.now();
 
+  /**
+   * Two modes, because a client install and a demo are not the same thing.
+   *
+   *   base     categories, brands, attributes, warehouse, settings
+   *            -> a working empty shop. This is what `npm run db:seed` does.
+   *   catalog  the above plus the 168 reference products
+   *            -> demos and screenshots. `npm run db:seed:catalog`.
+   *
+   * Seeding the catalogue into a client's store is the single worst thing this
+   * script could do: 168 "Premium ..." products they must delete one by one, and
+   * a storefront that looks like a template rather than their shop.
+   *
+   * Re-running base mode on a database that already has products changes nothing
+   * about them — every write is an upsert keyed on slug/sku.
+   */
+  const withCatalog = process.argv.includes('--catalog') || process.env.SEED_CATALOG === 'true';
+
   await seedWarehouse();
   const categoryIds = await seedCategories();
   const brandIds = await seedBrands();
   const attributeIds = await seedAttributes(categoryIds);
-  const productCount = await seedProducts(categoryIds, brandIds, attributeIds);
+
+  const productCount = withCatalog
+    ? await seedProducts(categoryIds, brandIds, attributeIds)
+    : 0;
+
   await seedSettings();
 
   const [
@@ -848,11 +888,15 @@ async function main(): Promise<void> {
 
   const elapsed = ((Date.now() - started) / 1000).toFixed(1);
 
-  console.log('Seed complete in ' + elapsed + 's');
+  console.log('Seed complete in ' + elapsed + 's (' + (withCatalog ? 'base + catalog' : 'base only') + ')');
   console.log('  categories    : ' + categories);
   console.log('  subcategories : ' + subcategories);
   console.log('  brands        : ' + brands);
-  console.log('  products      : ' + products + ' (' + productCount + ' upserted this run)');
+  console.log(
+    '  products      : ' +
+      products +
+      (withCatalog ? ' (' + productCount + ' upserted this run)' : ' (catalog skipped - base mode)'),
+  );
   console.log('  images        : ' + images);
   console.log('  variants      : ' + variants);
   console.log('  specifications: ' + specifications);
