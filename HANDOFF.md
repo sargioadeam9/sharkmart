@@ -34,7 +34,7 @@ keys in `SETTINGS`, and keeps the constants as the fallback.
 | Admin sidebar wordmark | **Yes** - layout fetches `/admin/settings/profile`, shell falls back to BRAND |
 | Storefront footer, top bar, cart drawer, cart page, checkout page | **Yes** - see the audit below |
 | Storefront `<title>` / description / admin metadata template | **No** - hardcoded strings. Phase 11 owns DB-backed metadata |
-| Homepage `freeDeliveryThresholdPoisha` | **No** - `homepage.service.ts:84` keeps its own copy of the constant |
+| Homepage `freeDeliveryThresholdPoisha` | **Yes** - `getHomepage()` reads `getDeliveryFees()` |
 | Emails, SMS, invoices | **No** - no sending code and no invoice generator exist yet |
 
 ### The audit that produced this table
@@ -73,10 +73,10 @@ concludes the save failed is a support ticket. A minute is a reasonable ceiling.
 
 ### Still open, and deliberately not fixed here
 
-- **`homepage.service.ts:84` has its own `FREE_DELIVERY_THRESHOLD_POISHA`.** It
-  feeds the homepage payload the storefront renders above the fold. Two sources
-  now disagree if the threshold changes. Wire it when the homepage is next
-  touched; it is one import.
+- ~~`homepage.service.ts:84` has its own threshold constant.~~ **Fixed in the same
+  pass.** It was the fourth copy of the number and the one the customer sees above
+  the fold, so leaving it would have kept the original bug alive in the most
+  visible place. `getHomepage()` now reads `getDeliveryFees()`.
 - **`/help`, `/return`, `/privacy`, `/terms` do not exist.** The footer links to
   them and they 404. Not a settings concern, but it is visible on the same page,
   and it is a content phase's job.

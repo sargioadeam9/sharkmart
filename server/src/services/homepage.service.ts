@@ -18,6 +18,7 @@ import { prisma } from '../config/database.js';
 import { PRODUCT_LIST_SELECT, type ProductListRow } from './mappers.js';
 import { PUBLISHED, mapProductRows } from './product.service.js';
 import { listBrands, listCategories } from './category.service.js';
+import { getDeliveryFees } from './settings.service.js';
 import type { BrandDto, CategoryDto, ProductDto } from './mappers.js';
 
 export interface HomepagePromo {
@@ -80,8 +81,14 @@ const PROMOS: HomepagePromo[] = [
   },
 ];
 
-/** Free delivery threshold in poisha — matches `commerce.ts` and the seed. */
-const FREE_DELIVERY_THRESHOLD_POISHA = 200_000;
+/**
+ * The free-delivery threshold is a store setting, not a constant.
+ *
+ * This module used to carry its own copy, which meant changing the threshold in
+ * the admin panel updated checkout and the cart but left the homepage banner
+ * advertising the old number. The payload is already cached, so the extra read is
+ * one cached map lookup.
+ */
 
 const railSelect = PRODUCT_LIST_SELECT;
 
@@ -92,6 +99,10 @@ const railSelect = PRODUCT_LIST_SELECT;
  * depending on the wall clock.
  */
 export async function getHomepage(now = new Date()): Promise<HomepageAggregate> {
+  // The banner above the fold quotes the threshold, so it must be the same
+  // number checkout uses. Cached in settings.service, so this is a map lookup.
+  const fees = await getDeliveryFees();
+
   const liveFlash = {
     ...PUBLISHED,
     isFlashSale: true,
@@ -221,7 +232,7 @@ export async function getHomepage(now = new Date()): Promise<HomepageAggregate> 
     catalog,
     promos: PROMOS,
     flashSaleEndsAt,
-    freeDeliveryThresholdPoisha: FREE_DELIVERY_THRESHOLD_POISHA,
+    freeDeliveryThresholdPoisha: fees.freeThresholdPoisha,
   };
 }
 
