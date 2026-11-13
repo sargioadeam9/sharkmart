@@ -4,6 +4,62 @@
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
 
+## 2026-11-13 - Phase 10 pass A - coupons and offers - VERIFIED
+
+Phase 10 has fourteen modules. This pass ships one of them, completely, rather
+than starting all fourteen: **coupons and offers**, API and screen.
+
+**Shipped**
+- `server/src/validators/adminCoupon.schema.ts` - rules that mirror what
+  `applyCoupon()` enforces at checkout, so a coupon that saves is a coupon that
+  redeems.
+- `server/src/routes/admin/coupon.service.ts` + `coupons.ts`, mounted at
+  `/api/v1/admin/coupons` behind `marketing:read` / `marketing:write`.
+- `src/app/admin/(panel)/offers/page.tsx` + `components/admin/coupons-table.tsx`
+  at the nav's existing `/admin/offers` entry. No nav change needed.
+- 12 tests in `tests/phase10a-coupons.test.ts`.
+
+**A customer-facing hole was closed, and it is the important part of this pass**
+
+`applicableCategories` and `applicableBrands` have existed since Phase 8 and were
+**selected and never read**. A coupon scoped to "Fashion" applied to a rice
+cooker. `applyCoupon()` now evaluates all three scopes: a line is eligible when
+it satisfies every scope the coupon sets, and the coupon applies when at least
+one line is eligible. Adding a scope narrows the offer, which is what the
+builder's checkboxes imply. Product-only scoping behaves exactly as before.
+
+**Five derived states, not a status column**
+
+live / scheduled / expired / exhausted / inactive are computed from `isActive`,
+the window and the usage counter, and expressed as `where` clauses so the tab
+counts are honest. Post-filtering in JS would have made `total` disagree with
+the rows the operator can page through. The five are mutually exclusive, so the
+counts partition the table - there is a test for that.
+
+**Delete is guarded**
+
+`order.couponId` is `ON DELETE SET NULL`. Deleting a redeemed coupon would not
+fail; it would silently erase which coupon paid for which order. DELETE therefore
+only succeeds for a coupon that has never been used, and anything else returns a
+409 naming the counts and telling the operator to deactivate.
+
+**Dev data note**
+
+The database holds 88 coupons, all residue from the Phase 8 test suite
+(`LIMIT...` / `EXP...`, FIXED 5000), plus 43 redemptions. They are not seed data
+and not a business catalog. The list is usable because it sorts newest-first and
+the tabs filter, but do not read anything into the counts. Clean them before any
+demo: they are identifiable by the `LIMIT` / `EXP` prefix.
+
+**No schema change.** Pass A needed none.
+
+**Deliberately not built in this pass** (they belong to other Phase 10 modules):
+flash-sale scheduler, active-offers dashboard widgets beyond the state tabs,
+expense tracking, and the SMS/email blasts the master prompt pairs with offers.
+The redemption report is built.
+
+---
+
 ## 2026-11-13 - P0 fix - product PATCH was blocked for every product
 
 **Symptom:** every product edit in the admin failed with 422 "discountPricePoisha

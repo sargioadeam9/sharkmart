@@ -4424,3 +4424,172 @@
     white-space: normal;
   }
 }
+
+/* ───────────────────────── Coupons (Phase 10 pass A) ────────────────────── */
+/* New classes are prefixed .cpn- and scoped under .admin-root, per landmine 17:
+   the storefront ships bare .badge/.card/.grid and a collision is silent. */
+
+.admin-root .cpn-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-root .cpn-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.admin-root .cpn-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.admin-root .cpn-table tbody tr:hover {
+  background: var(--brand-50);
+}
+
+.admin-root .cpn-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+
+.admin-root .cpn-sub {
+  font-size: 12px;
+  color: var(--faint);
+  margin-top: 2px;
+}
+
+.admin-root .cpn-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-root .cpn-drawer {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-root .cpn-drawer .drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-root .cpn-drawer .drawer-head h2 {
+  font-size: 17px;
+}
+
+.admin-root .cpn-drawer .drawer-body {
+  flex: 1;
+  overflow: auto;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-root .cpn-drawer .drawer-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+}
+
+.admin-root .cpn-drawer .field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.admin-root .cpn-switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-root .cpn-hint {
+  font-size: 12px;
+  color: var(--faint);
+  line-height: 1.5;
+}
+
+.admin-root .cpn-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.admin-root .cpn-stats > div {
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.admin-root .cpn-stats span {
+  font-size: 12px;
+  color: var(--faint);
+}
+
+.admin-root .cpn-stats b {
+  font-size: 18px;
+}
+
+.admin-root .cpn-report {
+  font-size: 13px;
+}
+
+/* Below 720 the table becomes stacked cards, the same shape the other four
+   admin lists use. data-label carries the header into each cell. */
+@media (max-width: 720px) {
+  .admin-root .cpn-drawer .field-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-root .cpn-table thead {
+    display: none;
+  }
+
+  .admin-root .cpn-table tr {
+    display: block;
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    margin-bottom: 10px;
+    padding: 10px 12px;
+  }
+
+  .admin-root .cpn-table td {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border: 0;
+    padding: 4px 0;
+  }
+
+  .admin-root .cpn-table td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: var(--faint);
+    font-size: 12px;
+  }
+}

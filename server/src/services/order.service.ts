@@ -192,6 +192,7 @@ async function applyCoupon(
       isActive: true,
       applicableProducts: true,
       applicableCategories: true,
+      applicableBrands: true,
     },
   });
 
@@ -229,10 +230,47 @@ async function applyCoupon(
     throw new HttpError(401, 'UNAUTHORIZED', 'Sign in to use this coupon.');
   }
 
-  // Product scoping, when the coupon is restricted to specific products.
-  const scoped = coupon.applicableProducts as string[] | null;
-  if (Array.isArray(scoped) && scoped.length > 0) {
-    const eligible = lineProductIds.some((id) => scoped.includes(id));
+  /**
+   * Scoping: products, categories and brands.
+   *
+   * A line is eligible when it satisfies **every** scope the coupon sets, and
+   * the coupon applies when at least one line is eligible. Adding a scope
+   * therefore narrows the offer rather than widening it, which is what an
+   * operator ticking boxes in the builder expects.
+   *
+   * `applicableCategories` and `applicableBrands` were selected since Phase 8 and
+   * never read: a coupon scoped to "Fashion" applied to a rice cooker. Phase 10's
+   * builder offers all three scopes, so leaving them unenforced would mean the
+   * panel configures something that does nothing.
+   *
+   * The category/brand lookup only runs when one of those two scopes is set, and
+   * is bounded by the cart's line count.
+   */
+  const scopedProducts = coupon.applicableProducts as string[] | null;
+  const scopedCategories = coupon.applicableCategories as string[] | null;
+  const scopedBrands = coupon.applicableBrands as string[] | null;
+
+  const hasProductScope = Array.isArray(scopedProducts) && scopedProducts.length > 0;
+  const hasCategoryScope = Array.isArray(scopedCategories) && scopedCategories.length > 0;
+  const hasBrandScope = Array.isArray(scopedBrands) && scopedBrands.length > 0;
+
+  if (hasProductScope || hasCategoryScope || hasBrandScope) {
+    const lines =
+      hasCategoryScope || hasBrandScope
+        ? await prisma.product.findMany({
+            where: { id: { in: lineProductIds } },
+            select: { id: true, categoryId: true, brandId: true },
+          })
+        : lineProductIds.map((id) => ({ id, categoryId: null, brandId: null }));
+
+    const eligible = lines.some(
+      (line) =>
+        (!hasProductScope || scopedProducts!.includes(line.id)) &&
+        (!hasCategoryScope ||
+          (line.categoryId !== null && scopedCategories!.includes(line.categoryId))) &&
+        (!hasBrandScope || (line.brandId !== null && scopedBrands!.includes(line.brandId))),
+    );
+
     if (!eligible) {
       throw new HttpError(422, 'VALIDATION_ERROR', 'This coupon does not apply to these items.');
     }
