@@ -27,6 +27,8 @@ import { productsRouter } from './products.js';
 import { ordersRouter } from './orders.js';
 import { inventoryRouter } from './inventory.js';
 import { reviewsRouter } from './reviews.js';
+import { categoriesRouter } from './categories.js';
+import { brandsRouter } from './brands.js';
 
 export const adminRouter: Router = Router();
 
@@ -151,3 +153,5 @@ adminRouter.use('/products', productsRouter);
 adminRouter.use('/orders', ordersRouter);
 adminRouter.use('/inventory', inventoryRouter);
 adminRouter.use('/reviews', reviewsRouter);
+adminRouter.use('/categories', categoriesRouter);
+adminRouter.use('/brands', brandsRouter);
