@@ -150,6 +150,23 @@ Fonts: `Plus Jakarta Sans` primary, `Hind Siliguri` for Bangla (`body.bn` swaps 
 
 Keep both. Route every amount through one helper per surface so this stays consistent. See §10.
 
+### 3.1 Store identity and money live in exactly one place
+
+The shop's name, contact details and the three delivery numbers are **store settings**, not constants. The admin panel edits them at `/admin/settings`; `server/src/services/settings.service.ts` holds the registry (`SETTINGS`), the cache and the validation.
+
+| Rule | Why |
+| --- | --- |
+| Never type the shop name, phone, email, address, delivery fee or free-delivery threshold as a literal | Phase 10 found **four** copies of the delivery numbers: `order.service.ts`, `src/lib/commerce.ts`, `homepage.service.ts` and one inline in `checkout-page.tsx`. Three of them were display-only, so raising the fee charged the new amount while the cart still quoted the old one. A customer-facing money mismatch is the worst bug this panel can produce. |
+| Adding a setting = one line in `SETTINGS` | The API, the validation and the admin screen all derive from that array. There is no second place to update. |
+| Reads go through `getSettings()` / `getStoreProfile()` / `getDeliveryFees()` | Cached (tag `settings`), never throws, falls back to the registered defaults. A failed read must still let the shop take an order. |
+| The fallback is `server/src/config/store-defaults.ts` and `src/lib/brand.ts` | A fresh database, or a dead API, renders yesterday's site — not a broken one. |
+| Storefront reads the profile once, in `(shop)/layout.tsx` | It goes through `StoreProvider`; client components call `useStore()`. No client-side fetch, and no price flashing from the old value to the new. |
+| A change reaches the storefront in **up to 60 seconds** | `next: { revalidate: 60 }` on the public settings fetch. If a rename "didn't apply", wait a minute before debugging. |
+
+**Two fetch halves, and using the wrong one fails silently.** `src/lib/api/admin-client.ts` is the browser half (reads `document.cookie` for CSRF); `src/lib/api/admin.ts` is the server half (`adminFetchServer`, uses `next/headers`). A server component that imports the browser half sends no session and the API answers *"You must be signed in."* This has now happened twice — the products editor importing `admin.ts`, and the settings page importing the browser client. Check which half you are in before importing.
+
+**A partial update is validated against the patch, not the merged row.** A PATCH of `{ isFeatured: true }` must not be rejected because of a stored price the client never sent. That was a P0: every product was read-only for four phases. Apply the same shape to any new cross-field rule — check only when the request touches one of the fields involved.
+
 ---
 
 ## 4. Working standard — the Opus-class bar
@@ -330,8 +347,16 @@ A task is done when **all** of these are true. Not before.
 [ ] Server-side validation + authorization on the endpoint
 [ ] Type-check passes, lint passes, build passes
 [ ] No console errors, no `any`, no TODO left behind
+[ ] The wiring is proven end to end, not just type-checked
 [ ] STATUS.md row updated · HANDOFF.md written
 ```
+
+**"Type-check passes" is not "it works."** A page can compile, render 200, and still
+show the wrong number because it read a constant instead of the setting, or send no
+session because it used the browser fetch half in a server component. Both happened
+in Phase 10 and both passed `tsc`. For anything that crosses a boundary — API to
+screen, settings to storefront, server to client — change a value, observe the
+change where the customer would see it, then change it back.
 
 ### Verification commands
 
@@ -391,6 +416,11 @@ Verified facts that have already tripped someone. Read once, save hours.
 | 19 | Order tabs ≠ order statuses | The enum has nine; the reference tabs show five. CONFIRMED and RETURNED are produced by the normal flow, so they need a reachable control — the status select in the toolbar, not a tab. Do not "simplify" it away because the tabs look complete. |
 | 20 | A code comment is not evidence | Twice now a comment asserted something false ("the reference shows four tabs", "reachable through the status filter") and the code disagreed. When a comment states a fact about behaviour, verify it before building on it — and fix the comment in the same commit that proves it wrong. |
 | 21 | `HANDOFF.md` is double-encoded | 290 of its lines carry mojibake where punctuation belongs, and 24 contain unreadable Bangla. Cause: a PowerShell `Get-Content`/`Set-Content` round-trip, the same bug that corrupted `categories-tree.tsx` mid-B5. **Never rewrite a file with PowerShell here.** Use the editor tools, or read and write UTF-8 explicitly in Node and diff the result. `STATUS.md`, `AGENTS.md` and `README.md` are clean — do not let them join it. |
+| 22 | "The settings screen saved but nothing changed" | Almost always the 60-second storefront revalidation, or the wrong fetch half (§3.1). Check `GET /api/v1/settings` first — if the API has the new value, the write worked and the storefront is waiting. |
+| 23 | A delivery fee or threshold typed as a number in a component | There were four copies of these before Phase 10. The server charges from settings; a component that quotes a constant shows the customer a different price than the invoice. Grep for `6000` / `200000` / `60` before adding one. |
+| 24 | `npm test` segfaults (exit 139) | Environmental, seen three times in this workspace. It happens after most suites have passed and prints no summary. Re-run; if it passes, treat the first run as noise. Do not start "fixing" tests because of it. |
+| 25 | `poolOptions.threads.singleThread` | A silent no-op since Vitest 4 — still type-valid, so the config looks right while every suite runs in parallel against one MySQL database. The tell is a *different* test failing each run. `fileParallelism: false` is the option that works. |
+| 26 | Trusting "it passed on re-run" | With parallel suites that phrase proves nothing: the race simply did not land. A green re-run after a red run is a hint, not evidence. Find the shared row. |
 
 ---
 
@@ -411,6 +441,20 @@ Verified facts that have already tripped someone. Read once, save hours.
 ├── Logo/                      ← brand assets
 ├── src/                       ← Next.js app (Phase 0 creates)
 └── server/                    ← API + Prisma (Phase 0 creates)
+```
+
+### Where the cross-cutting things live
+
+| Concern | File | Read this before |
+| --- | --- | --- |
+| Store identity, delivery fees, settings registry | `server/src/services/settings.service.ts` | touching any price, name or contact detail (§3.1) |
+| Fallback values when settings are absent | `server/src/config/store-defaults.ts`, `src/lib/brand.ts` | adding a default |
+| Storefront access to the profile | `src/components/providers/store-provider.tsx` (`useStore()`) | rendering the name, phone, fee or threshold |
+| Admin fetch, browser half | `src/lib/api/admin-client.ts` | writing a client component that calls the API |
+| Admin fetch, server half | `src/lib/api/admin.ts` (`adminFetchServer`) | writing a server component that calls the API |
+| Audit helper | `server/src/services/audit.service.ts` (`withAudit`, `diffChanges`) | any mutation — never write a second one |
+| Permission matrix | `server/src/services/permissions.ts` | adding a route or a nav item |
+| Cache + tags | `server/src/services/cache.ts` | adding a cached read or a write that must invalidate |
 ```
 
 ---
