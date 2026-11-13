@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-12 · **Updated by:** Phase 9 pass B2 — orders API, list, drawer and bulk actions shipped and verified
+**Last updated:** 2026-11-13 · **Updated by:** Phase 9 pass B3 — inventory API, list, adjust drawer and movement log shipped and verified
 
 ---
 
@@ -13,10 +13,10 @@
 | Field | Value |
 | --- | --- |
 | Active phase | **Phase 9 — Admin panel: core modules** |
-| Phase status | 🟡 **Phase 9 PASS B2 COMPLETE** — products (B1) and orders (B2) green. B3–B5 (Inventory, Reviews, Categories, Brands) not started |
-| Build state | Server: `npm test` **163/163** (8 files) · `tsc --noEmit` clean · `npm run lint` 0 errors (7 pre-existing warnings). Storefront: `npm run build` green · `tsc --noEmit` clean. `prisma migrate status` clean, 7 migrations |
-| Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so the reference's "Estimated profit" KPI is not computable (see HANDOFF). `cache-and-limits.test.ts` "exceeding the search limit" is **flaky under parallel file execution** (passes alone, passed on re-run of the full suite) — the in-process limiter is shared across files |
-| Next action | Phase 9 pass B3 — Inventory module (admin CRUD API first, then the screen) |
+| Phase status | 🟡 **Phase 9 PASS B3 COMPLETE** — products (B1), orders (B2) and inventory (B3) green. B4–B5 (Reviews, Categories, Brands) not started |
+| Build state | Server: `npm test` **183/183** (9 files) · `tsc --noEmit` clean · `npm run lint` 0 errors (15 pre-existing warnings). Storefront: `npm run build` green · `tsc --noEmit` clean. `prisma migrate status` clean, 7 migrations |
+| Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so neither the reference's "Estimated profit" KPI nor a stock-value column is computable (see HANDOFF). `cache-and-limits.test.ts` "exceeding the search limit" is **flaky under parallel file execution** (passes alone, passed on re-run of the full suite) — the in-process limiter is shared across files. **`WarehouseStock` is written by nothing except the new inventory adjust endpoint** — checkout decrements `ProductVariant.stock` only, so the two totals drift (5,183 vs 4,966 at B3 close). See HANDOFF for the exact reconciliation |
+| Next action | Phase 9 pass B4 — Reviews module |
 
 ### Phase 6 — gate evidence
 
@@ -196,6 +196,34 @@ cleared only after the server confirms.
 
 ---
 
+### Phase 9 pass B3 — inventory gate evidence
+
+| Gate requirement | State | Evidence |
+| --- | --- | --- |
+| Stock-of-record rule written down, not invented | ✅ | `inventory.service.ts` header + `stockOfRecordOf()`. The rule is `cart.service.ts:191-200` and `mappers.ts:277-282` restated — no new concept |
+| Storefront badge unchanged by the rule | ✅ | `totalStock()` in `mappers.ts:277` already prefers variant sum when variants exist. No public contract touched |
+| `GET /admin/inventory` returns both numbers + derived status | ✅ | Live: `warehouseQty`, `variantStock`, `stockOfRecord`, `stockSource`, `stockStatus` on every row |
+| Sorting by stock sorts on `stockOfRecord` | ✅ | Test asserts the returned `stockOfRecord` sequence is monotonic under `sort=stock_asc` |
+| `stock=out` count equals a direct DB count | ✅ | Live: endpoint `total` **15**, independent recompute **15**; all 15 rows `stockOfRecord === 0` |
+| KPI strip computed server-side | ✅ | `/alerts` → `{out:15, low:21, in:132, total:168, units:4966, skus:168}`; matches an independent recompute exactly. Browser counts nothing |
+| adjust +5 on a variant product | ✅ | `variant.stock` +5, **1** StockMovement, **1** AuditLog. Live: units 4,961 → 4,966 |
+| adjust +5 on a no-variant product | ✅ | Test creates a variant-less fixture (the seed has none) → `WarehouseStock.quantity` +5, no variant touched |
+| adjust to a negative result | ✅ | Live 422: *"That would take stock to -50. The current quantity is 23…"*; row unchanged, nothing written |
+| adjust without a reason | ✅ | 422 from Zod (`min(5)`), and a 2-char reason is a 422 too |
+| A no-op adjustment writes nothing | ✅ | `changed:false`, zero movement rows, **zero audit rows** — the no-op check runs before the transaction opens |
+| Every mutation writes both logs | ✅ | Counted against the live DB: 1 movement / 1 audit per real adjustment |
+| MARKETING_STAFF can read, cannot write | ⚠️ **conflict** | The matrix gives MARKETING_STAFF **no** `inventory:read`, so GET is 403 as well as POST. Brief said "can GET". Matrix left alone — see HANDOFF |
+| `npx tsc --noEmit` both packages | ✅ | exit 0, no output |
+| `npm test` | ✅ | **183/183**, 9 files, three consecutive green runs |
+| `npm run build` | ✅ | `✓ Compiled successfully`; `/admin/inventory` present as a dynamic route |
+| `npm run lint` | ✅ | 0 errors, 15 pre-existing warnings |
+| No horizontal scroll at 1440 / 1024 / 720 / 360 | ✅ | `scrollWidth - clientWidth = 0` at all four widths |
+| Table stacks to cards at 720 | ✅ | `thead` display `none`, `tr` `block`, `td` `flex`, `::before` content `"Product"` from `data-label` |
+| Dark mode: no surface under 3:1 | ✅ | Lowest measured pair **3.95:1** (`th`), most 6.5–14:1 |
+| Port 3000 is `npm run dev` | ✅ | Killed the orphaned `next start` (PID 19520) first — landmine 15 |
+
+---
+
 ## Phase status
 
 | # | Phase | Status | Verified by | Notes |
@@ -209,7 +237,7 @@ cleared only after the server confirms.
 | 6 | API — catalog | ✅ | build + tsc + lint + `npm test` 57/57 + parity-check 611 assertions | Flip `NEXT_PUBLIC_USE_MOCK=false` done here |
 | 7 | Search, wishlist, account | ✅ | build + tsc + live browser (both scripts, type-ahead, wishlist toggle/reload/remove) | `/search` + guest wishlist; account surface landed in Phase 8 |
 | 8 | Auth, cart, orders, checkout | ✅ | `npm test` 89/89 · tsc clean (both) · build green · live browser (merge, badge, drawer, `/cart` agree) | 747 variants (cartesian) · 3 follow-ups closed 2026-11-12 |
-| 9 | Admin — core | 🟡 | B1 products + B2 orders: `npm test` 163/163 · tsc clean (both) · build green · live browser (tabs, filters, drawer, bulk, dark mode) | B3–B5 remain |
+| 9 | Admin — core | 🟡 | B1 products + B2 orders + B3 inventory: `npm test` **183/183** (9 files) · tsc clean (both) · build green · live browser (KPI strip, filters, adjust drawer, movements tab, 4 widths, dark mode) | B4–B5 remain |
 | 10 | Admin — business | ⬜ | — | — |
 | 11 | SEO & analytics | ⬜ | — | — |
 | 12 | Testing & polish | ⬜ | — | — |
