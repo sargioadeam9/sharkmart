@@ -4,6 +4,47 @@
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
 
+## 2026-11-13 - P0 fix - product PATCH was blocked for every product
+
+**Symptom:** every product edit in the admin failed with 422 "discountPricePoisha
+must be less than basePricePoisha", including `PATCH { isFeatured: true }`. The
+product editor has no discount-price input at all, so an operator had no way to
+satisfy the rule. The products module had been read-only since B1.
+
+**Cause:** `product.service.ts` validated the merged row rather than the patch.
+`nextDiscount` fell back to the stored value and was compared against `nextBase`,
+so the check fired regardless of what the request sent. The seed wrote
+`discountPricePoisha = basePricePoisha` on all 168 products, which meant the
+comparison failed on every row.
+
+**Why four passes missed it:** B1's verification created products through the
+API, and the create schema forbids equality, so no created product ever had the
+condition. Nobody edited a seeded product. The two products first noticed looked
+like a data quirk; it was universal (168 of 168).
+
+**Fix, three parts:**
+1. `product.service.ts` - the cross-field check now runs only when the patch
+   touches `basePricePoisha` or `discountPricePoisha`. A partial update is
+   validated against the patch, not the merged row. A product already sitting in
+   a state the rule would reject must stay editable, or it can never be fixed.
+2. `prisma/seed.ts` - writes `discountPricePoisha: null`. The catalog discount is
+   already baked into `priceTaka`, and the struck-through value lives in
+   `originalPricePoisha`. The duplicate had no reader: `mappers.ts`
+   `payablePrice()` returns `basePricePoisha` and nothing else, and `src/` never
+   references the field.
+3. `tools/normalize-discount-price.mjs` - one-off, dry-run unless `--apply`.
+   Cleared 168 rows in the dev database. Idempotent, safe to re-run.
+
+**Tests added** (`phase9b-products.test.ts`): an unrelated edit on an
+equal-price product returns 200 (the regression); a patch can clear a redundant
+discount price; the existing "reject at or above base" still returns 422.
+Suite is 232/232 across 11 files.
+
+**Do not** reintroduce a cross-field price rule that reads stored values on a
+partial update. That is the bug, not the data.
+
+---
+
 ## 2026-11-13 · Phase 9 pass B5 · Saffron · Categories + Brands · VERIFIED
 
 **Phase 9 is closed.** B5a (API, commit `c8fda7d`) and B5b (both screens) are two

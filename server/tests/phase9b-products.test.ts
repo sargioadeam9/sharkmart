@@ -264,6 +264,51 @@ describe('update', () => {
     expect(res.status).toBe(422);
   });
 
+  /**
+   * The regression this suite exists to prevent.
+   *
+   * The seed writes `discountPricePoisha == basePricePoisha` on all 168 products.
+   * The update guard compared the merged row rather than the patch, so any edit
+   * at all — even one that touched no price — was rejected with "discount price
+   * must be less than base price", and the editor has no discount price input,
+   * so an operator could not clear the condition. Every product was read-only.
+   *
+   * The product here is created through the API (which forbids equality), then
+   * pushed into the seeded shape directly, so the test reproduces the real
+   * condition without depending on what the seed happens to contain today.
+   */
+  it('accepts an unrelated edit when the stored discount price equals the base price', async () => {
+    const agent = await signIn('super@sharkmart.test');
+    const { id, body } = await createProduct(agent);
+
+    await prisma.product.update({
+      where: { id },
+      data: { discountPricePoisha: body.basePricePoisha as number },
+    });
+
+    const res = await agent.patch(`/api/v1/admin/products/${id}`).send({ isFeatured: true });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.isFeatured).toBe(true);
+  });
+
+  it('lets a patch clear a redundant discount price', async () => {
+    const agent = await signIn('super@sharkmart.test');
+    const { id, body } = await createProduct(agent);
+
+    await prisma.product.update({
+      where: { id },
+      data: { discountPricePoisha: body.basePricePoisha as number },
+    });
+
+    const res = await agent
+      .patch(`/api/v1/admin/products/${id}`)
+      .send({ discountPricePoisha: null });
+
+    expect(res.status).toBe(200);
+    expect(res.body.data.discountPricePoisha).toBeNull();
+  });
+
   it('rejects an empty patch', async () => {
     const agent = await signIn('super@sharkmart.test');
     const { id } = await createProduct(agent);

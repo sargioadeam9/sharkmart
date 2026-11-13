@@ -656,7 +656,6 @@ async function seedProducts(
     const tint = tintByCategory.get(p.categoryId) ?? '#f4f4f4';
 
     const basePricePoisha = poisha(p.priceTaka);
-    const discountPricePoisha = p.discountPercent > 0 ? basePricePoisha : null;
     const isFlashSale = p.discountPercent >= 30;
 
     /**
@@ -677,7 +676,16 @@ async function seedProducts(
       brandId,
       basePricePoisha,
       discountPercent: p.discountPercent,
-      discountPricePoisha,
+      /**
+       * NULL, on purpose. The catalog's `discountPercent` is already baked into
+       * `priceTaka` (which becomes `basePricePoisha`) and the struck-through
+       * value lives in `originalPricePoisha`. Writing `basePricePoisha` here as
+       * well produced "discounted to exactly the same price" on all 168 rows —
+       * a value with no reader (`mappers.ts` `payablePrice()` returns the base
+       * price and nothing else) that still tripped the admin update guard and
+       * made every product read-only. See tools/normalize-discount-price.mjs.
+       */
+      discountPricePoisha: null,
       originalPricePoisha,
       isPublished: true,
       isDraft: false,

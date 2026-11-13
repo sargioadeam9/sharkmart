@@ -495,7 +495,31 @@ export async function updateAdminProduct(
   const nextDiscount =
     input.discountPricePoisha !== undefined ? input.discountPricePoisha : before.discountPricePoisha;
 
-  if (nextDiscount !== null && nextDiscount !== undefined && nextDiscount >= nextBase) {
+  /**
+   * A partial update is validated against the patch, not against the merged row.
+   *
+   * This check used to run unconditionally, comparing `nextDiscount` (which
+   * falls back to the stored value) with `nextBase`. That meant a stored field
+   * the client never mentioned could reject an unrelated edit: with the seed's
+   * `discountPricePoisha == basePricePoisha` on all 168 products, even
+   * `PATCH { isFeatured: true }` returned 422, and the editor has no discount
+   * price input, so the operator had no way to satisfy the rule. Every product
+   * was effectively read-only.
+   *
+   * The cross-field rule only has meaning when the patch moves one of the two
+   * prices. If it touches neither, the stored pair is not this request's
+   * business — and a product that is already in a state the rule would reject
+   * must still be editable, or it can never be corrected.
+   */
+  const touchesPrice =
+    input.basePricePoisha !== undefined || input.discountPricePoisha !== undefined;
+
+  if (
+    touchesPrice &&
+    nextDiscount !== null &&
+    nextDiscount !== undefined &&
+    nextDiscount >= nextBase
+  ) {
     throw new HttpError(
       422,
       'VALIDATION_ERROR',

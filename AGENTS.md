@@ -390,6 +390,7 @@ Verified facts that have already tripped someone. Read once, save hours.
 | 18 | `Product` has no `stock` column | Stock is `ProductVariant.stock` and `WarehouseStock.quantity`. Public availability is computed by `stockStatusOf()` in `services/mappers.ts` (0 → out, ≤5 → low). Any admin stock figure is an aggregate over `WarehouseStock`, never a column read. |
 | 19 | Order tabs ≠ order statuses | The enum has nine; the reference tabs show five. CONFIRMED and RETURNED are produced by the normal flow, so they need a reachable control — the status select in the toolbar, not a tab. Do not "simplify" it away because the tabs look complete. |
 | 20 | A code comment is not evidence | Twice now a comment asserted something false ("the reference shows four tabs", "reachable through the status filter") and the code disagreed. When a comment states a fact about behaviour, verify it before building on it — and fix the comment in the same commit that proves it wrong. |
+| 21 | `HANDOFF.md` is double-encoded | 290 of its lines carry mojibake where punctuation belongs, and 24 contain unreadable Bangla. Cause: a PowerShell `Get-Content`/`Set-Content` round-trip, the same bug that corrupted `categories-tree.tsx` mid-B5. **Never rewrite a file with PowerShell here.** Use the editor tools, or read and write UTF-8 explicitly in Node and diff the result. `STATUS.md`, `AGENTS.md` and `README.md` are clean — do not let them join it. |
 
 ---
 
