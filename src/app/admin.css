@@ -4593,3 +4593,86 @@
     font-size: 12px;
   }
 }
+
+/* ───────────────────────── Settings (Phase 10 pass B) ───────────────────── */
+
+.admin-root .set-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  position: sticky;
+  top: 8px;
+  z-index: 2;
+}
+
+.admin-root .set-dirty {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.admin-root .set-bar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.admin-root .set-card {
+  margin-bottom: 18px;
+}
+
+.admin-root .set-card-head {
+  margin-bottom: 14px;
+}
+
+.admin-root .set-card-head h2 {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.admin-root .set-grid {
+  gap: 14px 18px;
+}
+
+.admin-root .set-grid .field label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-root .set-grid textarea {
+  border-radius: var(--r-sm);
+  border: 1px solid var(--line);
+  padding: 10px 14px;
+  background: var(--card);
+  font: inherit;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.admin-root .set-grid textarea:focus {
+  outline: 0;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 4px var(--brand-50);
+}
+
+.admin-root .set-default {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--faint);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.admin-root .cpn-hint {
+  display: block;
+}

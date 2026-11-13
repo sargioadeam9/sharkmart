@@ -30,6 +30,7 @@ import { reviewsRouter } from './reviews.js';
 import { categoriesRouter } from './categories.js';
 import { brandsRouter } from './brands.js';
 import { couponsRouter } from './coupons.js';
+import { settingsRouter } from './settings.js';
 
 export const adminRouter: Router = Router();
 
@@ -157,3 +158,4 @@ adminRouter.use('/reviews', reviewsRouter);
 adminRouter.use('/categories', categoriesRouter);
 adminRouter.use('/brands', brandsRouter);
 adminRouter.use('/coupons', couponsRouter);
+adminRouter.use('/settings', settingsRouter);

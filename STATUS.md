@@ -13,10 +13,10 @@
 | Field | Value |
 | --- | --- |
 | Active phase | **Phase 10 — Admin business modules** |
-| Phase status | 🟡 **PHASE 10 PASS A COMPLETE** — coupons and offers (API + screen), and the coupon scoping hole in checkout closed. Remaining passes: CRM, HRM, suppliers, warehouses, POS, barcode, landing pages, SMS/email, reports, expenses, SEO, settings, system. Phase 9 is closed behind it |
-| Build state | Server: `npm test` **244/244** (12 files) · `tsc --noEmit` clean. Storefront: `tsc --noEmit` clean · `ƒ /admin/offers` builds. `prisma migrate status` clean, 8 migrations (no schema change in pass A) |
+| Phase status | 🟡 **PHASE 10 PASSES A-B COMPLETE** — A: coupons and offers, plus the coupon scoping hole in checkout closed. B: store settings (registry, API, screen) with delivery fees and the admin wordmark now reading from it. Remaining: CRM, HRM, suppliers, warehouses, POS, barcode, landing pages, SMS/email, reports, expenses, SEO, system |
+| Build state | Server: `npm test` **252/252** (13 files) · `tsc --noEmit` clean. Storefront: `tsc --noEmit` clean. `prisma migrate status` clean, 8 migrations (passes A and B needed none) |
 | Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so neither the reference's "Estimated profit" KPI nor a stock-value column is computable (see HANDOFF). **The "flaky under parallel execution" note is resolved** — `vitest.config.ts` used `poolOptions.threads.singleThread`, a silent no-op since Vitest 4; suites were racing on shared MySQL rows. Now `fileParallelism: false`, three consecutive 201/201 runs. **`WarehouseStock` is written by nothing except the inventory adjust endpoint** — checkout decrements `ProductVariant.stock` only, so the two totals drift (**5,183 vs 4,736, a 447-unit gap** as of the B3 follow-up; it widens per checkout, so re-measure rather than trusting this figure). The intake number is no longer shown as availability in the admin table — it is collapsed under "Received at intake" in the drawer. See HANDOFF for the exact reconciliation |
-| Next action | Phase 10 pass B — pick from CRM, HRM, suppliers, warehouses, POS, barcode, landing pages, SMS/email, reports, expenses, SEO, settings, system. Coupons are done; see the pass A entry in HANDOFF for the scoping change |
+| Next action | Phase 10 pass C — SMS/email is the natural next step (it consumes the settings from pass B for sender name and templates). See the pass B entry in HANDOFF for what is wired to settings and what is deliberately not |
 
 ### Phase 6 — gate evidence
 

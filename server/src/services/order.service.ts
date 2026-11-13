@@ -33,8 +33,10 @@
 import { randomBytes } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../config/database.js';
+import { DELIVERY_DEFAULTS } from '../config/store-defaults.js';
 import { HttpError } from '../middleware/errorHandler.js';
 import { clearCart } from './cart.service.js';
+import { getDeliveryFees } from './settings.service.js';
 import {
   canCustomerTransition,
   canTransition,
@@ -43,12 +45,15 @@ import {
   type OrderStatus,
 } from './order-status.js';
 
-/** ৳60 flat, free at ৳2,000 — AGENTS.md landmine #3, reference `totals()`. */
-export const DELIVERY_FLAT_POISHA = 6_000;
-export const FREE_DELIVERY_THRESHOLD_POISHA = 200_000;
-
-/** Express delivery is a surcharge on top of the standard charge. */
-export const EXPRESS_SURCHARGE_POISHA = 10_000;
+/**
+ * Delivery defaults. The live values come from the `Setting` table through
+ * `getDeliveryFees()`; these are the fallbacks a fresh database uses.
+ *
+ * Re-exported under the old names because other modules and docs refer to them.
+ */
+export const DELIVERY_FLAT_POISHA = DELIVERY_DEFAULTS.standardFeePoisha;
+export const FREE_DELIVERY_THRESHOLD_POISHA = DELIVERY_DEFAULTS.freeThresholdPoisha;
+export const EXPRESS_SURCHARGE_POISHA = DELIVERY_DEFAULTS.expressSurchargePoisha;
 
 export interface CheckoutInput {
   items: Array<{ productId: string; variantId?: string | null; quantity: number }>;
@@ -145,10 +150,22 @@ function effectivePrice(product: {
   return product.basePricePoisha;
 }
 
-/** Delivery charge for a subtotal. */
-export function deliveryChargeFor(subtotalPoisha: number, method: 'STANDARD' | 'EXPRESS'): number {
-  const base = subtotalPoisha >= FREE_DELIVERY_THRESHOLD_POISHA ? 0 : DELIVERY_FLAT_POISHA;
-  return method === 'EXPRESS' ? base + EXPRESS_SURCHARGE_POISHA : base;
+/**
+ * Delivery charge for a subtotal.
+ *
+ * Async because the three numbers are now store settings, not constants: an
+ * operator changing the flat fee in the admin panel must change what checkout
+ * charges on the next order. The read is cached (`getDeliveryFees`), so this is
+ * one map lookup, not three queries, and it never throws — a settings read that
+ * fails falls back to the defaults rather than refusing an order.
+ */
+export async function deliveryChargeFor(
+  subtotalPoisha: number,
+  method: 'STANDARD' | 'EXPRESS',
+): Promise<number> {
+  const fees = await getDeliveryFees();
+  const base = subtotalPoisha >= fees.freeThresholdPoisha ? 0 : fees.standardFeePoisha;
+  return method === 'EXPRESS' ? base + fees.expressSurchargePoisha : base;
 }
 
 interface CouponResult {
@@ -485,7 +502,7 @@ export async function placeOrder(
     lines.map((line) => line.productId),
   );
 
-  let deliveryChargePoisha = deliveryChargeFor(subtotalPoisha, input.deliveryMethod);
+  let deliveryChargePoisha = await deliveryChargeFor(subtotalPoisha, input.deliveryMethod);
   if (coupon.freeDelivery) deliveryChargePoisha = 0;
 
   const discountAmountPoisha = coupon.discountPoisha;

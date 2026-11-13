@@ -29,9 +29,14 @@ export const TTL = {
   flashSale: 60,
   /** Landing pages. */
   landing: 300,
+  /**
+   * The store settings map. Short enough that a missed invalidation corrects
+   * itself, long enough that checkout does not query per order.
+   */
+  settings: 300,
 } as const;
 
-export type CacheTag = 'products' | 'categories' | 'brands' | 'homepage' | 'flash-sale';
+export type CacheTag = 'products' | 'categories' | 'brands' | 'homepage' | 'flash-sale' | 'settings';
 
 const keyPrefix = 'cache:';
 const tagPrefix = 'tag:';

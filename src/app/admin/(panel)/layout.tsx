@@ -158,6 +158,22 @@ function ForbiddenPage({ lang }: { lang: 'en' | 'bn' }) {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const lang = await getLang();
 
+  /**
+   * The wordmark, from store settings.
+   *
+   * Fetched separately from `/admin/me` and deliberately non-fatal: if the
+   * settings read fails, the shell falls back to the BRAND constant rather than
+   * refusing to render the whole admin panel over a sidebar label.
+   */
+  const brand = await adminFetchServer<{ nameFirst: string; nameSecond: string }>(
+    '/admin/settings/profile',
+  )
+    .then((response) => ({
+      first: response.data.nameFirst,
+      second: response.data.nameSecond,
+    }))
+    .catch(() => undefined);
+
   let me: MeResponse;
   try {
     const response = await adminFetchServer<MeResponse>('/admin/me');
@@ -201,6 +217,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       }}
       permissions={me.permissions}
       lang={lang}
+      brand={brand}
       notifications={notifications}
       orderCount={orderCount}
     >

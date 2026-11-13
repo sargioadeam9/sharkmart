@@ -85,6 +85,12 @@ interface AdminShellProps {
   user: AdminUser;
   permissions: string[];
   lang: 'en' | 'bn';
+  /**
+   * The wordmark, from store settings. Falls back to the BRAND constant so the
+   * shell still renders if the settings read fails — a sidebar is not a place to
+   * throw.
+   */
+  brand?: { first: string; second: string };
   /** Live counts for the nav badges and the bell. */
   notifications: AdminNotification[];
   orderCount: number;
@@ -114,6 +120,7 @@ export function AdminShell({
   user,
   permissions,
   lang,
+  brand,
   notifications,
   orderCount,
   children,
@@ -279,8 +286,8 @@ export function AdminShell({
             </svg>
           </div>
           <span>
-            {BRAND.nameParts.first}
-            <b>{BRAND.nameParts.second}</b>
+            {(brand ?? BRAND.nameParts).first}
+            <b>{(brand ?? BRAND.nameParts).second}</b>
           </span>
         </div>
 

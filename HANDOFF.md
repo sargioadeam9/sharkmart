@@ -4,6 +4,74 @@
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
 
+## 2026-11-13 - Phase 10 pass B - store settings - VERIFIED
+
+**The Setting table had nine rows and no reader.** `site.name`,
+`delivery.standardFeePoisha` and seven others were seeded in Phase 6 and never
+queried; the shop name came from the `BRAND` constant and the delivery charge
+from a literal in `order.service.ts`. A settings screen on top of that would have
+been a screen that lies. This pass makes the table the source of truth for the
+keys in `SETTINGS`, and keeps the constants as the fallback.
+
+**Shipped**
+- `server/src/config/store-defaults.ts` - the fallback values, in one place per
+  package. This exists because `settings.service` needs the delivery defaults and
+  `order.service` needs the live fees; importing each other is a cycle in the
+  checkout path.
+- `server/src/services/settings.service.ts` - the registry, typed reads, cached
+  map, validation, audited bulk write.
+- `server/src/routes/admin/settings.ts` - GET /, GET /profile, PATCH /, behind
+  `settings:read` / `settings:write` (ADMIN and SUPER_ADMIN only).
+- `src/app/admin/(panel)/settings/page.tsx` + `settings-form.tsx` - four groups,
+  renders whatever the registry returns, sends only changed values.
+- `server/tests/phase10b-settings.test.ts` - 8 tests. Suite 252/252.
+
+**What actually reads settings now**
+
+| Consumer | Wired? |
+| --- | --- |
+| Checkout delivery charge | **Yes** - `deliveryChargeFor()` is async and reads `getDeliveryFees()` |
+| Admin sidebar wordmark | **Yes** - layout fetches `/admin/settings/profile`, shell falls back to BRAND |
+| Storefront metadata, header, footer | **No** - static rendering. Belongs to Phase 11 (SEO), which is already tasked with DB-backed metadata |
+| Homepage `freeDeliveryThresholdPoisha` | **No** - `homepage.service.ts:84` has its own copy of the constant. Two sources now. Wire it when the homepage is next touched |
+| Emails, SMS, invoices | **No** - there is no email or SMS sending code in this repo yet, only `SMTP_*` env vars |
+
+**Design rules that keep it safe**
+- Only registered keys exist. An unknown key in a PATCH is a 422, not a stored
+  row nobody will read or delete.
+- Reads never throw: a failed read returns the defaults, because a shop that
+  cannot read a settings row must still be able to take an order.
+- The cache is invalidated **after** the commit, never inside the transaction -
+  clearing it before the write lands lets a concurrent read repopulate the old
+  value.
+- A PATCH that changes nothing writes no audit row.
+
+**Bug found while verifying, worth remembering**
+
+The settings page first rendered "You must be signed in." It was using
+`getSettings()` from `src/lib/api/admin-settings.ts` - the **browser** client -
+inside a **server** component. The browser half reads `document.cookie` for CSRF,
+so on the server it sends no session. `admin-client.ts` documents this split; the
+fix is `adminFetchServer`. Same class of mistake as the products editor importing
+`admin.ts` in Phase 9.
+
+**Renaming the shop, when the time comes**
+
+Change `site.name`, `brand.nameFirst`, `brand.nameSecond` and `brand.logoUrl` in
+this screen. That is the rename. The remaining hardcoded `SharkMart` strings (18
+in `src/`, 8 in `server/`) are metadata titles, email copy and seed data; they are
+listed in this file's pass-A sibling entry and should be swept in one commit
+after Phase 11 moves metadata to the database. Do not rename by editing the
+frozen reference HTML.
+
+**Deliberately not built**: credential fields (SMTP keys, gateway keys). The
+master prompt asks for write-only secrets masked on read, and there is nothing
+consuming them yet. Build them with the module that sends, not before - a
+masked field that controls nothing is a field an operator will fill in and
+believe.
+
+---
+
 ## 2026-11-13 - Phase 10 pass A - coupons and offers - VERIFIED
 
 Phase 10 has fourteen modules. This pass ships one of them, completely, rather
