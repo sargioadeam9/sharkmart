@@ -1006,6 +1006,23 @@
   transform: translateX(100%);
 }
 
+/**
+ * The open state for a side drawer.
+ *
+ * `.overlay.open .modal { transform: none }` above resets the MODAL's entry
+ * transform, but a drawer is not a modal — it carries its own
+ * `translateX(100%)` and nothing was resetting it. The result was a drawer that
+ * mounted, took focus and blocked the page while sitting entirely off the right
+ * edge: `getBoundingClientRect().left` measured 1263 in a 1280 viewport.
+ *
+ * Found while verifying the inventory adjust drawer live. The products row
+ * drawer uses the same primitive and had the same bug; this fixes both, because
+ * the fix belongs to the primitive and not to either screen.
+ */
+.admin-root .overlay.open .drawer {
+  transform: none;
+}
+
 /* ---------- Forms ---------- */
 .admin-root .form {
   display: grid;
@@ -2427,4 +2444,603 @@
 .admin-root .ord-notice.is-error {
   color: var(--bad);
   background: var(--bad-bg);
+}
+
+/* ---------- Inventory module (Phase 9 pass B3) ----------
+   Everything here is prefixed `inv-` for the same reason the products screen
+   prefixed `prod-` and the orders screen prefixed `ord-`: a second lock on a
+   door the `.admin-root` scope already locks. AGENTS.md landmine 17 is the
+   reason — the storefront's home.css has unscoped `.card` / `.badge` / `.grid`
+   rules and a bare name loses that fight.
+
+   No new tokens. Palette, radii and breakpoints are the ones in the token block
+   at the top of this file: brand #c8143c, ink #16223d, bg #f6f7fa, radii
+   20/14/10, breakpoints 1180/960/720/360. */
+
+/* ---------- KPI strip ---------- */
+.admin-root .inv-kpis {
+  margin-bottom: 18px;
+}
+
+/* ---------- Tabs ---------- */
+.admin-root .inv-tabs {
+  margin-bottom: 14px;
+}
+
+/* ---------- Toolbar ---------- */
+.admin-root .inv-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+
+.admin-root .inv-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 260px;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  color: var(--muted);
+}
+
+.admin-root .inv-search:focus-within {
+  border-color: var(--brand-100);
+  box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+.admin-root .inv-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: none;
+  font: inherit;
+  color: var(--text);
+}
+
+.admin-root .inv-clear {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  color: var(--muted);
+}
+
+.admin-root .inv-clear:hover {
+  background: var(--mute-bg);
+  color: var(--text);
+}
+
+.admin-root .inv-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-root .inv-field-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.admin-root .inv-field-inline select {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--card);
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  max-width: 190px;
+}
+
+.admin-root .inv-field-inline select:focus {
+  outline: 0;
+  border-color: var(--brand-100);
+  box-shadow: 0 0 0 3px var(--brand-50);
+}
+
+/* ---------- Table ---------- */
+.admin-root .inv-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-root .inv-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.admin-root .inv-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .inv-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-root .inv-table th {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+
+.admin-root .inv-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line-2);
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+.admin-root .inv-table tbody tr {
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.admin-root .inv-table tbody tr:hover {
+  background: var(--brand-50);
+}
+
+.admin-root .inv-table tbody tr:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+
+.admin-root .inv-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The number the operator acts on. Weighted, because it is the answer to the
+   question they opened the screen with. */
+.admin-root .inv-record {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.admin-root .inv-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-root .inv-thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  object-fit: cover;
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  flex: none;
+}
+
+.admin-root .inv-thumb-empty {
+  display: block;
+  background: var(--bg);
+}
+
+.admin-root .inv-names {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-root .inv-names b {
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-root .inv-names small {
+  color: var(--muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-root .inv-sku {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  background: var(--line-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.admin-root .inv-date {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.admin-root .inv-delta {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.admin-root .inv-delta.ok {
+  color: var(--ok);
+}
+
+.admin-root .inv-delta.bad {
+  color: var(--bad);
+}
+
+/* ---------- Pager / empty ---------- */
+.admin-root .inv-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line-2);
+}
+
+.admin-root .inv-page-of {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .inv-pager .btn[aria-disabled='true'] {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.admin-root .inv-empty {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+
+/* ---------- Adjust drawer ---------- */
+.admin-root .inv-drawer .m-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.admin-root .inv-drawer-product {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.admin-root .inv-drawer-product b {
+  font-size: 15px;
+  color: var(--text);
+}
+
+.admin-root .inv-drawer-product small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* The variant warning. Amber, not red: it is a "read this before you type"
+   note, not an error. Text carries the meaning; colour only reinforces it. */
+.admin-root .inv-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--warn-bg);
+  color: var(--warn);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.admin-root .inv-warn svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.admin-root .inv-current {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--r-md);
+  background: var(--bg);
+}
+
+.admin-root .inv-current span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.admin-root .inv-current b {
+  font-size: 22px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .inv-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 4px;
+  border-radius: var(--r-sm);
+  background: var(--bg);
+}
+
+.admin-root .inv-mode button {
+  height: 34px;
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.admin-root .inv-mode button.on {
+  background: var(--card);
+  color: var(--brand);
+  box-shadow: var(--sh);
+}
+
+.admin-root .inv-projected {
+  margin: -6px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.admin-root .inv-projected b {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .inv-projected.bad,
+.admin-root .inv-projected.bad b {
+  color: var(--bad);
+}
+
+.admin-root .inv-hint {
+  color: var(--faint);
+  font-size: 12px;
+}
+
+.admin-root .inv-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--bad-bg);
+  color: var(--bad);
+  font-size: 13px;
+}
+
+.admin-root .inv-notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--ok-bg);
+  color: var(--ok);
+  font-size: 13px;
+}
+
+/* ---------- Recent movements inside the drawer ---------- */
+.admin-root .inv-recent h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 8px;
+}
+
+.admin-root .inv-recent ul {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-root .inv-recent li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--bg);
+  font-size: 12.5px;
+}
+
+.admin-root .inv-mv-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .inv-mv-type.ok {
+  color: var(--ok);
+}
+
+.admin-root .inv-mv-type.bad {
+  color: var(--bad);
+}
+
+.admin-root .inv-mv-reason {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-root .inv-mv-date {
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1180px) {
+  .admin-root .inv-table .inv-col-cat {
+    display: none;
+  }
+}
+
+@media (max-width: 960px) {
+  .admin-root .inv-table .inv-col-sku {
+    display: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-root .inv-toolbar {
+    padding: 12px;
+  }
+  .admin-root .inv-filters {
+    width: 100%;
+  }
+  .admin-root .inv-field-inline {
+    flex: 1 1 140px;
+  }
+  .admin-root .inv-field-inline select {
+    flex: 1;
+    max-width: none;
+  }
+  .admin-root .inv-table-head,
+  .admin-root .inv-pager {
+    padding: 12px;
+  }
+
+  /* Tables collapse to stacked cards. `data-label` on each td supplies the row
+     header, so a stacked card still says what each value is — the same rule the
+     products and orders screens use. */
+  .admin-root .inv-table thead {
+    display: none;
+  }
+  .admin-root .inv-table,
+  .admin-root .inv-table tbody,
+  .admin-root .inv-table tr,
+  .admin-root .inv-table td {
+    display: block;
+    width: 100%;
+  }
+  .admin-root .inv-table tr {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .admin-root .inv-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 5px 0;
+    border: 0;
+    text-align: left;
+  }
+  .admin-root .inv-table td[data-label]:not([data-label=''])::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+    flex: none;
+  }
+  .admin-root .inv-table .num {
+    text-align: right;
+  }
+  .admin-root .inv-table .inv-col-cat,
+  .admin-root .inv-table .inv-col-sku {
+    display: flex;
+  }
+  .admin-root .inv-names b,
+  .admin-root .inv-names small {
+    white-space: normal;
+  }
+  .admin-root .inv-mv-reason {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-root .inv-field-inline {
+    flex: 1 1 100%;
+  }
+  .admin-root .inv-mode {
+    grid-template-columns: 1fr;
+  }
+  .admin-root .inv-recent li {
+    grid-template-columns: auto 1fr;
+  }
+  .admin-root .inv-mv-date {
+    grid-column: 2;
+  }
+}
+
+/* ---------- Dark mode ---------- */
+.admin-root[data-theme='dark'] .inv-search,
+.admin-root[data-theme='dark'] .inv-field-inline select {
+  background: #1b2740;
+  border-color: #2c3a58;
+  color: #e8ecf6;
+}
+
+.admin-root[data-theme='dark'] .inv-thumb,
+.admin-root[data-theme='dark'] .inv-thumb-empty {
+  background: #1b2740;
+  border-color: #2c3a58;
+}
+
+.admin-root[data-theme='dark'] .inv-sku {
+  background: #1b2740;
+  color: #b9c6e4;
+}
+
+.admin-root[data-theme='dark'] .inv-table tbody tr:hover {
+  background: #1f2c47;
+}
+
+.admin-root[data-theme='dark'] .inv-current,
+.admin-root[data-theme='dark'] .inv-mode,
+.admin-root[data-theme='dark'] .inv-recent li {
+  background: #1b2740;
+}
+
+.admin-root[data-theme='dark'] .inv-mode button.on {
+  background: #24365f;
+  color: #f2b8c6;
+}
+
+.admin-root[data-theme='dark'] .inv-record,
+.admin-root[data-theme='dark'] .inv-current b {
+  color: #e8ecf6;
 }
