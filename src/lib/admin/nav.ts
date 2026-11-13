@@ -28,6 +28,7 @@ export type AdminPermission =
   | 'marketing:write'
   | 'settings:read'
   | 'settings:write'
+  | 'reports:read'
   | 'staff:manage'
   | 'audit:read'
   | 'inventory:read'
@@ -164,6 +165,13 @@ export const ADMIN_NAV: AdminNavGroup[] = [
         labelBn: 'অডিট লগ',
         icon: 'ScrollText',
         permission: 'audit:read',
+      },
+      {
+        href: '/admin/reports',
+        labelEn: 'Reports',
+        labelBn: 'রিপোর্ট',
+        icon: 'ChartBar',
+        permission: 'reports:read',
       },
       {
         href: '/admin/warehouses',

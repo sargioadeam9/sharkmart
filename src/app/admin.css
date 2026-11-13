@@ -4949,3 +4949,68 @@
     width: 100%;
   }
 }
+
+/* ─────────────────────── Reports (Phase 10 pass F) ──────────────────────── */
+
+.admin-root .rep-card {
+  padding: 16px 18px;
+}
+
+.admin-root .rep-card h2 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.admin-root .rep-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+/* Bars are divs, not a chart library: one series, one dimension. */
+.admin-root .rep-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 140px;
+  padding-top: 6px;
+}
+
+.admin-root .rep-bar {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  height: 100%;
+}
+
+.admin-root .rep-bar-fill {
+  width: 100%;
+  max-width: 34px;
+  border-radius: 6px 6px 2px 2px;
+  background: linear-gradient(180deg, var(--brand), var(--brand-600));
+  min-height: 4px;
+}
+
+.admin-root .rep-bar span {
+  font-size: 10px;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+@media (max-width: 1180px) {
+  .admin-root .rep-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-root .rep-grid {
+    grid-template-columns: 1fr;
+  }
+}

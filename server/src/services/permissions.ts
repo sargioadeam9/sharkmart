@@ -52,6 +52,8 @@ export type Permission =
   | 'staff:manage'
   // Audit
   | 'audit:read'
+  // Reports
+  | 'reports:read'
   // Inventory
   | 'inventory:read'
   | 'inventory:write'
@@ -112,6 +114,7 @@ export const PERMISSIONS_BY_ROLE: Record<Role, readonly Permission[]> = {
     'reviews:read',
     'reviews:moderate',
     'audit:read',
+    'reports:read',
   ],
 
   /** admin — everything except managing staff and roles. */
@@ -133,6 +136,7 @@ export const PERMISSIONS_BY_ROLE: Record<Role, readonly Permission[]> = {
     'reviews:read',
     'reviews:moderate',
     'audit:read',
+    'reports:read',
   ],
 
   /** super admin — the only role that may manage staff and roles. */
@@ -155,6 +159,7 @@ export const PERMISSIONS_BY_ROLE: Record<Role, readonly Permission[]> = {
     'reviews:read',
     'reviews:moderate',
     'audit:read',
+    'reports:read',
   ],
 };
 
