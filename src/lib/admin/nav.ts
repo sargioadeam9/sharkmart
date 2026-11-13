@@ -166,6 +166,13 @@ export const ADMIN_NAV: AdminNavGroup[] = [
         permission: 'audit:read',
       },
       {
+        href: '/admin/warehouses',
+        labelEn: 'Warehouses',
+        labelBn: 'গুদাম',
+        icon: 'Boxes',
+        permission: 'inventory:read',
+      },
+      {
         href: '/admin/suppliers',
         labelEn: 'Suppliers',
         labelBn: 'সরবরাহকারী',

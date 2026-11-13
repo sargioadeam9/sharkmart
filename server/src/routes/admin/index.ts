@@ -34,6 +34,7 @@ import { settingsRouter } from './settings.js';
 import { auditRouter } from './audit.js';
 import { suppliersRouter } from './suppliers.js';
 import { purchaseOrdersRouter } from './purchaseOrders.js';
+import { warehousesRouter } from './warehouses.js';
 import { expensesRouter } from './expenses.js';
 
 export const adminRouter: Router = Router();
@@ -129,3 +130,4 @@ adminRouter.use('/expenses', expensesRouter);
 adminRouter.use('/audit', auditRouter);
 adminRouter.use('/suppliers', suppliersRouter);
 adminRouter.use('/purchase-orders', purchaseOrdersRouter);
+adminRouter.use('/warehouses', warehousesRouter);

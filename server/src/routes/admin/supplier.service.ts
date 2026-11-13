@@ -638,7 +638,18 @@ export async function receivePurchaseOrder(
 ): Promise<PurchaseOrderDetail> {
   const order = await prisma.purchaseOrder.findUnique({
     where: { id },
-    select: { status: true, items: { select: { id: true, quantity: true, receivedQuantity: true } } },
+    select: {
+      status: true,
+      items: {
+        select: {
+          id: true,
+          productId: true,
+          variantId: true,
+          quantity: true,
+          receivedQuantity: true,
+        },
+      },
+    },
   });
   if (!order) throw notFound('Purchase order');
 
@@ -698,6 +709,44 @@ export async function receivePurchaseOrder(
 
   const fullyReceived = after.every((item) => item.received >= item.quantity);
 
+  /**
+   * The stock write.
+   *
+   * Receiving is the only place in the system that says "stock arrived", so it
+   * must land on the same field checkout decrements, or the two drift apart the
+   * moment the first shipment is booked in. That field is:
+   *
+   *   a line with a variant  -> ProductVariant.stock
+   *   a line without one     -> WarehouseStock at the default warehouse
+   *
+   * exactly the rule `cart.service.ts` and `mappers.ts` already apply. Each line
+   * also writes a StockMovement, which is the only record of why the count moved.
+   */
+  const linesWithProduct = order.items
+    .filter((item) => body.lines.some((line) => line.itemId === item.id))
+    .map((item) => ({
+      ...item,
+      delta: body.lines.find((line) => line.itemId === item.id)!.receivedQuantity,
+    }));
+
+  const variantIds = linesWithProduct
+    .map((item) => item.variantId)
+    .filter((value): value is string => Boolean(value));
+
+  const variants =
+    variantIds.length === 0
+      ? []
+      : await prisma.productVariant.findMany({
+          where: { id: { in: variantIds } },
+          select: { id: true, productId: true },
+        });
+  const variantById = new Map(variants.map((variant) => [variant.id, variant]));
+
+  const defaultWarehouse = await prisma.warehouse.findFirst({
+    where: { isDefault: true, isActive: true },
+    select: { id: true },
+  });
+
   await withAudit(
     {
       userId: actor.userId,
@@ -718,6 +767,84 @@ export async function receivePurchaseOrder(
           data: { receivedQuantity: { increment: line.receivedQuantity } },
         });
       }
+
+      for (const item of linesWithProduct) {
+        if (item.variantId) {
+          const variant = variantById.get(item.variantId);
+          if (!variant) throw notFound('Variant');
+
+          await tx.productVariant.update({
+            where: { id: item.variantId },
+            data: { stock: { increment: item.delta } },
+          });
+
+          await tx.stockMovement.create({
+            data: {
+              productId: variant.productId,
+              variantId: item.variantId,
+              warehouseId: defaultWarehouse?.id ?? null,
+              type: 'IN',
+              quantity: item.delta,
+              reason: body.note ?? 'Purchase order received',
+              referenceType: 'PURCHASE_ORDER',
+              referenceId: id,
+              createdBy: actor.userId,
+            },
+          });
+        } else {
+          if (!defaultWarehouse) {
+            throw new HttpError(
+              409,
+              'CONFLICT',
+              'No default warehouse is configured, so received stock has nowhere to go.',
+              { reason: 'NO_DEFAULT_WAREHOUSE' },
+            );
+          }
+
+          /**
+           * No variant: `WarehouseStock` is the stock of record for this product.
+           *
+           * findFirst + update/create rather than `upsert`: the compound unique
+           * is (warehouseId, productId, variantId) and `variantId` is nullable,
+           * so the generated `..._variantId` input cannot express "null" — a
+           * cast would compile and then fail at runtime.
+           */
+          const existing = await tx.warehouseStock.findFirst({
+            where: { warehouseId: defaultWarehouse.id, productId: item.productId, variantId: null },
+            select: { id: true },
+          });
+
+          if (existing) {
+            await tx.warehouseStock.update({
+              where: { id: existing.id },
+              data: { quantity: { increment: item.delta } },
+            });
+          } else {
+            await tx.warehouseStock.create({
+              data: {
+                warehouseId: defaultWarehouse.id,
+                productId: item.productId,
+                variantId: null,
+                quantity: item.delta,
+              },
+            });
+          }
+
+          await tx.stockMovement.create({
+            data: {
+              productId: item.productId,
+              warehouseId: defaultWarehouse.id,
+              type: 'IN',
+              quantity: item.delta,
+              reason: body.note ?? 'Purchase order received',
+              referenceType: 'PURCHASE_ORDER',
+              referenceId: id,
+              createdBy: actor.userId,
+            },
+          });
+        }
+      }
+
       await tx.purchaseOrder.update({
         where: { id },
         data: {

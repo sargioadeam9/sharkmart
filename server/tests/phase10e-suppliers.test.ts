@@ -84,8 +84,52 @@ beforeEach(async () => {
   await resetRateLimits();
 });
 
+/**
+ * Receiving now writes stock (pass E), so a test that receives must put it back.
+ *
+ * The reversal is driven by the StockMovement rows the receipt itself wrote: they
+ * are the exact record of what changed, so undoing them cannot drift from what
+ * was done. Deleting the movements afterwards keeps the ledger clean for the next
+ * run.
+ */
+async function revertReceivedStock(ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+
+  const movements = await prisma.stockMovement.findMany({
+    where: { referenceType: 'PURCHASE_ORDER', referenceId: { in: ids } },
+    select: { id: true, productId: true, variantId: true, warehouseId: true, quantity: true },
+  });
+
+  for (const movement of movements) {
+    if (movement.variantId) {
+      await prisma.productVariant.update({
+        where: { id: movement.variantId },
+        data: { stock: { decrement: movement.quantity } },
+      });
+    } else if (movement.warehouseId) {
+      const row = await prisma.warehouseStock.findFirst({
+        where: {
+          warehouseId: movement.warehouseId,
+          productId: movement.productId,
+          variantId: null,
+        },
+        select: { id: true },
+      });
+      if (row) {
+        await prisma.warehouseStock.update({
+          where: { id: row.id },
+          data: { quantity: { decrement: movement.quantity } },
+        });
+      }
+    }
+  }
+
+  await prisma.stockMovement.deleteMany({ where: { id: { in: movements.map((m) => m.id) } } });
+}
+
 afterAll(async () => {
   if (poIds.length > 0) {
+    await revertReceivedStock(poIds);
     await prisma.auditLog.deleteMany({ where: { entityId: { in: poIds } } });
     await prisma.purchaseOrderItem.deleteMany({ where: { purchaseOrderId: { in: poIds } } });
     await prisma.purchaseOrder.deleteMany({ where: { id: { in: poIds } } });
