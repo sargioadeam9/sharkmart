@@ -16,7 +16,7 @@
  */
 
 import { Router } from 'express';
-import { requireAuth, requirePermission } from '../../middleware/auth.js';
+import { requireAuth } from '../../middleware/auth.js';
 import { rateLimit, LIMITS } from '../../middleware/rateLimiter.js';
 import { ok } from '../../types/api.js';
 import { prisma } from '../../config/database.js';
@@ -31,6 +31,7 @@ import { categoriesRouter } from './categories.js';
 import { brandsRouter } from './brands.js';
 import { couponsRouter } from './coupons.js';
 import { settingsRouter } from './settings.js';
+import { auditRouter } from './audit.js';
 import { expensesRouter } from './expenses.js';
 
 export const adminRouter: Router = Router();
@@ -112,44 +113,6 @@ adminRouter.get('/me', async (req, res, next) => {
   }
 });
 
-/**
- * GET /admin/audit — the audit trail, newest first.
- *
- * `audit:read` is held by ORDER_MANAGER and above (security.md §6). Included in
- * pass A because it is the read side of the audit helper, and verifying that a
- * mutation wrote a row is much easier through an endpoint than through a SQL
- * client.
- */
-adminRouter.get('/audit', requirePermission('audit:read'), async (req, res, next) => {
-  try {
-    const take = Math.min(Number(req.query.limit) || 50, 200);
-    const rows = await prisma.auditLog.findMany({
-      orderBy: { createdAt: 'desc' },
-      take,
-      include: { user: { select: { id: true, name: true, role: true } } },
-    });
-
-    res.json(
-      ok({
-        entries: rows.map((row) => ({
-          id: row.id,
-          userId: row.userId,
-          userName: row.user?.name ?? null,
-          userRole: row.user?.role ?? null,
-          action: row.action,
-          entity: row.entity,
-          entityId: row.entityId,
-          changes: row.changes,
-          ipAddress: row.ipAddress,
-          createdAt: row.createdAt.toISOString(),
-        })),
-      }),
-    );
-  } catch (error) {
-    next(error);
-  }
-});
-
 // ── Module routers ──────────────────────────────────────────────────────────
 adminRouter.use('/dashboard', dashboardRouter);
 adminRouter.use('/products', productsRouter);
@@ -161,3 +124,4 @@ adminRouter.use('/brands', brandsRouter);
 adminRouter.use('/coupons', couponsRouter);
 adminRouter.use('/settings', settingsRouter);
 adminRouter.use('/expenses', expensesRouter);
+adminRouter.use('/audit', auditRouter);

@@ -4804,3 +4804,19 @@
     font-size: 12px;
   }
 }
+
+/* Audit log — the JSON payload inside a row's <details>. */
+.admin-root .audit-json {
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  max-width: 420px;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
