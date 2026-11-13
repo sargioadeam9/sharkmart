@@ -25,6 +25,7 @@ import { isAdminRole, permissionsFor } from '../../services/permissions.js';
 import { dashboardRouter } from './dashboard.js';
 import { productsRouter } from './products.js';
 import { ordersRouter } from './orders.js';
+import { inventoryRouter } from './inventory.js';
 
 export const adminRouter: Router = Router();
 
@@ -147,3 +148,4 @@ adminRouter.get('/audit', requirePermission('audit:read'), async (req, res, next
 adminRouter.use('/dashboard', dashboardRouter);
 adminRouter.use('/products', productsRouter);
 adminRouter.use('/orders', ordersRouter);
+adminRouter.use('/inventory', inventoryRouter);
