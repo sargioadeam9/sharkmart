@@ -40,7 +40,10 @@ afterAll(async () => {
   await prisma.notification.deleteMany({ where: { type: { in: ['campaign_sms', 'campaign_email'] } } });
   if (templateIds.length > 0) {
     await prisma.auditLog.deleteMany({ where: { entityId: { in: templateIds } } });
+    // Both tables share the id list, so both must be swept — the first version
+    // only deleted SMS rows and left email templates behind for the next run.
     await prisma.sMSTemplate.deleteMany({ where: { id: { in: templateIds } } });
+    await prisma.emailTemplate.deleteMany({ where: { id: { in: templateIds } } });
   }
   await prisma.auditLog.deleteMany({ where: { action: 'campaign.send' } });
 });
