@@ -3789,3 +3789,638 @@
 .admin-root[data-theme='dark'] .rev-table tbody tr:hover {
   background: #1b2740;
 }
+
+/* ==========================================================================
+   Phase 9 B5 — Categories tree + Brands table
+   --------------------------------------------------------------------------
+   Prefixed `.cat-` and `.brd-` and scoped under `.admin-root`, per AGENTS.md
+   landmine 17: the storefront stylesheet carries bare `.card` / `.badge` /
+   `.grid` rules and an unscoped name here has already cost this project a
+   session. Tokens are the admin set, unchanged.
+   ========================================================================== */
+
+/* ---------- Shared toolbar (both screens) ---------- */
+.admin-root .cat-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.admin-root .cat-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 0 14px;
+  min-height: 40px;
+  flex: 1 1 240px;
+  max-width: 380px;
+}
+
+.admin-root .cat-search input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--text);
+  width: 100%;
+  min-height: 38px;
+}
+
+.admin-root .cat-search input::placeholder {
+  color: var(--faint);
+}
+
+.admin-root .cat-search svg {
+  color: var(--muted);
+  flex: none;
+}
+
+.admin-root .cat-filter-note {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+/* ---------- Row identity ---------- */
+.admin-root .cat-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.admin-root .cat-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  line-height: 1;
+  flex: none;
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+}
+
+/* 84 of 98 categories carry no accentColor, so the tile is deliberately
+   neutral: colour cannot be the thing that tells two rows apart. */
+.admin-root .cat-icon.empty {
+  color: var(--faint);
+}
+
+.admin-root .cat-label {
+  min-width: 0;
+}
+
+.admin-root .cat-label b {
+  display: block;
+  font-weight: 600;
+  color: var(--text);
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-root .cat-label small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The disambiguator. Three categories are called "Accessories"; without this
+   line the table shows three identical rows and the operator cannot tell which
+   one they are about to delete. */
+.admin-root .cat-path {
+  display: inline-block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--info);
+  background: var(--info-bg);
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-root .cat-slug {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+
+/* ---------- Tree ---------- */
+.admin-root .cat-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-root .cat-table-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.admin-root .cat-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .cat-table tbody tr.cat-child-row {
+  background: var(--bg);
+}
+
+.admin-root .cat-table tbody tr.cat-child-row:hover {
+  background: var(--brand-50);
+}
+
+/* Indentation is the only signal that a row is a child, so it has to be
+   visible at every width. The expand button lives in the same cell. */
+.admin-root .cat-indent {
+  display: inline-block;
+  flex: none;
+}
+
+.admin-root .cat-expand {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  flex: none;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.admin-root .cat-expand:hover {
+  background: var(--brand-50);
+  color: var(--brand);
+}
+
+.admin-root .cat-expand:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.admin-root .cat-expand svg {
+  transition: transform 0.16s ease;
+}
+
+.admin-root .cat-expand.open svg {
+  transform: rotate(90deg);
+}
+
+/* A leaf keeps the column width so names line up down the tree. */
+.admin-root .cat-expand-spacer {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.admin-root .cat-col-count {
+  width: 96px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .cat-col-active {
+  width: 92px;
+}
+
+.admin-root .cat-col-order {
+  width: 132px;
+}
+
+.admin-root .cat-num {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.admin-root .cat-num.zero {
+  color: var(--faint);
+  font-weight: 400;
+}
+
+.admin-root .cat-num small {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+/* ---------- Active toggle ---------- */
+.admin-root .cat-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 30px;
+  padding: 3px 10px 3px 4px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  transition: border-color 0.14s ease, color 0.14s ease, background 0.14s ease;
+}
+
+.admin-root .cat-toggle:hover {
+  border-color: var(--brand-100);
+}
+
+.admin-root .cat-toggle:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.admin-root .cat-toggle i {
+  width: 30px;
+  height: 18px;
+  border-radius: var(--r-pill);
+  background: var(--line);
+  position: relative;
+  flex: none;
+  transition: background 0.16s ease;
+}
+
+.admin-root .cat-toggle i::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(22, 34, 61, 0.3);
+  transition: transform 0.16s ease;
+}
+
+.admin-root .cat-toggle.on {
+  color: var(--ok);
+  border-color: var(--ok-bg);
+  background: var(--ok-bg);
+}
+
+.admin-root .cat-toggle.on i {
+  background: var(--ok);
+}
+
+.admin-root .cat-toggle.on i::after {
+  transform: translateX(12px);
+}
+
+.admin-root .cat-toggle:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- Order buttons ---------- */
+.admin-root .cat-order {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.admin-root .cat-order button {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.admin-root .cat-order button:hover:not(:disabled) {
+  border-color: var(--brand-100);
+  color: var(--brand);
+  background: var(--brand-50);
+}
+
+.admin-root .cat-order button:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+
+.admin-root .cat-order button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ---------- Row actions ---------- */
+.admin-root .cat-row-actions {
+  display: inline-flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.admin-root .cat-del {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+
+.admin-root .cat-del:hover {
+  border-color: var(--bad);
+  color: var(--bad);
+  background: var(--bad-bg);
+}
+
+.admin-root .cat-del:focus-visible {
+  outline: 2px solid var(--bad);
+  outline-offset: 1px;
+}
+
+/* ---------- Delete dialog ---------- */
+.admin-root .cat-dialog-body {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.admin-root .cat-dialog-body p + p {
+  margin-top: 10px;
+}
+
+.admin-root .cat-dialog-lead {
+  font-weight: 600;
+}
+
+/* The API's own message, verbatim. It already names the count and the reason;
+   rewriting it here would be a second copy of a rule that lives on the server. */
+.admin-root .cat-dialog-msg {
+  background: var(--bad-bg);
+  border: 1px solid var(--bad);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  color: var(--bad);
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.admin-root .cat-dialog-msg.info {
+  background: var(--info-bg);
+  border-color: var(--info);
+  color: var(--info);
+}
+
+.admin-root .cat-dialog-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.admin-root .cat-dialog-list li {
+  margin-bottom: 3px;
+}
+
+.admin-root .cat-dialog-list b {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.admin-root .cat-dialog-note {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 12px;
+  line-height: 1.55;
+}
+
+.admin-root .cat-dialog-err {
+  color: var(--bad);
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+.admin-root .btn.danger {
+  background: var(--bad);
+  border-color: var(--bad);
+  color: #fff;
+}
+
+.admin-root .btn.danger:hover {
+  background: #a80f31;
+  border-color: #a80f31;
+}
+
+/* ---------- Brands ---------- */
+.admin-root .brd-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-sm);
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--bg);
+  border: 1px solid var(--line-2);
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.admin-root .brd-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.admin-root .brd-name {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.admin-root .brd-tagline {
+  font-size: 12.5px;
+  color: var(--muted);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-root .brd-col-own {
+  width: 108px;
+}
+
+.admin-root .brd-col-count {
+  width: 96px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-root .brd-col-active {
+  width: 92px;
+}
+
+.admin-root .brd-col-order {
+  width: 132px;
+}
+
+.admin-root .brd-own {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.admin-root .brd-own.no {
+  color: var(--faint);
+  font-weight: 400;
+}
+
+/* ---------- Empty / loading ---------- */
+.admin-root .cat-empty {
+  padding: 44px 24px;
+  text-align: center;
+}
+
+.admin-root .cat-empty-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.admin-root .cat-empty-body {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 420px;
+  margin: 0 auto;
+  line-height: 1.55;
+}
+
+.admin-root .cat-empty-icon {
+  color: var(--line);
+  margin-bottom: 10px;
+}
+
+/* ---------- Dark mode ---------- */
+.admin-root[data-theme='dark'] .cat-icon,
+.admin-root[data-theme='dark'] .brd-logo {
+  background: #1b2740;
+  border-color: #2c3a58;
+}
+
+.admin-root[data-theme='dark'] .cat-table tbody tr.cat-child-row {
+  background: #131c2f;
+}
+
+.admin-root[data-theme='dark'] .cat-table tbody tr.cat-child-row:hover,
+.admin-root[data-theme='dark'] .cat-table tbody tr:hover {
+  background: #1b2740;
+}
+
+.admin-root[data-theme='dark'] .cat-search,
+.admin-root[data-theme='dark'] .cat-order button,
+.admin-root[data-theme='dark'] .cat-del,
+.admin-root[data-theme='dark'] .cat-toggle {
+  background: #1b2740;
+  border-color: #2c3a58;
+  color: #e8ecf6;
+}
+
+.admin-root[data-theme='dark'] .cat-toggle i {
+  background: #2c3a58;
+}
+
+.admin-root[data-theme='dark'] .cat-toggle.on {
+  background: rgba(18, 128, 92, 0.3);
+  border-color: #1f8a5b;
+  /* 12px label text, so this has to clear 4.5:1, not the 3:1 UI bar. */
+  color: #a7f3d0;
+}
+
+.admin-root[data-theme='dark'] .cat-path {
+  background: rgba(43, 95, 217, 0.22);
+  color: #9db8f5;
+}
+
+.admin-root[data-theme='dark'] .cat-dialog-msg {
+  background: rgba(200, 20, 60, 0.18);
+  border-color: #c8143c;
+  color: #ff9db4;
+}
+
+.admin-root[data-theme='dark'] .cat-dialog-msg.info {
+  background: rgba(43, 95, 217, 0.2);
+  border-color: #2b5fd9;
+  color: #9db8f5;
+}
+
+.admin-root[data-theme='dark'] .cat-empty-icon {
+  color: #33415f;
+}
+
+/* ---------- Under 720px: rows stack, data-label supplies the header ---------- */
+@media (max-width: 720px) {
+  .admin-root .cat-search {
+    max-width: none;
+  }
+
+  .admin-root .cat-table tbody td.cat-col-count,
+  .admin-root .cat-table tbody td.cat-col-active,
+  .admin-root .cat-table tbody td.cat-col-order {
+    text-align: left;
+  }
+
+  .admin-root .cat-num small {
+    display: inline;
+    margin-left: 6px;
+  }
+
+  .admin-root .cat-row-actions {
+    justify-content: flex-start;
+  }
+
+  /* The name cell keeps its own layout when stacked: the icon, the expand
+     control and the label stay on one line so the tree still reads as a tree. */
+  .admin-root .cat-table tbody td.cat-col-name {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .admin-root .cat-table tbody td.cat-col-name::before {
+    display: none;
+  }
+
+  .admin-root .cat-label b,
+  .admin-root .cat-label small {
+    white-space: normal;
+  }
+}

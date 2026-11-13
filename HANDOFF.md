@@ -4,6 +4,121 @@
 > One entry per session. Be specific: file paths, commands, results. Vague handoffs are how work gets rebuilt twice.
 
 
+## 2026-11-13 · Phase 9 pass B5 · Saffron · Categories + Brands · VERIFIED
+
+**Phase 9 is closed.** B5a (API, commit `c8fda7d`) and B5b (both screens) are two
+separate commits. The API half was verified before the screens started and was
+never re-opened. 230/230 tests, `tsc` clean in both packages, `npm run build`
+green with `ƒ /admin/categories` and `ƒ /admin/brands`.
+
+Four files for two screens, no new dependency, no shared abstraction layer. The
+small duplicated bits (the `num()` lakh formatter, the active-toggle markup, the
+delete-dialog shell) are duplicated on purpose: two screens is not enough
+repetition to justify a third file, and an abstraction invented for two callers
+is the thing the next agent has to unpick.
+
+### 1. The duplicate-name rule — the reason the tree is not a flat list
+
+Three categories are called **"Accessories"**, under Fashion, Gadgets &
+Electronics, and Automotive & Motorbike. A flat list shows three identical rows
+and the operator cannot tell which delete button belongs to which category.
+
+The rule: **every child row renders its `path`**, and a root renders its `path`
+too when its name collides with another visible row. `path` is computed
+server-side in `toRow()` (`category.service.ts`), never in the browser — a second
+copy of "how do I build a path" would drift from the one the API returns.
+
+Verified live at `?q=Accessories`: all three render distinctly. If you add a
+category whose name duplicates an existing one, this is already handled; do not
+"simplify" the path badge away because the tree looks fine without it.
+
+### 2. The `sortOrder` collision fix, and why the buttons disable
+
+`POST /:id/reorder` (categories) and `POST /reorder` (brands) take the **complete
+sibling group** in its new order and renumber `sortOrder` to a dense `0..n-1`.
+The endpoint refuses a partial list with a 422 rather than renumbering a subset,
+because renumbering a subset is how two rows end up sharing a `sortOrder` and the
+tree order becomes non-deterministic.
+
+Consequence for the UI, and this is the part that is easy to get wrong: **under a
+search or an active filter the visible rows are a subset, so the buttons must be
+disabled.** Sending the visible ids would be a guaranteed 422. Both screens
+disable them and the toolbar says why in one line. The brands screen also
+disables them under `sort=name|products`, because the visual order no longer
+matches the stored order the buttons assume.
+
+Verified: moving Women above Men returned `sortOrder` `0,1,2,3,4,5` with no gaps,
+and the order survived a reload. Original order restored afterwards.
+
+### 3. The delete blast-radius contract — three different rules
+
+| Entity | Rule | Refusal | Escape hatch |
+| --- | --- | --- | --- |
+| Category with **products** | RESTRICT | 409 `CATEGORY_IN_USE` + count + 3 product names | **None.** There is no bulk move for products; the operator moves them by hand |
+| Category with **children** | Refuse | 409 `CATEGORY_HAS_CHILDREN` + count + child names | `?reparent=true` — children are promoted to root, then the node is deleted |
+| Brand with **products** | SET NULL | 409 `BRAND_IN_USE` + count + 3 product names | `?detach=true` — products survive with `brandId: null`; response carries `affectedCount` |
+
+The dialogs are driven by the **real 409 body**, not by a pre-computed guess. The
+server's message already names the count and the reason, so the screen renders it
+verbatim and lists `details.products` / `details.children`. Rewriting that
+sentence in the browser would be a second copy of a rule that lives on the server,
+and the server's copy is the one that decides whether the delete happens.
+
+Verified live: Fashion (12 products) refused and the row survived with the Delete
+button disabled; a temporary parent with one child refused, then reparented and
+deleted with the child promoted to root; Samsung (2 products) detached and
+deleted with **both products still present and `brandId: null`**, 168 products
+unchanged. Seed state restored afterwards.
+
+**Do not change brand delete from SET NULL to RESTRICT** — that is a schema
+change and the owner's call, not a screen fix.
+
+### 4. What B5 deliberately cut
+
+Not oversights, and each screen carries a header comment saying so.
+
+- **Drag-and-drop reorder.** The up/down buttons call the same endpoint and
+  produce the same dense `sortOrder`, and they work on touch and with a keyboard.
+  Drag-and-drop would cost a dependency and a pointer implementation for no gain
+  in correctness.
+- **CSV export.** 98 categories and 25 brands do not need one.
+- **Bulk select and the sticky bulk bar.** The API exposes no bulk operation for
+  either entity, so the bar would be decoration over a loop of single calls.
+- **Create and edit forms.** Never in B5's scope.
+
+### 5. Landmines hit
+
+**PowerShell double-encoded a source file.** `Get-Content` → string replace →
+`Set-Content` on `categories-tree.tsx` wrote UTF-8 bytes as if they were Latin-1,
+so every Bangla string and the `·` placeholder became mojibake (`Â·`, `à¦…`) —
+and it still type-checked and built, so only a screenshot caught it. The other
+four files written with `writeLocalFile` were clean. **Fix: never round-trip a
+file containing Bangla through PowerShell text cmdlets.** Use `writeLocalFile`,
+`editLocalFile`, or a Python script that opens with an explicit encoding.
+
+**`URLSearchParams.size` may not be in the TS lib.** Used `params.toString()`
+truthiness instead.
+
+**The seed has `discountPricePoisha == basePricePoisha`** on "Android Phone" and
+"Premium Android Phone", so a `PATCH /admin/products/:id` on either one fails
+validation with `discountPricePoisha must be less than basePricePoisha`. This is
+pre-existing and unrelated to B5, but it means those two products cannot be
+edited through the API as seeded. Restoring the Samsung brand required a direct
+Prisma `updateMany`, not a PATCH.
+
+**Mobile layout was not visually confirmed.** No viewport-resize tool was
+available in this session. What *was* verified: all 7 `.cat-*` rules inside the
+720px media query load and parse, every `td` carries `data-label`, and there is no
+horizontal scroll at 1280. The 360/720/1024 visual pass is still owed — do it
+first if you touch the tree layout.
+
+### 6. Exact next step
+
+Phase 10 — not started. Phase 9 is complete: B1 products, B2 orders, B3
+inventory, B4 reviews, B5 categories + brands.
+
+---
+
 ## 2026-11-13 · Phase 9 pass B4 · Saffron · Reviews module · VERIFIED
 
 **Reviews moderation is shipped end to end: schema, API, screen, 19 tests. The

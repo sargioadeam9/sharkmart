@@ -4,7 +4,7 @@
 > Update the phase row **and** your claim row before you finish a session.
 > Phase definitions and gates live in `prompts/masterbuild.md`.
 
-**Last updated:** 2026-11-13 · **Updated by:** Phase 9 pass B4 — Reviews module shipped (API + screen + tests); test-runner flake root-caused and fixed in `vitest.config.ts`
+**Last updated:** 2026-11-13 · **Updated by:** Phase 9 pass B5 — Categories and Brands shipped (API + both screens). **Phase 9 complete, B1 through B5.**
 
 ---
 
@@ -13,10 +13,10 @@
 | Field | Value |
 | --- | --- |
 | Active phase | **Phase 9 — Admin panel: core modules** |
-| Phase status | 🟡 **Phase 9 PASS B4 COMPLETE** — products (B1), orders (B2), inventory (B3) and reviews (B4) green. B5 (Categories, Brands) not started |
-| Build state | Server: `npm test` **201/201** (10 files, three consecutive green runs) · `tsc --noEmit` clean · `npm run lint` 0 errors (15 pre-existing warnings). Storefront: `npm run build` green (`ƒ /admin/reviews`) · `tsc --noEmit` clean. `prisma migrate status` clean, 8 migrations |
+| Phase status | ✅ **PHASE 9 COMPLETE** — B1 products, B2 orders, B3 inventory, B4 reviews, B5 categories + brands. All five modules shipped, API and screen |
+| Build state | Server: `npm test` **230/230** (11 files) · `tsc --noEmit` clean. Storefront: `npm run build` green (`ƒ /admin/categories`, `ƒ /admin/brands`) · `tsc --noEmit` clean. `prisma migrate status` clean, 8 migrations |
 | Blocking issues | Redis not installed locally — cache/limiter run on the in-process fallback (correct, tested, single-process only). `Product` has no cost field, so neither the reference's "Estimated profit" KPI nor a stock-value column is computable (see HANDOFF). **The "flaky under parallel execution" note is resolved** — `vitest.config.ts` used `poolOptions.threads.singleThread`, a silent no-op since Vitest 4; suites were racing on shared MySQL rows. Now `fileParallelism: false`, three consecutive 201/201 runs. **`WarehouseStock` is written by nothing except the inventory adjust endpoint** — checkout decrements `ProductVariant.stock` only, so the two totals drift (**5,183 vs 4,736, a 447-unit gap** as of the B3 follow-up; it widens per checkout, so re-measure rather than trusting this figure). The intake number is no longer shown as availability in the admin table — it is collapsed under "Received at intake" in the drawer. See HANDOFF for the exact reconciliation |
-| Next action | Phase 9 pass B5 — Categories and Brands modules |
+| Next action | Phase 10 — not started. Phase 9 closed; see the B5 section below and the HANDOFF entry for the three delete rules |
 
 ### Phase 6 — gate evidence
 
@@ -221,6 +221,49 @@ cleared only after the server confirms.
 | Table stacks to cards at 720 | ✅ | `thead` display `none`, `tr` `block`, `td` `flex`, `::before` content `"Product"` from `data-label` |
 | Dark mode: no surface under 3:1 | ✅ | Lowest measured pair **3.95:1** (`th`), most 6.5–14:1 |
 | Port 3000 is `npm run dev` | ✅ | Killed the orphaned `next start` (PID 19520) first — landmine 15 |
+
+---
+
+### Phase 9 pass B5 — categories and brands gate evidence
+
+**Phase 9 is complete.** B5a (API) and B5b (both screens) shipped as two separate
+commits. The API half was verified before the screens started and was not
+re-opened.
+
+| Gate requirement | State | Evidence |
+| --- | --- | --- |
+| `/admin/categories` returns 200 with 14 roots | ✅ | Live: `14 roots · 84 sub-categories · 98 total`. Tree expands per root; 84 children is the reference structure and was deliberately not pruned |
+| The three "Accessories" are distinguishable | ✅ | Live at `?q=Accessories`: `Fashion / Accessories`, `Automotive & Motorbike / Accessories`, `Gadgets & Electronics / Accessories`. Every child row renders its `path`; a root renders it too when its name collides |
+| Delete a category with products | ✅ | Live on Fashion (12 products): 409 `CATEGORY_IN_USE` → dialog states "12 products use this category", lists Cotton Panjabi / Denim Jeans / Ladies Handbag + "and 9 more…", Delete button disables, **row survives (98 rows after)** |
+| Delete a parent with children | ✅ | Live on a temporary parent with one child: 409 `CATEGORY_HAS_CHILDREN` → dialog states the child count and offers "Reparent and delete". Ran it: parent deleted, child promoted to root (`1 roots · 0 sub-categories`) |
+| Delete a brand with products | ✅ | Live on Samsung (2 products): 409 `BRAND_IN_USE` → dialog offers "Detach 2 products and delete". Ran it: brand gone (25 → 24), **both products still exist with `brandId: null`**, 168 products total unchanged. Seed restored afterwards |
+| Reorder via buttons | ✅ | Moved Women above Men: `sortOrder` came back dense `0..5` with no gaps and the order persisted across reload. Original order restored |
+| Reorder refuses a partial group | ✅ | The endpoint 422s unless `orderedIds` is the complete sibling set, so the buttons are disabled whenever a search or active filter is on, and the toolbar says why |
+| Search + active filter | ✅ | `q` and `active=all|true|false` both wired to the URL on both screens; brand screen adds `sort=sortOrder|name|products` |
+| Mobile stacking under 720px | ✅ | All 7 `.cat-*` rules inside the 720px media query load and parse; `data-label` on every `td` supplies the stacked header. **Not visually confirmed** — no viewport-resize tool in this session, see HANDOFF |
+| No horizontal scroll | ✅ | `scrollWidth - clientWidth = 0` on the document and on `.table-wrap` at 1280 |
+| Dark mode | ✅ | Measured contrast on the new surfaces: name 14.12:1, count 6.52:1, search input 12.84:1. The active toggle was 3.23:1 at 12px text — below the 4.5:1 that size needs — and was raised to `#a7f3d0` on a 0.3 alpha fill |
+| `npx tsc --noEmit` both packages | ✅ | exit 0, no output |
+| `npm test` | ✅ | **230/230**, 11 files |
+| `npm run build` | ✅ | `✓ Compiled successfully`; `ƒ /admin/categories` and `ƒ /admin/brands` both present |
+| Encoding survived the edit | ✅ | **Defect found and fixed:** a PowerShell `Get-Content`/`Set-Content` round-trip double-encoded `categories-tree.tsx` (Bangla strings and the `·` placeholder rendered as mojibake). Reversed programmatically and re-verified; the other four files were clean |
+
+**The three delete rules, in one place:**
+
+1. **Category with products → RESTRICT.** 409 `CATEGORY_IN_USE` with the count and
+   three product names. There is no bulk move for products, so this is a manual
+   step and the dialog says so.
+2. **Category with children → refuse unless `?reparent=true`.** 409
+   `CATEGORY_HAS_CHILDREN`; reparenting promotes the children to root first.
+3. **Brand with products → SET NULL, behind an explicit `?detach=true`.** 409
+   `BRAND_IN_USE` by default; detaching keeps the products and nulls their brand,
+   and the response carries `affectedCount` so the screen can report it.
+
+**Deliberately cut in B5, not forgotten:** drag-and-drop reorder (the buttons hit
+the same endpoint for the same `sortOrder` fix and work on touch), CSV export (98
+categories and 25 brands do not need one), and bulk select with the sticky bulk
+bar (the API exposes no bulk operation for either entity, so the bar would be
+decoration). Create and edit forms were never in B5's scope.
 
 ---
 
