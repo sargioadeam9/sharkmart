@@ -49,6 +49,7 @@ model User {
   refreshTokens       RefreshToken[]
   passwordResetTokens PasswordResetToken[]
   couponRedemptions   CouponRedemption[]
+  notes               CustomerNote[]
 
   @@index([role])
   @@index([createdAt])
@@ -169,6 +170,26 @@ model IdempotencyKey {
   @@unique([scope, key])
   @@index([userId])
   @@index([createdAt])
+}
+
+/**
+ * A staff note about a customer.
+ *
+ * Deliberately not a generic "comment" table: it hangs off a user, is written by
+ * staff, and is never shown to the customer. That is the whole feature — the next
+ * person who opens this profile needs to know the customer called about a late
+ * delivery, and that fact has nowhere else to live.
+ */
+model CustomerNote {
+  id        String   @id @default(uuid())
+  userId    String
+  body      String   @db.Text
+  createdBy String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model Address {
