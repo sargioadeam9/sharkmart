@@ -29,6 +29,20 @@ const EnvSchema = z.object({
     .string()
     .default('http://localhost:3000,http://127.0.0.1:3000'),
 
+  /**
+   * Optional parent domain for the CSRF cookie, e.g. `.example.com`.
+   *
+   * Only needed when the storefront and the API are **different subdomains**
+   * (`shop.example.com` + `api.example.com`, which is how shared hosting lays
+   * them out). The CSRF cookie is host-only by default, so JavaScript on the
+   * storefront cannot read a cookie the API set on its own subdomain — the
+   * header goes out empty and every mutation 401s.
+   *
+   * Leave it unset for a single-origin deployment (both apps behind one host,
+   * or the API proxied under `/api/v1`). Never set it in development.
+   */
+  COOKIE_DOMAIN: z.string().optional(),
+
   // Phase 8 — auth. Optional at parse time so the catalog-only suites and a
   // fresh clone still boot; `requireAuthSecrets()` below is what refuses to
   // serve auth routes without them.
@@ -95,6 +109,31 @@ export const isProduction = env.NODE_ENV === 'production';
 export const corsOrigins = env.CORS_ORIGINS.split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+
+/**
+ * Normalises `COOKIE_DOMAIN` to the leading-dot form Express expects.
+ *
+ * Exported so it can be tested without booting the app. A malformed value is
+ * ignored rather than thrown: a browser silently rejects a cookie whose Domain
+ * is a scheme or contains a path, and the symptom — "login does nothing" — is
+ * expensive to trace back to an env typo.
+ */
+export function normalizeCookieDomain(raw: string | undefined): string | undefined {
+  const value = raw?.trim();
+  if (!value) return undefined;
+
+  if (value.includes('/') || value.includes(':')) {
+    console.error(
+      `[env] COOKIE_DOMAIN looks wrong (${value}) — expected a domain such as ".example.com". Ignoring it.`,
+    );
+    return undefined;
+  }
+
+  return value.startsWith('.') ? value : `.${value}`;
+}
+
+/** `.example.com`, or undefined when cookies should stay host-only. */
+export const cookieDomain = normalizeCookieDomain(env.COOKIE_DOMAIN);
 
 /**
  * `Secure` is not negotiable in production. Outside it, `COOKIE_SECURE` may

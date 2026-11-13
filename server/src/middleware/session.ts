@@ -23,7 +23,7 @@
 
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import type { NextFunction, Request, Response } from 'express';
-import { cookieSecure, corsOrigins, isProduction } from '../config/env.js';
+import { cookieDomain, cookieSecure, corsOrigins, isProduction } from '../config/env.js';
 import { fail } from '../types/api.js';
 import { ACCESS_TTL_SECONDS, REFRESH_TTL_SECONDS } from '../services/token.service.js';
 
@@ -76,6 +76,21 @@ export function setCsrfCookie(res: Response): string {
     sameSite: 'lax',
     path: '/',
     maxAge: REFRESH_TTL_SECONDS * 1000,
+    /**
+     * Only the CSRF cookie gets a parent domain, and only when the deployment
+     * is split across subdomains (`COOKIE_DOMAIN=.example.com`).
+     *
+     * The storefront reads this value with `document.cookie` and echoes it in a
+     * header. If the API sets it on `api.example.com` host-only, a page on
+     * `shop.example.com` cannot see it, so every POST/PATCH/DELETE goes out with
+     * an empty `X-CSRF-Token` and is rejected. Sharing the cookie across the
+     * parent domain is what makes the double-submit work.
+     *
+     * The access and refresh cookies deliberately do NOT get a domain: they are
+     * only ever sent to the API, and widening them would expose the session to
+     * every other subdomain on the domain.
+     */
+    ...(cookieDomain ? { domain: cookieDomain } : {}),
   });
   return token;
 }
