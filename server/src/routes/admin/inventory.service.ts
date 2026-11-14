@@ -255,8 +255,15 @@ function toListItem(row: InventoryListRow, warehouseQty: number): InventoryListI
   };
 }
 
-/** Resolves the default warehouse, for a variant-less adjustment with no id. */
-async function defaultWarehouseId(): Promise<string> {
+/**
+ * Resolves the default warehouse, for a variant-less adjustment with no id.
+ *
+ * Exported because the POS module needs the same answer when it decrements the
+ * stock of a product that has no variants — "which warehouse holds this" must
+ * have one definition, or a till sale and a manual adjustment will disagree
+ * about where the stock went.
+ */
+export async function defaultWarehouseId(): Promise<string> {
   const warehouse =
     (await prisma.warehouse.findFirst({ where: { isDefault: true, isActive: true }, select: { id: true } })) ??
     (await prisma.warehouse.findFirst({ where: { isActive: true }, select: { id: true } }));

@@ -589,11 +589,44 @@ model Order {
   trackingUrl   String?
   notes         String? @db.Text
 
+  /**
+   * Where the sale happened — the storefront or the counter.
+   *
+   * A POS sale is written as an `Order`, not into a parallel sales table, so
+   * that revenue reports, the order list and the dashboard have exactly one
+   * source of truth. A separate `PosSale` table would have meant every report
+   * needing a UNION, and the first report that forgot one would under-report
+   * takings by whatever the shop sold at the counter. See pos.service.ts.
+   */
+  channel OrderChannel @default(ONLINE)
+
+  /** The till shift this sale belongs to. Null for online orders. */
+  posSessionId String?
+
+  /**
+   * Cash tendered and change returned, for the counter only.
+   *
+   * `totalAmountPoisha` is what the customer owes; `cashReceivedPoisha` is what
+   * they handed over. Both are stored because a Z-report has to show the drawer
+   * float, and because "gave 500, got 40 back" is the only way to settle a
+   * dispute about change.
+   */
+  cashReceivedPoisha Int?
+  changePoisha       Int?
+
+  /**
+   * The till's own reference for one basket, so a double-tapped "Complete sale"
+   * cannot ring the goods up twice. Unique, and nullable because online orders
+   * do not use it — MySQL permits many NULLs in a unique index.
+   */
+  posClientRef String? @unique
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user            User?                @relation(fields: [userId], references: [id])
   coupon          Coupon?              @relation(fields: [couponId], references: [id])
+  posSession      PosSession?          @relation(fields: [posSessionId], references: [id])
   items           OrderItem[]
   statusHistory   OrderStatusHistory[]
   shippingAddress ShippingAddress?
@@ -603,6 +636,20 @@ model Order {
   @@index([guestPhone])
   @@index([currentStatus])
   @@index([createdAt])
+  @@index([channel])
+  @@index([posSessionId])
+}
+
+/**
+ * ONLINE is the storefront; POS is the counter.
+ *
+ * An enum rather than a boolean because a third channel (a marketplace, a phone
+ * order taken by an agent) is a realistic next step, and `isPos: false` would
+ * then be a lie about two different things.
+ */
+enum OrderChannel {
+  ONLINE
+  POS
 }
 
 enum OrderStatus {
@@ -931,6 +978,74 @@ enum MovementType {
   ADJUSTMENT
   TRANSFER
   RETURN
+}
+
+// ─── POS / COUNTER SALES ─────────────────────────────────────────────────
+
+/**
+ * One shift at the till — a drawer of cash that gets counted at the end.
+ *
+ * ── Why the totals are snapshots, not running counters ─────────────────────
+ *
+ * `saleCount`, `cashSalesPoisha` and the rest are null while the shift is open
+ * and filled once at close. They are deliberately NOT incremented per sale:
+ * a counter that is incremented on write drifts the first time a sale is
+ * voided, a refund is booked, or a transaction is retried, and then the Z-report
+ * is wrong in a way nobody can explain. The live figure is always derived from
+ * the orders that point at this session (`pos.service.ts#sessionSummary`), so
+ * there is one definition of "what this shift took".
+ *
+ * The snapshot exists for the opposite reason: once the drawer is counted and
+ * the shift closed, the report must keep showing what was true at that moment,
+ * even if an order is edited a month later.
+ *
+ * ── Why `expectedCashPoisha` and `countedCashPoisha` are separate ──────────
+ *
+ * Expected is what the system says should be in the drawer (float + cash sales).
+ * Counted is what the cashier physically found. `variancePoisha` is the
+ * difference, and it is the single most useful number in the module: a shop with
+ * a persistent negative variance has a leak, and a shop that never looks has no
+ * idea.
+ */
+model PosSession {
+  id String @id @default(uuid())
+
+  openedBy String
+  openedAt DateTime @default(now())
+
+  /** The float the drawer started with. Counted, not assumed. */
+  openingCashPoisha Int @default(0)
+
+  status PosSessionStatus @default(OPEN)
+
+  closedBy String?
+  closedAt DateTime?
+
+  /** Cash physically counted at close. Null until then. */
+  countedCashPoisha Int?
+  /** Float + cash sales, computed at the moment of closing. */
+  expectedCashPoisha Int?
+  /** counted - expected. Negative means the drawer is short. */
+  variancePoisha Int?
+
+  /** Shift snapshot, written at close. Null while the shift is open. */
+  saleCount        Int?
+  cashSalesPoisha  Int?
+  cardSalesPoisha  Int?
+  otherSalesPoisha Int?
+
+  note String? @db.Text
+
+  orders Order[]
+
+  @@index([status])
+  @@index([openedAt])
+  @@index([openedBy, status])
+}
+
+enum PosSessionStatus {
+  OPEN
+  CLOSED
 }
 
 // ─── EXPENSE ─────────────────────────────────────────────────────────────

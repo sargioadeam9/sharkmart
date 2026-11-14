@@ -136,8 +136,15 @@ export function generateOrderNumber(): string {
   return `SM-${time}${rand}`;
 }
 
-/** The price a product sells at today — must match the cart's derivation. */
-function effectivePrice(product: {
+/**
+ * The price a product sells at today — must match the cart's derivation.
+ *
+ * Exported because the POS till prices a sale with the same rule. A second copy
+ * of "flash sale beats discount beats base" is a copy that will be updated once
+ * and forgotten once, and then the counter and the website will quote different
+ * prices for the same shelf.
+ */
+export function effectivePrice(product: {
   basePricePoisha: number;
   discountPricePoisha: number | null;
   flashSalePricePoisha: number | null;

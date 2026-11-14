@@ -160,7 +160,24 @@ These are known and deliberate, not bugs waiting to be discovered:
   service, so "upload" means "paste a link".
 - **No storefront landing page.** `GET /api/v1/landing/:slug` and the order POST
   exist; the page that would call them does not.
-- **POS is not built.** It is the one Phase 10 module still missing.
+- **Checkout does not decrement stock for a product with no variants.** A
+  variant-less product's stock of record is `WarehouseStock` (see
+  `inventory.service.ts`), and `placeOrder` skips those lines entirely, so an
+  online order for such a product leaves the count untouched. The till *does*
+  decrement it, because a counter sale hands the goods over immediately. The
+  catalogue currently ships with zero variant-less products, which is the only
+  reason this has not bitten. Fixing it means touching the checkout transaction,
+  which is the most carefully tested path in the project — it is a change for a
+  pass of its own, not a footnote.
+- **Checkout writes no `StockMovement` rows.** The inventory movement log shows
+  counter sales, adjustments, transfers and receipts, but not online orders. The
+  till writes them; `placeOrder` does not.
+- **No refunds or voids from the till.** A counter refund is an order refund, and
+  the orders module owns that path with its own permission (`orders:refund`) and
+  audit trail. A second refund button would be a second way to move money.
+- **A manual till discount is capped at 50% of the bill.** Anything larger is a
+  pricing decision and belongs in the coupon module, where it is dated and
+  auditable.
 - **No profit reporting.** `Product` has no cost field, so margin is not
   computable. Revenue minus expenses is shown as a cash view, labelled as such.
 - **Reviews are never seeded.** `ratingAvg`/`reviewCount` carry the reference

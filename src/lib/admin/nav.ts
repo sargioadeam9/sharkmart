@@ -83,6 +83,14 @@ export const ADMIN_NAV: AdminNavGroup[] = [
     headingBn: 'বিক্রয়',
     items: [
       {
+        href: '/admin/pos',
+        labelEn: 'Till',
+        labelBn: 'কাউন্টার',
+        icon: 'Store',
+        permission: 'orders:write',
+        bottomNav: true,
+      },
+      {
         href: '/admin/orders',
         labelEn: 'Orders',
         labelBn: 'অর্ডার',

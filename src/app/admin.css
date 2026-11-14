@@ -1205,6 +1205,20 @@
   }
 }
 
+/**
+ * The mobile bottom nav is a phone-only control.
+ *
+ * It only had a rule inside `@media (max-width: 720px)`, which meant that above
+ * that width it fell back to `display: block` and rendered as a plain vertical
+ * list of links after the content. On a long page that list sits below the fold
+ * and nobody ever sees it — on a short one (a receipt, an empty state) it is
+ * right there at the bottom of the screen. Hidden by default, revealed by the
+ * media query below.
+ */
+.admin-root .bottom-nav {
+  display: none;
+}
+
 @media (max-width: 960px) {
   .admin-root .sidebar {
     transform: translateX(-100%);
@@ -5132,6 +5146,714 @@
   text-align: center;
 }
 
+/* ==========================================================================
+   TILL (POS) — Phase 10 pass M
+
+   Layout is a two-column split: products on the left, basket and payment on the
+   right. On a counter tablet the right column is where the cashier's hands are,
+   so it is fixed-width and the product grid takes whatever is left.
+
+   Everything is scoped under `.admin-root` like the rest of this file, which is
+   why the till cannot leak into the storefront — and, more importantly here,
+   why the storefront's `.badge` cannot reposition a stock pill.
+   ========================================================================== */
+
+.admin-root .pos-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+
+.admin-root .pos-bar-facts {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.admin-root .pos-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--ok-bg);
+  color: var(--ok);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.admin-root .pos-fact {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.admin-root .pos-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Products ───────────────────────────────────────────────────────────── */
+
+.admin-root .pos-main {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 14px;
+  min-height: 480px;
+}
+
+.admin-root .pos-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 0 12px;
+  background: var(--bg);
+  color: var(--muted);
+}
+
+.admin-root .pos-search:focus-within {
+  border-color: var(--brand);
+  background: var(--card);
+}
+
+.admin-root .pos-search input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  padding: 12px 0;
+  font-size: 15px;
+  color: var(--text);
+  outline: none;
+}
+
+.admin-root .pos-search-clear {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+}
+
+.admin-root .pos-results {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px;
+  max-height: 62vh;
+  overflow: auto;
+}
+
+.admin-root .pos-hint {
+  color: var(--faint);
+  font-size: 13px;
+  padding: 10px 2px;
+  grid-column: 1 / -1;
+}
+
+.admin-root .pos-tile {
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.admin-root .pos-tile:hover:not(:disabled) {
+  border-color: var(--brand);
+  box-shadow: 0 2px 10px rgba(200, 20, 60, 0.08);
+}
+
+.admin-root .pos-tile:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.admin-root .pos-tile.is-variants {
+  cursor: default;
+}
+
+.admin-root .pos-tile-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.admin-root .pos-tile-head strong {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.3;
+}
+
+.admin-root .pos-line-sku {
+  font-size: 10.5px;
+  color: var(--faint);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.admin-root .pos-tile-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-root .pos-price {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--navy);
+}
+
+.admin-root .pos-variants {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-root .pos-variant {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-root .pos-variant:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: var(--brand-50);
+}
+
+.admin-root .pos-variant:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-root .pos-variant-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.admin-root .pos-variant-meta em {
+  font-style: normal;
+  font-size: 11px;
+  background: var(--mute-bg);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+
+.admin-root .pos-variant-meta em.is-out {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+/* ── Basket ─────────────────────────────────────────────────────────────── */
+
+.admin-root .pos-side {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  position: sticky;
+  top: 14px;
+}
+
+.admin-root .pos-cart {
+  max-height: 34vh;
+  overflow: auto;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-root .pos-cart-empty {
+  text-align: center;
+  padding: 26px 0;
+}
+
+.admin-root .pos-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+}
+
+.admin-root .pos-line + .pos-line {
+  border-top: 1px dashed var(--line-2);
+}
+
+.admin-root .pos-line-name {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-root .pos-line-name strong {
+  font-size: 12.5px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-root .pos-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px;
+}
+
+.admin-root .pos-qty button {
+  border: 0;
+  background: transparent;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--navy);
+  border-radius: 50%;
+}
+
+.admin-root .pos-qty button:hover {
+  background: var(--mute-bg);
+}
+
+.admin-root .pos-qty span {
+  min-width: 20px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.admin-root .pos-line-total {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
+}
+
+.admin-root .pos-line-remove {
+  border: 0;
+  background: transparent;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 3px;
+  display: grid;
+  place-items: center;
+}
+
+.admin-root .pos-line-remove:hover {
+  color: var(--bad);
+}
+
+.admin-root .pos-totals {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.admin-root .pos-total-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.admin-root .pos-total-row input {
+  width: 96px;
+  text-align: right;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--card);
+}
+
+.admin-root .pos-total-row input[aria-invalid='true'] {
+  border-color: var(--bad);
+}
+
+.admin-root .pos-total-row.is-grand {
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.admin-root .pos-total-row.is-grand strong {
+  font-size: 18px;
+  color: var(--navy);
+}
+
+.admin-root .pos-warn {
+  font-size: 11.5px;
+  color: var(--bad);
+  margin: 0;
+}
+
+.admin-root .pos-pay {
+  padding: 0 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-root .pos-pay-methods {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.admin-root .pos-pay-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  border-radius: 10px;
+  padding: 8px 4px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.admin-root .pos-pay-btn.is-active {
+  border-color: var(--brand);
+  background: var(--brand-50);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.admin-root .pos-cash {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.admin-root .pos-cash input {
+  width: 130px;
+  text-align: right;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.admin-root .pos-complete {
+  width: 100%;
+  justify-content: center;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.admin-root .pos-customer {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.admin-root .pos-customer summary {
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.admin-root .pos-customer input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+  margin-top: 6px;
+}
+
+/* ── Shift start ────────────────────────────────────────────────────────── */
+
+.admin-root .pos-start {
+  display: grid;
+  place-items: center;
+  padding: 40px 0;
+}
+
+.admin-root .pos-start-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 26px;
+  max-width: 460px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.admin-root .pos-start-card h2 {
+  font-size: 20px;
+  color: var(--navy);
+  margin: 0;
+}
+
+.admin-root .pos-start-card .sub {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Z-report (close shift) ─────────────────────────────────────────────── */
+
+.admin-root .pos-z {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  background: var(--bg);
+  margin-bottom: 4px;
+}
+
+.admin-root .pos-variance {
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.admin-root .pos-variance.is-ok {
+  background: var(--ok-bg);
+  color: var(--ok);
+}
+
+.admin-root .pos-variance.is-bad {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+
+/* ── Receipt ────────────────────────────────────────────────────────────── */
+
+.admin-root .pos-receipt-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 0 40px;
+}
+
+.admin-root .pos-receipt-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/**
+ * 80mm paper.
+ *
+ * Width is fixed in millimetres because that is what a thermal printer takes;
+ * the monospace font is not a style choice either — a proportional font makes
+ * the qty and amount columns wander, and a receipt that does not line up looks
+ * like a receipt that has been tampered with.
+ */
+.admin-root .pos-receipt {
+  width: 80mm;
+  background: #fff;
+  color: #000;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+
+.admin-root .pos-receipt-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  text-align: center;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #999;
+}
+
+.admin-root .pos-receipt-head strong {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+
+.admin-root .pos-receipt-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px dashed #999;
+  font-size: 9.5px;
+}
+
+.admin-root .pos-receipt-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4px 0;
+  /**
+   * `.admin-root table` sets `min-width: 560px` so a data table scrolls instead
+   * of crushing its columns. On 80mm paper that is a receipt printed off the
+   * edge of the paper — the amount column ended up 130px past the roll.
+   */
+  min-width: 0;
+}
+
+.admin-root .pos-receipt-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.admin-root .pos-receipt-table th:nth-child(2),
+.admin-root .pos-receipt-table td:nth-child(2) {
+  text-align: center;
+  width: 28px;
+}
+
+.admin-root .pos-receipt-table th:last-child,
+.admin-root .pos-receipt-table td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin-root .pos-receipt-table td {
+  padding: 3px 0;
+  vertical-align: top;
+  /**
+   * The global data-table rules are wrong on paper: `white-space: nowrap` stops
+   * a product name from wrapping (so it pushes the amount column off the roll)
+   * and `border-bottom` draws a rule under every line, which a receipt does not
+   * have.
+   */
+  white-space: normal;
+  border-bottom: 0;
+}
+
+.admin-root .pos-receipt-table tbody tr:hover {
+  background: transparent;
+}
+
+.admin-root .pos-receipt-table td em {
+  display: block;
+  font-style: normal;
+  font-size: 8.5px;
+  color: #666;
+}
+
+.admin-root .pos-receipt-totals {
+  border-top: 1px dashed #999;
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.admin-root .pos-receipt-totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.admin-root .pos-receipt-totals .is-grand {
+  font-size: 12px;
+  font-weight: 700;
+  border-top: 1px solid #000;
+  padding-top: 4px;
+  margin-top: 2px;
+}
+
+.admin-root .pos-receipt-foot {
+  border-top: 1px dashed #999;
+  margin-top: 8px;
+  padding-top: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 9.5px;
+  text-align: center;
+}
+
+@media (max-width: 1180px) {
+  .admin-root .pos-screen {
+    grid-template-columns: minmax(0, 1fr) 330px;
+  }
+}
+
+@media (max-width: 960px) {
+  .admin-root .pos-screen {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-root .pos-side {
+    position: static;
+  }
+
+  .admin-root .pos-cart {
+    max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-root .pos-results {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-root .pos-receipt {
+    width: 100%;
+    max-width: 80mm;
+  }
+}
+
 /**
  * Printing.
  *
@@ -5162,5 +5884,25 @@
 
   .admin-root .barcode-label {
     border-color: #ccc;
+  }
+
+  /**
+   * The receipt.
+   *
+   * In the receipt state the till is not rendered at all, so the only things
+   * left on the page are the shell (hidden above) and the paper. Stripping the
+   * border and radius here matters: a screen border prints as a grey box around
+   * the receipt, which looks like a printing fault.
+   */
+  .admin-root .pos-receipt-wrap {
+    padding: 0;
+    gap: 0;
+  }
+
+  .admin-root .pos-receipt {
+    width: 80mm;
+    border: 0;
+    border-radius: 0;
+    padding: 0;
   }
 }

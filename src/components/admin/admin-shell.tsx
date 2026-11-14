@@ -42,6 +42,7 @@ import {
   Settings,
   ShoppingCart,
   Star,
+  Store,
   Sun,
   Tag,
   Users,
@@ -75,6 +76,10 @@ const ICONS: Record<string, LucideIcon> = {
   Megaphone,
   Wallet,
   Truck,
+  // `UserCog` was imported and never registered, so HRM silently fell back to
+  // the dashboard icon. One line here fixes a nav that lied about itself.
+  UserCog,
+  Store,
 };
 
 const THEME_KEY = 'sm_admin_theme';

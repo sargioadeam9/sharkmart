@@ -442,6 +442,11 @@ Verified facts that have already tripped someone. Read once, save hours.
 | 24 | `npm test` segfaults (exit 139) | Environmental, seen three times in this workspace. It happens after most suites have passed and prints no summary. Re-run; if it passes, treat the first run as noise. Do not start "fixing" tests because of it. |
 | 25 | `poolOptions.threads.singleThread` | A silent no-op since Vitest 4 — still type-valid, so the config looks right while every suite runs in parallel against one MySQL database. The tell is a *different* test failing each run. `fileParallelism: false` is the option that works. |
 | 26 | Trusting "it passed on re-run" | With parallel suites that phrase proves nothing: the race simply did not land. A green re-run after a red run is a hint, not evidence. Find the shared row. |
+| 27 | A POS sale written to its own table | `PosSale` + `PosSaleItem` looks tidy and is wrong: every revenue figure here is a query over `Order`, so a parallel table means each report needs a UNION, and the first one written without it under-reports by the counter's takings forever. A till sale is an `Order` with `channel = 'POS'`. `PosSession` holds only what an order cannot: the shift, the float, the cash count. |
+| 28 | Reusing checkout's `reserveVariantStock` in the till | It increments `reservedStock` as well as decrementing `stock`. Correct for a courier order, wrong for a counter sale — the goods left in a bag, nothing is being held. The till decrements `stock` alone, conditionally, and writes an `OUT` movement. |
+| 29 | Shift totals as a running counter | Incrementing `saleCount`/`cashSalesPoisha` on every sale drifts the first time a sale is voided or a request retried, and then the Z-report disagrees with the drawer with no explanation. Open shifts derive their totals from the orders (`pos.service.ts#liveTotals`); the stored snapshot is written once, at close. |
+| 30 | A till with no idempotency key | "Complete sale" is a touchscreen button and the shop's network is often a phone hotspot. `clientRef` is required, unique on `Order.posClientRef`, and a replay returns the first sale with `replayed: true` instead of ringing the goods up twice. Do not make it optional. |
+| 31 | `crypto.randomUUID` in a shop panel | It only exists in a secure context. A panel reached over plain http on the LAN — which is how most Bangladeshi shops would run a till — throws. `newClientRef()` in `pos-screen.tsx` falls back to `getRandomValues`. |
 
 ---
 
@@ -476,6 +481,9 @@ Verified facts that have already tripped someone. Read once, save hours.
 | Audit helper | `server/src/services/audit.service.ts` (`withAudit`, `diffChanges`) | any mutation — never write a second one |
 | Permission matrix | `server/src/services/permissions.ts` | adding a route or a nav item |
 | Cache + tags | `server/src/services/cache.ts` | adding a cached read or a write that must invalidate |
+| Stock of record rule | `server/src/routes/admin/inventory.service.ts` (header + `defaultWarehouseId`) | writing anything that decrements stock — variants vs `WarehouseStock` |
+| Selling price rule | `server/src/services/order.service.ts` (`effectivePrice`) | quoting a price anywhere. Flash sale beats discount beats base — one definition, imported, never copied |
+| Counter sales | `server/src/routes/admin/pos.service.ts` | anything touching the till, shifts or the receipt |
 ```
 
 ---

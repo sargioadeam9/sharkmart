@@ -42,6 +42,7 @@ import { staffRouter } from './staff.js';
 import { landingAdminRouter } from './landing.js';
 import { hrmRouter } from './hrm.js';
 import { expensesRouter } from './expenses.js';
+import { posRouter } from './pos.js';
 
 export const adminRouter: Router = Router();
 
@@ -143,3 +144,4 @@ adminRouter.use('/marketing', marketingRouter);
 adminRouter.use('/staff', staffRouter);
 adminRouter.use('/landing', landingAdminRouter);
 adminRouter.use('/hrm', hrmRouter);
+adminRouter.use('/pos', posRouter);
