@@ -42,7 +42,8 @@
 
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/database.js';
-import { withAudit, diffChanges } from '../../services/audit.service.js';
+import { withAudit, diffChanges, audit } from '../../services/audit.service.js';
+import { placeOrder } from '../../services/order.service.js';
 import { getSettings } from '../../services/settings.service.js';
 import {
   formatTaka,
@@ -70,6 +71,7 @@ import {
   type AdminOrderStatus,
 } from '../../services/admin/order.admin.service.js';
 import type {
+  AdminOrderCreateInput,
   AdminOrderListInput,
   OrderBulkStatusInput,
   OrderCourierInput,
@@ -682,4 +684,65 @@ export async function setOrderNotes(
   );
 
   return getAdminOrder(id);
+}
+
+/**
+ * POST /admin/orders — an order taken over the phone.
+ *
+ * ── Why this is `placeOrder` and not a second insert ───────────────────────
+ *
+ * A hand-built `order.create` would skip the stock reservation, the coupon
+ * ledger, the price derivation and the confirmation email, and the result would
+ * be an order that looks real in the list and behaves like a stranger in every
+ * report. Delegating to `placeOrder` means a manual order is a real order with a
+ * different author — which is exactly what it is.
+ *
+ * The caller is staff, so `userId` is null: the customer is a guest, whether or
+ * not they have an account. That is deliberate — linking a phone order to an
+ * account the customer never signed into would put a purchase in their history
+ * they cannot see or dispute.
+ */
+export async function createManualOrder(
+  input: AdminOrderCreateInput,
+  actor: Actor,
+): Promise<AdminOrderDetail> {
+  const created = await placeOrder(null, {
+    items: input.items.map((item) => ({
+      productId: item.productId,
+      variantId: item.variantId ?? null,
+      quantity: item.quantity,
+    })),
+    address: {
+      recipientName: input.customerName,
+      phone: input.customerPhone,
+      division: input.address.division,
+      district: input.address.district,
+      area: input.address.area,
+      address: input.address.address,
+      postalCode: input.address.postalCode,
+    },
+    deliveryMethod: input.deliveryMethod,
+    paymentMethod: input.paymentMethod,
+    guestPhone: input.customerPhone,
+    guestName: input.customerName,
+    ...(input.contactEmail ? { contactEmail: input.contactEmail } : {}),
+    ...(input.notes ? { notes: input.notes } : {}),
+  });
+
+  await audit(prisma, {
+    userId: actor.userId,
+    action: 'order.manual_create',
+    entity: 'order',
+    entityId: created.id,
+    changes: {
+      orderNumber: created.orderNumber,
+      itemCount: input.items.length,
+      totalPoisha: created.totalAmountPoisha,
+      paymentMethod: input.paymentMethod,
+      channel: 'STAFF',
+    },
+    ipAddress: actor.ipAddress,
+  });
+
+  return getAdminOrder(created.id);
 }

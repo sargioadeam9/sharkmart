@@ -18,6 +18,7 @@ import { Check, RotateCcw, X } from 'lucide-react';
 
 import { saveSettings, type SettingGroup, type SettingItem, type SettingsGroup } from '@/lib/api/admin-settings';
 import { adminFetch } from '@/lib/api/admin-client';
+import { formatMoneyAdmin } from '@/lib/format';
 
 type Lang = 'en' | 'bn';
 
@@ -303,11 +304,30 @@ function SettingField({
           id={id}
           value={value}
           disabled={disabled}
-          type={item.type === 'int' ? 'number' : 'text'}
-          inputMode={item.type === 'int' ? 'numeric' : undefined}
-          min={item.type === 'int' ? 0 : undefined}
+          type={item.type === 'int' || item.type === 'money' ? 'number' : 'text'}
+          inputMode={item.type === 'int' || item.type === 'money' ? 'numeric' : undefined}
+          min={item.type === 'int' || item.type === 'money' ? 0 : undefined}
           onChange={(event) => onChange(event.target.value)}
         />
+      )}
+
+      {/**
+       * The taka figure, live.
+       *
+       * The stored value is poisha and stays poisha — but "6000" is not a number
+       * a shopkeeper reads as ৳60 without doing the division, and the one time
+       * they get it wrong the delivery fee is ৳6,000. This updates on every
+       * keystroke so the mistake is visible before Save.
+       */}
+      {item.type === 'money' && (
+        <small className="set-money">
+          {formatMoneyAdmin(Number(value) || 0)}
+          {item.key === 'delivery.freeThresholdPoisha' && value
+            ? lang === 'bn'
+              ? ' বা তার বেশি অর্ডারে ডেলিভারি ফ্রি'
+              : ' and above ships free'
+            : ''}
+        </small>
       )}
 
       {hint && <small className="cpn-hint">{hint}</small>}

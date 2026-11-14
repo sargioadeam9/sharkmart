@@ -324,21 +324,6 @@ function WarehouseDrawer({
             </label>
           )}
 
-          <button
-            type="button"
-            className="btn sm"
-            onClick={() => void save()}
-            disabled={busy || name.trim().length === 0}
-          >
-            {warehouse
-              ? lang === 'bn'
-                ? 'সংরক্ষণ'
-                : 'Save'
-              : lang === 'bn'
-                ? 'তৈরি করুন'
-                : 'Create'}
-          </button>
-
           {warehouse && (
             <>
               <section className="sup-section">
@@ -431,6 +416,32 @@ function WarehouseDrawer({
               </section>
             </>
           )}
+        </div>
+
+        {/**
+         * The save action belongs in a footer.
+         *
+         * It used to be the last item in the scrolling body, which on a new
+         * warehouse — two fields and nothing else — stretched a disabled button
+         * across the full width directly under the address, with a screen of
+         * empty white below it. In edit mode it scrolled away above the stock
+         * table.
+         */}
+        <div className="drawer-foot">
+          <button
+            type="button"
+            className="btn"
+            onClick={() => void save()}
+            disabled={busy || name.trim().length === 0}
+          >
+            {warehouse
+              ? lang === 'bn'
+                ? 'সংরক্ষণ'
+                : 'Save'
+              : lang === 'bn'
+                ? 'তৈরি করুন'
+                : 'Create'}
+          </button>
         </div>
       </div>
     </div>

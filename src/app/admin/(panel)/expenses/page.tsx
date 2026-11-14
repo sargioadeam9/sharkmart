@@ -132,7 +132,8 @@ export default async function ExpensesPage({ searchParams }: PageProps) {
             categories={categories}
           />
 
-          {items.length === 0 ? (
+          {items.length === 0 && one(params.new) !== '1' && !one(params.edit) ? (
+            /* Same trap as suppliers: the drawer lives in the table component. */
             <div className="card prod-empty">
               <p>
                 {lang === 'bn'

@@ -1004,6 +1004,19 @@
   height: 100%;
   border-radius: 24px 0 0 24px;
   transform: translateX(100%);
+  /**
+   * The panel itself.
+   *
+   * Every drawer in the admin was transparent: `.modal` carries the card
+   * background and the drawer never did, so the coupon, supplier, warehouse and
+   * expense forms all rendered as loose inputs floating over the blurred table
+   * behind them. The section styles lived in `.cpn-drawer`, which is why the
+   * breakage looked like a form bug in four different modules rather than one
+   * missing line here.
+   */
+  background: var(--card);
+  box-shadow: -24px 0 60px -22px rgba(22, 34, 61, 0.38);
+  overflow: hidden;
 }
 
 /**
@@ -4661,6 +4674,22 @@
  * (both channels at once), not on one value, and a button inside a field grid
  * reads as if it belongs to the input next to it.
  */
+/**
+ * The live taka figure under a money setting.
+ *
+ * Sits between the input and the hint, and is deliberately louder than the hint:
+ * the number is the answer to "what did I just type", the hint is documentation.
+ */
+.admin-root .set-money {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  background: var(--brand-50);
+  border-radius: 8px;
+  padding: 3px 9px;
+  align-self: flex-start;
+}
+
 .admin-root .set-actions {
   display: flex;
   flex-wrap: wrap;
@@ -5921,4 +5950,109 @@
     border-radius: 0;
     padding: 0;
   }
+}
+
+/* ── New order drawer (Phase 12) ────────────────────────────────────────────
+   The item picker inside the manual-order form. Deliberately plain: a staff
+   member is typing while the customer is on the phone, so the list has to be
+   one click per line and the running subtotal has to be visible without
+   scrolling past the basket. */
+
+.admin-root .ord-items {
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+}
+
+.admin-root .ord-results {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px;
+}
+
+.admin-root .ord-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 6px;
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+
+.admin-root .ord-result:hover {
+  background: var(--bg);
+}
+
+.admin-root .ord-variants {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.admin-root .ord-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 12.5px;
+}
+
+.admin-root .ord-line strong {
+  display: block;
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-root .ord-qty {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px;
+}
+
+.admin-root .ord-qty button {
+  border: 0;
+  background: transparent;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--navy);
+  border-radius: 50%;
+}
+
+.admin-root .ord-qty button:hover {
+  background: var(--bg);
+}
+
+.admin-root .ord-qty span {
+  min-width: 18px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.admin-root .ord-amount {
+  font-weight: 700;
+  color: var(--navy);
+  white-space: nowrap;
 }

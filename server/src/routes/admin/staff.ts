@@ -31,6 +31,7 @@ import { prisma } from '../../config/database.js';
 import { HttpError, notFound } from '../../middleware/errorHandler.js';
 import { withAudit } from '../../services/audit.service.js';
 import { permissionsFor } from '../../services/permissions.js';
+import { hashPassword } from '../../services/password.service.js';
 
 export const staffRouter: Router = Router();
 
@@ -269,6 +270,165 @@ staffRouter.post(
           note: 'Access tokens remain valid until they expire (up to 15 minutes).',
         }),
       );
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// ─── Create ────────────────────────────────────────────────────────────────
+
+const createStaffBody = z
+  .object({
+    name: z.string().trim().min(2, 'a name is required').max(120),
+    email: z.string().trim().toLowerCase().email('enter a valid email').max(254),
+    phone: z
+      .string()
+      .trim()
+      .regex(/^(?:\+?880|0)1[3-9]\d{8}$/, 'enter a valid Bangladesh mobile number')
+      .optional(),
+    role: z.enum(STAFF_ROLES),
+    /**
+     * Chosen by the person creating the account, and shown to them once.
+     *
+     * There is no invite email: the mail transport exists but a staff invite is
+     * a different flow (token, expiry, first-login password change) and half of
+     * it would be worse than none. The creator reads the password out and the
+     * new staff member changes it from their profile.
+     */
+    password: z.string().min(8, 'at least 8 characters').max(128),
+  })
+  .strict();
+
+staffRouter.post(
+  '/',
+  requirePermission('staff:manage'),
+  validate({ body: createStaffBody }),
+  async (req, res, next) => {
+    try {
+      const body = req.body as z.infer<typeof createStaffBody>;
+      const actor = actorFrom(req);
+
+      const existing = await prisma.user.findFirst({
+        where: { email: body.email },
+        select: { id: true },
+      });
+
+      if (existing) {
+        throw new HttpError(409, 'CONFLICT', 'An account with that email already exists.');
+      }
+
+      const passwordHash = await hashPassword(body.password);
+
+      const created = await withAudit<{ id: string; name: string; email: string | null; role: string }>(
+        (result) => ({
+          userId: actor.userId,
+          action: 'staff.create',
+          entity: 'user',
+          entityId: result.id,
+          changes: { name: body.name, email: body.email, role: body.role },
+          ipAddress: actor.ipAddress,
+        }),
+        async (tx) =>
+          tx.user.create({
+            data: {
+              name: body.name,
+              email: body.email,
+              phone: body.phone ?? null,
+              passwordHash,
+              role: body.role,
+              isActive: true,
+            },
+            select: { id: true, name: true, email: true, role: true },
+          }),
+      );
+
+      res.status(201).json(
+        ok({
+          user: { ...created, permissions: permissionsFor(created.role) },
+        }),
+      );
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// ─── Delete ────────────────────────────────────────────────────────────────
+
+/**
+ * Removes a staff account.
+ *
+ * Three refusals, each for a different reason:
+ *
+ *   yourself          deleting the session you are using is a foot-gun, and the
+ *                     account that can do it is the one that should not.
+ *   the last super    the shop would have nobody who can manage staff.
+ *   anyone with orders  `Order.userId` is a RESTRICT foreign key — the delete
+ *                     would fail at the database with a Prisma error instead of
+ *                     a sentence. A staff member who also bought something is
+ *                     deactivated, not deleted, and the message says so.
+ *
+ * Deletion is real, not soft: the row goes, and with it the refresh tokens and
+ * notifications (both cascade). The audit row is written first and outlives the
+ * user, because `AuditLog.userId` is a plain column with no foreign key.
+ */
+staffRouter.delete(
+  '/:id',
+  requirePermission('staff:manage'),
+  validate({ params: idParams }),
+  async (req, res, next) => {
+    try {
+      const id = req.params.id!;
+      const actor = actorFrom(req);
+
+      const target = await prisma.user.findUnique({
+        where: { id },
+        select: { id: true, name: true, role: true, isActive: true },
+      });
+
+      if (!target) throw notFound('Staff member');
+
+      if (target.id === actor.userId) {
+        throw new HttpError(409, 'CONFLICT', 'You cannot delete your own account.', {
+          reason: 'SELF_DELETE',
+        });
+      }
+
+      if (target.role === 'SUPER_ADMIN' && target.isActive) {
+        const others = await otherActiveSupers(id);
+        if (others === 0) {
+          throw new HttpError(409, 'CONFLICT', 'This is the last active super admin.', {
+            reason: 'LAST_SUPER_ADMIN',
+          });
+        }
+      }
+
+      const orderCount = await prisma.order.count({ where: { userId: id } });
+      if (orderCount > 0) {
+        throw new HttpError(
+          409,
+          'CONFLICT',
+          `${target.name} has ${orderCount} order${orderCount === 1 ? '' : 's'} in their name. Deactivate the account instead — deleting it would orphan the order history.`,
+          { reason: 'HAS_ORDERS' },
+        );
+      }
+
+      await withAudit(
+        {
+          userId: actor.userId,
+          action: 'staff.delete',
+          entity: 'user',
+          entityId: id,
+          changes: { name: target.name, role: target.role },
+          ipAddress: actor.ipAddress,
+        },
+        async (tx) => {
+          await tx.user.delete({ where: { id } });
+        },
+      );
+
+      res.json(ok({ deleted: true }));
     } catch (error) {
       next(error);
     }

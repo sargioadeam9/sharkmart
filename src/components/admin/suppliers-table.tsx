@@ -457,22 +457,6 @@ function SupplierDrawer({
                 </label>
               </div>
 
-              <div className="sup-actions">
-                <button type="button" className="btn sm" onClick={() => void save()} disabled={saving || !valid}>
-                  {saving
-                    ? lang === 'bn'
-                      ? 'সংরক্ষণ…'
-                      : 'Saving…'
-                    : supplierId
-                      ? lang === 'bn'
-                        ? 'পরিবর্তন সংরক্ষণ'
-                        : 'Save changes'
-                      : lang === 'bn'
-                        ? 'তৈরি করুন'
-                        : 'Create'}
-                </button>
-              </div>
-
               {detail && (
                 <>
                   <SuppliedProducts lang={lang} supplier={detail} onChanged={reload} />
@@ -482,6 +466,37 @@ function SupplierDrawer({
             </>
           )}
         </div>
+
+        {/**
+         * The action row is a footer, not the last thing in the scrolling body.
+         *
+         * It used to sit inline under the fields, which on an empty form left a
+         * washed-out "Create" button floating in the middle of a tall white
+         * panel. In edit mode it was worse: the save button scrolled away above
+         * the supplier's product list.
+         */}
+        {!loading && (
+          <div className="drawer-foot">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => void save()}
+              disabled={saving || !valid}
+            >
+              {saving
+                ? lang === 'bn'
+                  ? 'সংরক্ষণ…'
+                  : 'Saving…'
+                : supplierId
+                  ? lang === 'bn'
+                    ? 'পরিবর্তন সংরক্ষণ'
+                    : 'Save changes'
+                  : lang === 'bn'
+                    ? 'তৈরি করুন'
+                    : 'Create'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

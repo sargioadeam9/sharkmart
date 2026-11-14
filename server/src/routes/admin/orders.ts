@@ -27,6 +27,7 @@ import { can } from '../../services/permissions.js';
 import { validate } from '../../middleware/validate.js';
 import { ok, paginationMeta } from '../../types/api.js';
 import {
+  adminOrderCreateBody,
   adminOrderListQuery,
   orderBulkStatusBody,
   orderCourierBody,
@@ -38,6 +39,7 @@ import {
 import {
   bulkChangeOrderStatus,
   changeOrderStatus,
+  createManualOrder,
   getAdminOrder,
   getAdminOrderByNumber,
   listAdminOrders,
@@ -123,6 +125,31 @@ ordersRouter.get(
           paginationMeta(result.page, result.limit, result.total),
         ),
       );
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+/**
+ * POST / — a phone order typed in by staff.
+ *
+ * Declared before `/:id` because `ordersRouter.post('/:id/...')` exists further
+ * down and a bare POST must not be mistaken for one of those.
+ *
+ * This is a real order, not a placeholder: it goes through `placeOrder`, so the
+ * stock is reserved, the coupon rules apply, the confirmation email fires and
+ * the order appears in every report. The only thing that differs is who typed
+ * it — and that is recorded in the audit log.
+ */
+ordersRouter.post(
+  '/',
+  requirePermission('orders:write'),
+  validate({ body: adminOrderCreateBody }),
+  async (req, res, next) => {
+    try {
+      const body = req.body as Parameters<typeof createManualOrder>[0];
+      res.status(201).json(ok(await createManualOrder(body, actorFrom(req))));
     } catch (error) {
       next(error);
     }

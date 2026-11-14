@@ -94,7 +94,13 @@ export default async function SuppliersPage({ searchParams }: PageProps) {
         <div className="card">
           <p style={{ color: 'var(--bad)' }}>{error}</p>
         </div>
-      ) : items.length === 0 ? (
+      ) : items.length === 0 && one(params.new) !== '1' && !one(params.open) ? (
+        /**
+         * The empty state replaces the table — and the drawer lives *inside* the
+         * table. With no suppliers in the database, "New supplier" navigated to
+         * `?new=1` and nothing appeared, because the component that owns the
+         * form was never mounted. The condition now yields to the drawer.
+         */
         <div className="card prod-empty">
           <p>
             {lang === 'bn'

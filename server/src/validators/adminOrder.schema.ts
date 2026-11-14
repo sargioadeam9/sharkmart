@@ -182,3 +182,54 @@ export const orderNotesBody = z
     notes: z.string().trim().max(2000).nullable(),
   })
   .strict();
+
+/**
+ * POST /admin/orders — a phone order typed in by staff.
+ *
+ * ── Why this reuses the checkout rules instead of inventing a shortcut ─────
+ *
+ * The body mirrors `checkoutBody` on purpose: ids and quantities, an address,
+ * a payment method. Prices, delivery and the total are recomputed by
+ * `placeOrder` from the database, exactly as they are for a customer. An admin
+ * form that could set a total would be a form that can sell a ৳5,000 phone for
+ * ৳5, and the audit trail would show a staff member did it.
+ *
+ * The one difference is `guestPhone`, which is required here: a staff-entered
+ * order with no phone cannot be delivered and cannot be called back.
+ */
+export const adminOrderCreateBody = z
+  .object({
+    customerName: z.string().trim().min(2, 'a name is required').max(120),
+    customerPhone: z
+      .string()
+      .trim()
+      .regex(/^(?:\+?880|0)1[3-9]\d{8}$/, 'enter a valid Bangladesh mobile number'),
+    contactEmail: z.string().trim().toLowerCase().email().max(254).optional(),
+    address: z
+      .object({
+        division: z.string().trim().min(1).max(60),
+        district: z.string().trim().min(1).max(60),
+        area: z.string().trim().min(1).max(120),
+        address: z.string().trim().min(3).max(400),
+        postalCode: z.string().trim().max(12).optional(),
+      })
+      .strict(),
+    items: z
+      .array(
+        z
+          .object({
+            productId: z.string().uuid(),
+            variantId: z.string().uuid().nullable().optional(),
+            quantity: z.number().int().min(1).max(99),
+          })
+          .strict(),
+      )
+      .min(1, 'add at least one item')
+      .max(50),
+    deliveryMethod: z.enum(['STANDARD', 'EXPRESS']).default('STANDARD'),
+    paymentMethod: z.enum(['COD', 'BKASH', 'NAGAD', 'SSLCOMMERZ']).default('COD'),
+    notes: z.string().trim().max(500).optional(),
+  })
+  .strict();
+
+export type AdminOrderCreateInput = z.infer<typeof adminOrderCreateBody>;

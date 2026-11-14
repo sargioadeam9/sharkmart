@@ -29,6 +29,7 @@ import type { Metadata } from 'next';
 
 import { adminFetchServer, AdminApiError } from '@/lib/api/admin';
 import { getLang } from '@/lib/locale';
+import { NewCategoryButton } from '@/components/admin/category-create';
 import {
   CategoriesTree,
   type ActiveFilter,
@@ -118,6 +119,7 @@ export default async function CategoriesPage({ searchParams }: PageProps) {
               : `${num(rootCount)} roots · ${num(childCount)} sub-categories · ${num(total)} total`}
           </p>
         </div>
+        <NewCategoryButton lang={lang} roots={items} canWrite={canWrite} />
       </div>
 
       {error ? (

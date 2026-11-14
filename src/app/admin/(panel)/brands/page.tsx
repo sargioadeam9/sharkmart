@@ -27,6 +27,7 @@ import type { Metadata } from 'next';
 
 import { adminFetchServer, AdminApiError } from '@/lib/api/admin';
 import { getLang } from '@/lib/locale';
+import { NewBrandButton } from '@/components/admin/brand-create';
 import {
   BrandsTable,
   type ActiveFilter,
@@ -110,6 +111,7 @@ export default async function BrandsPage({ searchParams }: PageProps) {
             {lang === 'bn' ? `${num(total)}টি ব্র্যান্ড` : `${num(total)} brands`}
           </p>
         </div>
+        <NewBrandButton lang={lang} canWrite={canWrite} />
       </div>
 
       {error ? (

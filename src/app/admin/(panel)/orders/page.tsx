@@ -27,6 +27,7 @@ import type {
   AdminOrderStatus,
 } from '@/lib/api/admin-orders';
 import { OrdersToolbar, OrdersTable } from '@/components/admin/orders-table';
+import { NewOrderButton } from '@/components/admin/order-create';
 
 export const metadata: Metadata = {
   title: 'Orders',
@@ -96,14 +97,18 @@ export default async function OrdersPage({ searchParams }: PageProps) {
   let data: AdminOrderListResponse | null = null;
   let counts: AdminOrderCounts = { all: 0, byStatus: {} };
   let error: string | null = null;
+  let canWrite = false;
 
   try {
-    const [list, tabCounts] = await Promise.all([
+    const [list, tabCounts, me] = await Promise.all([
       adminFetchServer<AdminOrderListResponse>(`/admin/orders?${query.toString()}`),
       adminFetchServer<AdminOrderCounts>('/admin/orders/counts'),
+      // Same source the nav reads: the permission list, not the role name.
+      adminFetchServer<{ permissions: string[] }>('/admin/me'),
     ]);
     data = list.data;
     counts = tabCounts.data;
+    canWrite = me.data.permissions.includes('orders:write');
   } catch (caught) {
     if (caught instanceof AdminApiError) {
       error = caught.message;
@@ -142,6 +147,7 @@ export default async function OrdersPage({ searchParams }: PageProps) {
               : `${total} order${total === 1 ? '' : 's'} · showing ${items.length}`}
           </p>
         </div>
+        <NewOrderButton lang={lang} canWrite={canWrite} />
       </div>
 
       {/* Status tabs. Each is a link, so the filter survives a refresh and the

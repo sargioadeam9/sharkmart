@@ -33,7 +33,15 @@ import { withAudit } from './audit.service.js';
 import { BRAND_FALLBACK as BRAND, DELIVERY_DEFAULTS } from '../config/store-defaults.js';
 
 export type SettingGroup = 'general' | 'contact' | 'commerce' | 'branding' | 'notifications';
-export type SettingType = 'string' | 'int' | 'email' | 'url' | 'text' | 'boolean';
+/**
+ * `money` is an `int` of poisha that the panel renders with a taka conversion.
+ *
+ * The database and the wire keep poisha (AGENTS.md landmine #4 — no floats, no
+ * taka anywhere in storage). The type exists so the screen knows to show
+ * "= ৳60" under the box, instead of making the operator divide by 100 in their
+ * head and get it wrong once a year.
+ */
+export type SettingType = 'string' | 'int' | 'money' | 'email' | 'url' | 'text' | 'boolean';
 
 export interface SettingDef {
   key: string;
@@ -127,7 +135,7 @@ export const SETTINGS: readonly SettingDef[] = [
   {
     key: 'delivery.standardFeePoisha',
     group: 'commerce',
-    type: 'int',
+    type: 'money',
     default: String(DELIVERY_DEFAULTS.standardFeePoisha),
     labelEn: 'Standard delivery fee (poisha)',
     labelBn: 'স্ট্যান্ডার্ড ডেলিভারি চার্জ (পয়সা)',
@@ -138,7 +146,7 @@ export const SETTINGS: readonly SettingDef[] = [
   {
     key: 'delivery.freeThresholdPoisha',
     group: 'commerce',
-    type: 'int',
+    type: 'money',
     default: String(DELIVERY_DEFAULTS.freeThresholdPoisha),
     labelEn: 'Free delivery threshold (poisha)',
     labelBn: 'ফ্রি ডেলিভারি থ্রেশহোল্ড (পয়সা)',
@@ -149,7 +157,7 @@ export const SETTINGS: readonly SettingDef[] = [
   {
     key: 'delivery.expressSurchargePoisha',
     group: 'commerce',
-    type: 'int',
+    type: 'money',
     default: String(DELIVERY_DEFAULTS.expressSurchargePoisha),
     labelEn: 'Express surcharge (poisha)',
     labelBn: 'এক্সপ্রেস সারচার্জ (পয়সা)',
@@ -424,7 +432,7 @@ export function validatePatch(patch: Record<string, string>): SettingsValidation
 
     const value = raw.trim();
 
-    if (def.type === 'int') {
+    if (def.type === 'int' || def.type === 'money') {
       if (!/^\d+$/.test(value)) {
         errors.push({ key, message: 'must be a whole number' });
         continue;
