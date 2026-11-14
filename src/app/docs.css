@@ -1,0 +1,298 @@
+/* ==========================================================================
+   Policy pages — /help, /return, /privacy, /terms, /about.
+
+   Built on the storefront token set only (--red, --navy, --line, --muted, --r,
+   --sh). The admin ramp is a different design system and must not appear here.
+
+   Two layout rules worth stating because they are the whole file:
+
+   1. The prose column is capped at 68 characters. A policy paragraph that runs
+      the full width of a 1320px container is a paragraph nobody finishes.
+   2. The contents rail is sticky only where there is room for it. Below 900px
+      it turns into a horizontal list of chips above the text — a sticky sidebar
+      on a phone is a way to lose 40% of the reading width.
+
+   Every class is prefixed `docpage` so nothing here can reach the storefront.
+   ========================================================================== */
+
+.docpage {
+  padding: 28px 0 60px;
+}
+
+/**
+ * A narrower container than the storefront's 1320px.
+ *
+ * A policy page is a document, not a shelf. At the full storefront width the
+ * contents rail, the 720px measure and the remaining gutter added up to a large
+ * dead column on the right, and the title started 200px to the left of the card
+ * it belonged to. 1080 keeps the three edges — title, rail, card — within one
+ * block that reads as a single page.
+ */
+.docpage-wrap {
+  max-width: 1080px;
+}
+
+.docpage-head {
+  margin-bottom: 24px;
+  max-width: 760px;
+}
+
+.docpage-head h1 {
+  font-size: clamp(26px, 3.2vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--navy);
+  line-height: 1.2;
+}
+
+.docpage-sub {
+  margin-top: 10px;
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+
+.docpage-updated {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── two columns ───────────────────────────────────────────────────────── */
+
+.docpage-grid {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
+.docpage-rail {
+  position: sticky;
+  top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.docpage-toc h2,
+.docpage-other h2 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.docpage-toc ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-left: 2px solid var(--line);
+}
+
+.docpage-toc a {
+  display: block;
+  padding: 5px 0 5px 12px;
+  margin-left: -2px;
+  border-left: 2px solid transparent;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--muted);
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.docpage-toc a:hover {
+  color: var(--red);
+  border-left-color: var(--red);
+}
+
+.docpage-other ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.docpage-other a {
+  font-size: 13px;
+  color: var(--navy);
+}
+
+.docpage-other a:hover {
+  color: var(--red);
+  text-decoration: underline;
+}
+
+/* ── the document ──────────────────────────────────────────────────────── */
+
+.docpage-body {
+  max-width: 720px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: var(--sh);
+  padding: 26px 30px;
+}
+
+.docpage-section + .docpage-section {
+  margin-top: 26px;
+  padding-top: 26px;
+  border-top: 1px solid var(--line);
+}
+
+.docpage-section h2 {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--navy);
+  margin-bottom: 10px;
+  /* Anchored from the contents rail — clears the sticky header. */
+  scroll-margin-top: 96px;
+}
+
+.docpage-section p {
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--navy);
+  opacity: 0.86;
+  margin: 0 0 10px;
+  max-width: 68ch;
+}
+
+.docpage-section p:last-child {
+  margin-bottom: 0;
+}
+
+.docpage-section ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 68ch;
+  /**
+   * Tailwind's preflight resets `list-style` on `ul`, so without this the
+   * bullets render as indented paragraphs — the list looks like a formatting
+   * mistake rather than a list. `::marker` below only colours them.
+   */
+  list-style: disc;
+}
+
+.docpage-section li {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--navy);
+  opacity: 0.86;
+}
+
+.docpage-section li::marker {
+  color: var(--red);
+}
+
+/**
+ * The aside.
+ *
+ * Tinted from the brand pink token rather than a hand-picked hex, so a change to
+ * the shop colour moves this too. `color-mix` keeps it as a tint instead of the
+ * full-strength pink, which is too loud for a paragraph of text.
+ */
+.docpage-note {
+  background: color-mix(in srgb, var(--pink) 40%, #fff);
+  border-left: 3px solid var(--red);
+  border-radius: 0 8px 8px 0;
+  padding: 10px 14px;
+  margin: 4px 0 10px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--navy);
+  max-width: 68ch;
+}
+
+.docpage-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.docpage-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 15px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+}
+
+.docpage-link:hover {
+  background: var(--red-d);
+  color: #fff;
+}
+
+/* ── narrow ────────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .docpage-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+
+  .docpage-rail {
+    position: static;
+  }
+
+  .docpage-toc ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-left: 0;
+  }
+
+  .docpage-toc a {
+    margin: 0;
+    padding: 5px 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: #fff;
+  }
+
+  .docpage-toc a:hover {
+    border-color: var(--red);
+  }
+
+  .docpage-other ul {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 760px) {
+  .docpage {
+    padding: 18px 0 44px;
+  }
+
+  .docpage-body {
+    padding: 18px 16px;
+    border-radius: 14px;
+  }
+
+  .docpage-section h2 {
+    font-size: 17.5px;
+    scroll-margin-top: 80px;
+  }
+}

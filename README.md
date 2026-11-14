@@ -178,6 +178,13 @@ These are known and deliberate, not bugs waiting to be discovered:
 - **A manual till discount is capped at 50% of the bill.** Anything larger is a
   pricing decision and belongs in the coupon module, where it is dated and
   auditable.
+- **Two storefront links still 404.** The mobile bottom nav points at `/account`
+  and the sign-in form points at `/forgot-password`; neither route exists. The
+  pages themselves are a small job — the reset flow needs the token endpoints
+  wired to a form — but until they land, the Help page tells customers to phone
+  the shop rather than promising a reset link.
+- **No sitemap or robots file.** `src/app/sitemap.ts` and `robots.ts` do not
+  exist, so search engines crawl from the links they find.
 - **No profit reporting.** `Product` has no cost field, so margin is not
   computable. Revenue minus expenses is shown as a cash view, labelled as such.
 - **Reviews are never seeded.** `ratingAvg`/`reviewCount` carry the reference

@@ -447,6 +447,7 @@ Verified facts that have already tripped someone. Read once, save hours.
 | 29 | Shift totals as a running counter | Incrementing `saleCount`/`cashSalesPoisha` on every sale drifts the first time a sale is voided or a request retried, and then the Z-report disagrees with the drawer with no explanation. Open shifts derive their totals from the orders (`pos.service.ts#liveTotals`); the stored snapshot is written once, at close. |
 | 30 | A till with no idempotency key | "Complete sale" is a touchscreen button and the shop's network is often a phone hotspot. `clientRef` is required, unique on `Order.posClientRef`, and a replay returns the first sale with `replayed: true` instead of ringing the goods up twice. Do not make it optional. |
 | 31 | `crypto.randomUUID` in a shop panel | It only exists in a secure context. A panel reached over plain http on the LAN — which is how most Bangladeshi shops would run a till — throws. `newClientRef()` in `pos-screen.tsx` falls back to `getRandomValues`. |
+| 32 | A policy page promising something the code does not do | The Help page first said "use the forgot-password link on the sign-in page" — that link goes to `/forgot-password`, which does not exist. A privacy page claiming "we never store card data" is fine because `Order` genuinely holds only a transaction id; a help page promising a reset email is a support ticket. Before writing a policy claim, open the route or read the query it describes. The same rule caught the payment gateway: the copy says online payment is offered "where the shop has enabled it" because `verifyPayment` is still a documented stub. |
 
 ---
 
@@ -484,6 +485,7 @@ Verified facts that have already tripped someone. Read once, save hours.
 | Stock of record rule | `server/src/routes/admin/inventory.service.ts` (header + `defaultWarehouseId`) | writing anything that decrements stock — variants vs `WarehouseStock` |
 | Selling price rule | `server/src/services/order.service.ts` (`effectivePrice`) | quoting a price anywhere. Flash sale beats discount beats base — one definition, imported, never copied |
 | Counter sales | `server/src/routes/admin/pos.service.ts` | anything touching the till, shifts or the receipt |
+| Policy copy (help, returns, privacy, terms, about) | `src/lib/legal/content.ts` | editing any promise the shop makes. Delivery figures are read from `StoreProfile`, never typed |
 ```
 
 ---
