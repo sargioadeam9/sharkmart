@@ -46,6 +46,21 @@ export const ACCOUNT_STRINGS = {
     rateLimited: 'Too many attempts. Please wait a minute and try again.',
     genericAuthError: 'That did not work. Check your details and try again.',
 
+    /* ── password reset ────────────────────────────────────────────────── */
+    forgotTitle: 'Reset your password',
+    forgotSubtitle: 'Enter the email or phone on your account and we will send a reset link.',
+    emailOrPhone: 'Email or mobile number',
+    resetTitle: 'Choose a new password',
+    resetSubtitle: 'Pick something you have not used on another site.',
+    resetSentTitle: 'Check your messages',
+    resetSentBody:
+      'If an account matches, a reset link is on its way. The link expires in 30 minutes.',
+    resetNoMessage: 'Nothing arrived? Check your spam folder, or call us on',
+    resetTokenMissing: 'This link has no reset token. Request a new one.',
+    resetDone: 'Your password has been reset. Sign in with the new one.',
+    resetDevNote: 'Development only — no mail transport is configured, so use this link:',
+    backToSignIn: 'Back to sign in',
+
     /* ── profile + addresses ───────────────────────────────────────────── */
     profile: 'My account',
     myOrders: 'My orders',
@@ -201,6 +216,21 @@ export const ACCOUNT_STRINGS = {
     invalidPhone: 'সঠিক বাংলাদেশি মোবাইল নম্বর দিন, যেমন ০১৭১২৩৪৫৬৭৮।',
     rateLimited: 'অনেকবার চেষ্টা হয়েছে। এক মিনিট অপেক্ষা করে আবার চেষ্টা করুন।',
     genericAuthError: 'কাজটি হয়নি। তথ্য দেখে আবার চেষ্টা করুন।',
+
+    /* ── password reset ────────────────────────────────────────────────── */
+    forgotTitle: 'পাসওয়ার্ড রিসেট করুন',
+    forgotSubtitle: 'অ্যাকাউন্টের ইমেইল বা মোবাইল নম্বর দিন — আমরা একটি রিসেট লিংক পাঠাব।',
+    emailOrPhone: 'ইমেইল বা মোবাইল নম্বর',
+    resetTitle: 'নতুন পাসওয়ার্ড দিন',
+    resetSubtitle: 'অন্য কোথাও ব্যবহার করেননি এমন একটি পাসওয়ার্ড বেছে নিন।',
+    resetSentTitle: 'বার্তা দেখুন',
+    resetSentBody:
+      'অ্যাকাউন্ট থাকলে একটি রিসেট লিংক পাঠানো হয়েছে। লিংকটি ৩০ মিনিট পর্যন্ত কাজ করবে।',
+    resetNoMessage: 'বার্তা পাননি? স্প্যাম ফোল্ডার দেখুন, অথবা ফোন করুন',
+    resetTokenMissing: 'এই লিংকে কোনো রিসেট টোকেন নেই। নতুন লিংকের অনুরোধ করুন।',
+    resetDone: 'পাসওয়ার্ড বদলে গেছে। নতুন পাসওয়ার্ড দিয়ে সাইন ইন করুন।',
+    resetDevNote: 'শুধু ডেভেলপমেন্টে — ইমেইল পাঠানোর ব্যবস্থা নেই, তাই এই লিংকটি ব্যবহার করুন:',
+    backToSignIn: 'সাইন ইনে ফিরে যান',
 
     /* ── profile + addresses ───────────────────────────────────────────── */
     profile: 'আমার অ্যাকাউন্ট',

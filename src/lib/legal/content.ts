@@ -150,12 +150,12 @@ export function helpContent(lang: Lang, store: StoreProfile): DocContent {
         bullets: bn
           ? [
               'অ্যাকাউন্ট না খুলেও অর্ডার করা যায়।',
-              `পাসওয়ার্ড ভুলে গেলে ${store.phone} নম্বরে ফোন করুন — আমরা অ্যাকাউন্টটি ফিরিয়ে দিতে সাহায্য করব।`,
+              `পাসওয়ার্ড ভুলে গেলে সাইন ইন পাতার “পাসওয়ার্ড ভুলে গেছি?” থেকে রিসেট লিংক নিন; না পেলে ${store.phone} নম্বরে ফোন করুন।`,
               'নিজের প্রোফাইল থেকে ঠিকানা ও ফোন নম্বর বদলাতে পারবেন।',
             ]
           : [
               'You can order without an account.',
-              `Forgotten your password? Call us on ${store.phone} and we will help you back into your account.`,
+              `Forgotten your password? Use "Forgot password?" on the sign-in page to get a reset link, and call ${store.phone} if it does not arrive.`,
               'Addresses and phone numbers can be edited from your profile at any time.',
             ],
         links: [{ label: bn ? 'আমার অ্যাকাউন্ট' : 'Your account', href: '/profile' }],

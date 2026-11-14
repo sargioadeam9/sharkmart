@@ -66,7 +66,12 @@ export function BottomNav() {
         {t('wish')}
       </Link>
 
-      <Link href="/account" className={cn(isActive('/account') && 'on')}>
+      {/*
+        `/profile`, not `/account`. The tab is labelled "Account" but the route
+        that holds it is `/profile` — the link pointed at a page that has never
+        existed, so the most-used tab on a phone was a 404.
+      */}
+      <Link href="/profile" className={cn(isActive('/profile') && 'on')}>
         <UserIcon />
         {t('acc')}
       </Link>
