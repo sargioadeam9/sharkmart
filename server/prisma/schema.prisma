@@ -559,6 +559,15 @@ model Order {
   userId        String?
   guestPhone    String?
   guestName     String?
+  /**
+   * Where order mail goes.
+   *
+   * Separate from `User.email` on purpose: a guest has no account, and a
+   * registered customer may want receipts at a different address than they sign
+   * in with. Snapshotted at checkout, like every other order field, so editing a
+   * profile later does not rewrite history.
+   */
+  contactEmail  String?
   currentStatus OrderStatus @default(PENDING)
 
   subtotalPoisha       Int
@@ -801,21 +810,44 @@ model CartItem {
 
 // ─── NOTIFICATION ────────────────────────────────────────────────────────
 
+/**
+ * One row per message the shop intended to send.
+ *
+ * ── Why `recipientId` is nullable ──────────────────────────────────────────
+ *
+ * It used to be a required FK to `User`, which made one whole category of
+ * message impossible: a guest order. Most cash-on-delivery orders in this market
+ * are placed without an account, so "email the customer their confirmation"
+ * silently could not reach the majority of customers. The address now lives on
+ * the row itself (`toEmail` / `toPhone`), and `recipientId` is filled in only
+ * when we happen to know who they are.
+ *
+ * The row is still the audit trail: who was told what, when, and — via `error`
+ * and `attempts` — why it did not go.
+ */
 model Notification {
   id          String              @id @default(uuid())
   type        String
-  recipientId String
+  /** Null for a guest. Present when the recipient is a registered user. */
+  recipientId String?
   channel     NotificationChannel
+  /** The address actually used. Snapshot: a user can change their email later. */
+  toEmail     String?
+  toPhone     String?
   subject     String?
   body        String              @db.Text
   status      String              @default("PENDING") // PENDING | SENT | FAILED
+  /** Why the last attempt failed, verbatim from the provider. */
+  error       String?
+  attempts    Int                 @default(0)
   sentAt      DateTime?
   createdAt   DateTime            @default(now())
 
-  recipient User @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  recipient User? @relation(fields: [recipientId], references: [id], onDelete: Cascade)
 
   @@index([recipientId])
   @@index([status])
+  @@index([type, createdAt])
 }
 
 enum NotificationChannel {
@@ -1153,6 +1185,12 @@ model SMSTemplate {
 
 model EmailTemplate {
   id        String @id @default(uuid())
+  /**
+   * Stable identifier the code looks a template up by — `order_confirmation`,
+   * `password_reset`. Null for a template an operator wrote by hand for a
+   * campaign; `name` is a label and can be renamed, so it cannot be the key.
+   */
+  key       String? @unique
   name      String
   subjectEn String
   subjectBn String

@@ -14,6 +14,7 @@
  */
 
 import { AttributeType, DetailSection, PrismaClient } from '@prisma/client';
+import { DEFAULT_TEMPLATES } from '../src/services/notify/templates.js';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -835,6 +836,35 @@ async function seedSettings(): Promise<void> {
   }
 }
 
+/**
+ * Puts the shipped transactional templates into the database.
+ *
+ * `renderEmail()` falls back to the constants in `notify/templates.ts` when a row
+ * is missing, so mail works without this. What this adds is the ability to
+ * *edit* the copy: the marketing screen lists rows, and a shop that wants its
+ * confirmation email to say something different needs a row to edit.
+ *
+ * Create-only, like settings: re-running the seed after a deploy must not
+ * overwrite the wording an operator has already changed.
+ */
+async function seedEmailTemplates(): Promise<void> {
+  for (const [key, template] of Object.entries(DEFAULT_TEMPLATES)) {
+    await prisma.emailTemplate.upsert({
+      where: { key },
+      update: {},
+      create: {
+        key,
+        name: template.name,
+        subjectEn: template.subjectEn,
+        subjectBn: template.subjectBn,
+        bodyEn: template.bodyEn,
+        bodyBn: template.bodyBn,
+        type: template.type,
+      },
+    });
+  }
+}
+
 async function main(): Promise<void> {
   const started = Date.now();
 
@@ -865,6 +895,7 @@ async function main(): Promise<void> {
     : 0;
 
   await seedSettings();
+  await seedEmailTemplates();
 
   const [
     categories,

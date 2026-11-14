@@ -230,6 +230,16 @@ export const checkoutBody = z
     /** Guest checkout is legal in Bangladesh; a phone is required for it. */
     guestPhone: bdPhone.optional(),
     guestName: nameField.optional(),
+
+    /**
+     * Where to send the confirmation.
+     *
+     * Optional, and optional on purpose: an email field that is required loses
+     * orders in a market where most people check out with a phone and nothing
+     * else. When it is present the customer gets a receipt; when it is absent
+     * they get the SMS row that already existed.
+     */
+    contactEmail: z.string().trim().toLowerCase().email('Enter a valid email address').max(254).optional(),
   })
   .strict()
   .refine((value) => Boolean(value.addressId || value.address), {

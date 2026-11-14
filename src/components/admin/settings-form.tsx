@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { Check, RotateCcw, X } from 'lucide-react';
 
 import { saveSettings, type SettingGroup, type SettingItem, type SettingsGroup } from '@/lib/api/admin-settings';
+import { adminFetch } from '@/lib/api/admin-client';
 
 type Lang = 'en' | 'bn';
 
@@ -25,6 +26,7 @@ const GROUP_LABEL: Record<SettingGroup, { en: string; bn: string }> = {
   contact: { en: 'Contact', bn: 'যোগাযোগ' },
   commerce: { en: 'Delivery and pricing', bn: 'ডেলিভারি ও মূল্য' },
   branding: { en: 'Branding', bn: 'ব্র্যান্ডিং' },
+  notifications: { en: 'Notifications', bn: 'নোটিফিকেশন' },
 };
 
 const GROUP_HINT: Partial<Record<SettingGroup, { en: string; bn: string }>> = {
@@ -35,6 +37,10 @@ const GROUP_HINT: Partial<Record<SettingGroup, { en: string; bn: string }>> = {
   branding: {
     en: 'The wordmark is two fields because the two halves are different colours.',
     bn: 'ওয়ার্ডমার্ক দুই ফিল্ডে, কারণ দুই অংশের রঙ আলাদা।',
+  },
+  notifications: {
+    en: 'The API keys live in the server .env (RESEND_API_KEY, TELEGRAM_BOT_TOKEN) — they are not stored here, because every admin can read this page.',
+    bn: 'API কী সার্ভারের .env-এ থাকে (RESEND_API_KEY, TELEGRAM_BOT_TOKEN) — এখানে রাখা হয় না, কারণ এই পাতা সব অ্যাডমিন দেখতে পারেন।',
   },
 };
 
@@ -165,9 +171,82 @@ export function SettingsForm({ lang, groups, canWrite }: Props) {
               />
             ))}
           </div>
+
+          {group.group === 'notifications' && canWrite && (
+            <NotifyTestActions lang={lang} onResult={(text, tone) => setNotice({ text, tone })} />
+          )}
         </section>
       ))}
     </>
+  );
+}
+
+/**
+ * "Send a test" for both channels.
+ *
+ * The keys are in `.env`, which the panel cannot see. Without these buttons the
+ * only way to know whether a Resend key works is to wait for a real customer to
+ * complain — and the provider's own error ("domain is not verified") is the
+ * sentence that tells an operator what to fix.
+ */
+function NotifyTestActions({
+  lang,
+  onResult,
+}: {
+  lang: Lang;
+  onResult: (text: string, tone: 'ok' | 'error') => void;
+}) {
+  const [busy, setBusy] = useState<'email' | 'telegram' | null>(null);
+
+  async function run(kind: 'email' | 'telegram'): Promise<void> {
+    setBusy(kind);
+    try {
+      const path = kind === 'email' ? '/admin/settings/test-email' : '/admin/settings/test-telegram';
+      await adminFetch(path, { method: 'POST', body: {} });
+
+      onResult(
+        kind === 'email'
+          ? lang === 'bn'
+            ? 'টেস্ট ইমেইল পাঠানো হয়েছে।'
+            : 'Test email sent.'
+          : lang === 'bn'
+            ? 'টেস্ট টেলিগ্রাম বার্তা পাঠানো হয়েছে।'
+            : 'Test Telegram message sent.',
+        'ok',
+      );
+    } catch (error) {
+      onResult((error as Error).message, 'error');
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <div className="set-actions">
+      <button type="button" className="btn ghost sm" onClick={() => void run('email')} disabled={busy !== null}>
+        {busy === 'email'
+          ? lang === 'bn'
+            ? 'পাঠানো হচ্ছে…'
+            : 'Sending…'
+          : lang === 'bn'
+            ? 'টেস্ট ইমেইল'
+            : 'Send test email'}
+      </button>
+      <button
+        type="button"
+        className="btn ghost sm"
+        onClick={() => void run('telegram')}
+        disabled={busy !== null}
+      >
+        {busy === 'telegram'
+          ? lang === 'bn'
+            ? 'পাঠানো হচ্ছে…'
+            : 'Sending…'
+          : lang === 'bn'
+            ? 'টেস্ট টেলিগ্রাম'
+            : 'Send test Telegram'}
+      </button>
+    </div>
   );
 }
 
@@ -201,7 +280,17 @@ function SettingField({
         )}
       </label>
 
-      {item.type === 'text' ? (
+      {item.type === 'boolean' ? (
+        <select
+          id={id}
+          value={value === 'false' ? 'false' : 'true'}
+          disabled={disabled}
+          onChange={(event) => onChange(event.target.value)}
+        >
+          <option value="true">{lang === 'bn' ? 'চালু' : 'On'}</option>
+          <option value="false">{lang === 'bn' ? 'বন্ধ' : 'Off'}</option>
+        </select>
+      ) : item.type === 'text' ? (
         <textarea
           id={id}
           value={value}

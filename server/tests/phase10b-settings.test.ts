@@ -71,15 +71,27 @@ describe('read', () => {
       items: Array<{ key: string; value: string; default: string; isDefault: boolean }>;
     }>;
 
-    expect(groups.map((g) => g.group)).toEqual(['general', 'contact', 'commerce', 'branding']);
+    expect(groups.map((g) => g.group)).toEqual([
+      'general',
+      'contact',
+      'commerce',
+      'branding',
+      'notifications',
+    ]);
 
     const keys = groups.flatMap((g) => g.items.map((i) => i.key));
     expect(keys).toContain('site.name');
     expect(keys).toContain('delivery.standardFeePoisha');
     expect(keys).toContain('brand.nameFirst');
 
-    // Every item carries a value, even the ones with no row.
-    expect(groups.flatMap((g) => g.items).every((i) => i.value.length > 0)).toBe(true);
+    /**
+     * Every item carries a value, even the ones with no row.
+     *
+     * `typeof` rather than a length check: two notification settings default to
+     * an empty string on purpose — "no admin alert address" and "no Telegram
+     * chat id" are valid states, not missing ones.
+     */
+    expect(groups.flatMap((g) => g.items).every((i) => typeof i.value === 'string')).toBe(true);
   });
 
   it('refuses ORDER_MANAGER, who has no settings permission', async () => {

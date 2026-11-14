@@ -129,6 +129,8 @@ export interface CheckoutInput {
   notes?: string;
   guestPhone?: string;
   guestName?: string;
+  /** Optional receipt address; the order is valid without one. */
+  contactEmail?: string;
 }
 
 // ─── Orders ──────────────────────────────────────────────────────────────

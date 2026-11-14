@@ -14,10 +14,16 @@
  * body shape must match the provider that URL belongs to — it is a starting point,
  * not a universal contract.
  *
- * Email: **not implemented.** There is no mail dependency in this project, and
- * adding one is a decision. Rows are left PENDING with a clear reason rather than
- * marked SENT, because a delivery report that says "sent" when nothing left the
- * building is worse than one that says "not sent".
+ * Email: Resend, over HTTPS. The canonical implementation is
+ * `server/src/services/notify/mailer.ts`; the twenty lines are repeated here
+ * because this script runs on plain node with no TypeScript loader, and making
+ * it depend on a build would mean the queue cannot be drained from a machine
+ * that has not run `tsc`. If the mailer changes, change both — the comment in
+ * each points at the other.
+ *
+ * A row that cannot be delivered is left PENDING with the reason printed, rather
+ * than marked SENT, because a delivery report that says "sent" when nothing left
+ * the building is worse than one that says "not sent".
  *
  * Without `--send`, everything is a dry run: rows are marked SENT with a note, so
  * the queue can be exercised end to end without spending money.
@@ -71,12 +77,47 @@ async function counts() {
 }
 
 async function deliver(row) {
-  if (row.channel === 'EMAIL') {
-    return { ok: false, reason: 'email transport not implemented (no mail dependency)' };
-  }
-
   if (!send) {
     return { ok: true, reason: 'dry run' };
+  }
+
+  if (row.channel === 'EMAIL') {
+    const key = process.env.RESEND_API_KEY;
+    const from = process.env.MAIL_FROM;
+
+    if (!key || !from) {
+      return { ok: false, reason: 'RESEND_API_KEY or MAIL_FROM is not set' };
+    }
+
+    const to = row.toEmail ?? row.recipient?.email;
+    if (!to) return { ok: false, reason: 'no email address on the row' };
+
+    const html = `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1a2238;">${String(
+      row.body,
+    )
+      .split('\n')
+      .map((line) => (line.trim() ? `<p>${line.replace(/[<>&]/g, (c) => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;' })[c])}</p>` : ''))
+      .join('')}</div>`;
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject: row.subject ?? 'A message from the shop',
+        html,
+        ...(process.env.MAIL_REPLY_TO ? { reply_to: process.env.MAIL_REPLY_TO } : {}),
+      }),
+      signal: AbortSignal.timeout(8_000),
+    });
+
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      return { ok: false, reason: `resend ${response.status}: ${body?.message ?? 'no detail'}` };
+    }
+
+    return { ok: true, reason: 'resend accepted' };
   }
 
   const gateway = process.env.SMS_GATEWAY_URL;
@@ -84,7 +125,7 @@ async function deliver(row) {
     return { ok: false, reason: 'SMS_GATEWAY_URL is not set' };
   }
 
-  const to = row.recipient?.phone;
+  const to = row.toPhone ?? row.recipient?.phone;
   if (!to) return { ok: false, reason: 'recipient has no phone' };
 
   const response = await fetch(gateway, {
@@ -116,7 +157,10 @@ async function main() {
     select: {
       id: true,
       channel: true,
+      subject: true,
       body: true,
+      toEmail: true,
+      toPhone: true,
       recipient: { select: { phone: true, email: true } },
     },
   });

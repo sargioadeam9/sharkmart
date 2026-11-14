@@ -4654,6 +4654,22 @@
   gap: 14px 18px;
 }
 
+/**
+ * The "send a test" row under the notifications group.
+ *
+ * Sits below the fields rather than beside them: it acts on the whole group
+ * (both channels at once), not on one value, and a button inside a field grid
+ * reads as if it belongs to the input next to it.
+ */
+.admin-root .set-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-2);
+}
+
 .admin-root .set-grid .field label {
   display: flex;
   align-items: center;

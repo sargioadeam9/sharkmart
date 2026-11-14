@@ -82,6 +82,31 @@ const EnvSchema = z.object({
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),
 
+  /**
+   * Phase 12 — outbound notifications.
+   *
+   * ── Why the secrets are here and not in the settings table ───────────────
+   *
+   * `GET /admin/settings` returns every setting value to any ADMIN, and the
+   * settings table is inside every database dump. A Resend key in there would be
+   * readable by the first staff account that got phished, and would travel with
+   * a backup. An API key belongs in the process environment, where it dies with
+   * the machine.
+   *
+   * The non-secret half — which address mail comes from, who gets the admin
+   * alerts, whether each channel is on — lives in settings so an operator can
+   * change it from the panel without SSH.
+   *
+   * All optional: an install with no mail configured must still boot and sell.
+   */
+  RESEND_API_KEY: z.string().optional(),
+  /** `SharkMart <noreply@sharkmart.com.bd>` or a bare address. */
+  MAIL_FROM: z.string().optional(),
+  MAIL_REPLY_TO: z.string().optional(),
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  /** Fallback chat id when the settings row is empty. */
+  TELEGRAM_CHAT_ID: z.string().optional(),
+
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
 });
 

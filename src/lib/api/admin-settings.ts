@@ -8,8 +8,8 @@
 
 import { adminFetch } from './admin-client';
 
-export type SettingGroup = 'general' | 'contact' | 'commerce' | 'branding';
-export type SettingType = 'string' | 'int' | 'email' | 'url' | 'text';
+export type SettingGroup = 'general' | 'contact' | 'commerce' | 'branding' | 'notifications';
+export type SettingType = 'string' | 'int' | 'email' | 'url' | 'text' | 'boolean';
 
 export interface SettingItem {
   key: string;

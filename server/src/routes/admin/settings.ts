@@ -27,6 +27,14 @@ import {
   updateSettings,
   type Actor,
 } from '../../services/settings.service.js';
+import {
+  adminEmail,
+  formatTaka,
+  itemsTable,
+  renderEmail,
+  sendEmail,
+  sendTelegram,
+} from '../../services/notify/index.js';
 
 export const settingsRouter: Router = Router();
 
@@ -77,6 +85,103 @@ settingsRouter.patch(
       const body = req.body as { values: Record<string, string> };
       const groups = await updateSettings(body.values, actorFrom(req));
       res.json(ok({ groups }));
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+// ─── Notification tests (Phase 12) ─────────────────────────────────────────
+//
+// The keys live in `.env`, which means an operator cannot see whether they
+// worked by looking at the panel. These two endpoints are the answer: press the
+// button, get a real send, and read the provider's own error if it fails.
+//
+// `settings:write`, because a test send costs money and reaches a real inbox.
+
+const testEmailBody = z
+  .object({
+    /** Defaults to the admin alert address. */
+    to: z.string().trim().email().max(254).optional(),
+  })
+  .strict();
+
+settingsRouter.post(
+  '/test-email',
+  requirePermission('settings:write'),
+  validate({ body: testEmailBody }),
+  async (req, res, next) => {
+    try {
+      const body = req.body as { to?: string };
+      const recipient = body.to?.trim() || (await adminEmail());
+
+      if (!recipient) {
+        res.status(422).json({
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message:
+              'No address to send to. Set the admin alert address above, or pass one in the request.',
+          },
+        });
+        return;
+      }
+
+      const rendered = await renderEmail('admin_new_order', 'en', {
+        orderNumber: 'TEST-0001',
+        total: formatTaka(150_000),
+        paymentMethod: 'COD',
+        customerName: 'Test customer',
+        customerPhone: '01700000000',
+        address: 'Dhaka',
+        itemsTable: itemsTable([{ name: 'Test item', quantity: 1, lineTotal: formatTaka(150_000) }]),
+      });
+
+      const result = await sendEmail({
+        to: recipient,
+        subject: `Test — ${rendered.subject}`,
+        html: rendered.html,
+        text: rendered.text,
+      });
+
+      if (!result.ok) {
+        /**
+         * 502, not 500: the shop's own code is fine, the upstream provider is
+         * what refused. The reason is passed through verbatim because "domain is
+         * not verified" is the sentence that fixes the problem.
+         */
+        res.status(502).json({
+          success: false,
+          error: { code: 'UPSTREAM_ERROR', message: result.reason ?? 'Send failed.' },
+        });
+        return;
+      }
+
+      res.json(ok({ sent: true, to: recipient, id: result.id ?? null }));
+    } catch (error) {
+      next(error);
+    }
+  },
+);
+
+settingsRouter.post(
+  '/test-telegram',
+  requirePermission('settings:write'),
+  async (_req, res, next) => {
+    try {
+      const result = await sendTelegram(
+        '✅ <b>SharkMart</b> test alert — Telegram is connected.',
+      );
+
+      if (!result.ok) {
+        res.status(502).json({
+          success: false,
+          error: { code: 'UPSTREAM_ERROR', message: result.reason ?? 'Send failed.' },
+        });
+        return;
+      }
+
+      res.json(ok({ sent: true }));
     } catch (error) {
       next(error);
     }

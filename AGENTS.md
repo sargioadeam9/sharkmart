@@ -487,6 +487,8 @@ Verified facts that have already tripped someone. Read once, save hours.
 | Selling price rule | `server/src/services/order.service.ts` (`effectivePrice`) | quoting a price anywhere. Flash sale beats discount beats base — one definition, imported, never copied |
 | Counter sales | `server/src/routes/admin/pos.service.ts` | anything touching the till, shifts or the receipt |
 | Policy copy (help, returns, privacy, terms, about) | `src/lib/legal/content.ts` | editing any promise the shop makes. Delivery figures are read from `StoreProfile`, never typed |
+| Outbound notifications | `server/src/services/notify/` (`mailer`, `telegram`, `templates`, `index`) | sending anything. Secrets are in `.env`; the switches are in settings |
+| Email wording | `notify/templates.ts` defaults, overridable by `EmailTemplate` rows (seeded create-only) | changing what a customer reads |
 ```
 
 ---

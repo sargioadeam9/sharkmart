@@ -38,6 +38,15 @@ import { HttpError } from '../middleware/errorHandler.js';
 import { clearCart } from './cart.service.js';
 import { getDeliveryFees } from './settings.service.js';
 import {
+  formatTaka,
+  itemsTable,
+  notifyAdmins,
+  notifyEmail,
+  notifyTelegram,
+  tgEscape,
+  type Lang,
+} from './notify/index.js';
+import {
   canCustomerTransition,
   canTransition,
   releasesStock,
@@ -74,6 +83,8 @@ export interface CheckoutInput {
   notes?: string;
   guestPhone?: string;
   guestName?: string;
+  /** Where the confirmation goes. Optional — a phone-only checkout is normal here. */
+  contactEmail?: string;
 }
 
 export interface OrderLineDto {
@@ -580,6 +591,7 @@ export async function placeOrder(
         userId: userId ?? null,
         guestPhone,
         guestName: userId ? null : (input.guestName ?? shipping.recipientName),
+        contactEmail: input.contactEmail ?? null,
         currentStatus: 'PENDING',
         subtotalPoisha,
         discountAmountPoisha,
@@ -643,6 +655,7 @@ export async function placeOrder(
           type: 'ORDER_CONFIRMATION',
           recipientId: userId,
           channel: 'SMS',
+          toPhone: shipping.phone,
           subject: `Order ${created.orderNumber}`,
           body: `Your SharkMart order ${created.orderNumber} has been received.`,
           status: 'PENDING',
@@ -662,7 +675,114 @@ export async function placeOrder(
 
   const dto = await getOrderById(order.id);
   if (!dto) throw new HttpError(500, 'INTERNAL_ERROR', 'Order was created but could not be read back.');
+
+  /**
+   * Tell the customer and the shop.
+   *
+   * Fired after the transaction commits and deliberately not awaited: the order
+   * is placed, and a mail provider having a slow minute must not hold the
+   * confirmation page. Every message writes its own `Notification` row first, so
+   * a crash here loses nothing — the drainer picks it up.
+   */
+  announceNewOrder({
+    orderNumber: order.orderNumber,
+    userId: userId ?? null,
+    contactEmail: input.contactEmail ?? null,
+    customerName: shipping.recipientName,
+    customerPhone: shipping.phone,
+    address: [shipping.address, shipping.area, shipping.district].filter(Boolean).join(', '),
+    paymentMethod: input.paymentMethod,
+    totalPoisha: totalAmountPoisha,
+    items: lines.map((line) => ({
+      name: line.nameEn,
+      quantity: line.quantity,
+      lineTotal: line.lineTotalPoisha,
+    })),
+  });
+
   return dto;
+}
+
+/**
+ * The two messages a new order produces: the customer's receipt and the shop's
+ * alert.
+ *
+ * Kept as one function so the item table, the total and the address are built
+ * once and cannot disagree between the two emails.
+ */
+function announceNewOrder(order: {
+  orderNumber: string;
+  userId: string | null;
+  contactEmail: string | null;
+  customerName: string;
+  customerPhone: string;
+  address: string;
+  paymentMethod: string;
+  totalPoisha: number;
+  items: Array<{ name: string; quantity: number; lineTotal: number }>;
+}): void {
+  void (async () => {
+    try {
+      const account = order.userId
+        ? await prisma.user.findUnique({
+            where: { id: order.userId },
+            select: { email: true, language: true },
+          })
+        : null;
+
+      const lang: Lang = account?.language === 'en' ? 'en' : 'bn';
+      const to = order.contactEmail ?? account?.email ?? null;
+
+      const table = itemsTable(
+        order.items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          lineTotal: formatTaka(item.lineTotal),
+        })),
+      );
+
+      if (to) {
+        await notifyEmail({
+          type: 'order_confirmation',
+          template: 'order_confirmation',
+          lang,
+          to,
+          recipientId: order.userId,
+          vars: {
+            customerName: order.customerName,
+            orderNumber: order.orderNumber,
+            itemsTable: table,
+            total: formatTaka(order.totalPoisha),
+            paymentMethod: order.paymentMethod,
+          },
+          raw: ['itemsTable'],
+        });
+      }
+
+      await notifyAdmins({
+        type: 'admin_new_order',
+        template: 'admin_new_order',
+        lang: 'en',
+        vars: {
+          orderNumber: order.orderNumber,
+          total: formatTaka(order.totalPoisha),
+          paymentMethod: order.paymentMethod,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          address: order.address,
+          itemsTable: table,
+        },
+        raw: ['itemsTable'],
+        telegram:
+          `🛒 <b>New order</b> ${tgEscape(order.orderNumber)}\n` +
+          `${tgEscape(formatTaka(order.totalPoisha))} · ${tgEscape(order.paymentMethod)}\n` +
+          `${tgEscape(order.customerName)} · ${tgEscape(order.customerPhone)}\n` +
+          `${tgEscape(order.address)}`,
+      });
+    } catch (error) {
+      console.error('[order] notify failed', error instanceof Error ? error.message : error);
+    }
+  })();
 }
 
 /** Maps an order row to the wire DTO. */
@@ -966,8 +1086,12 @@ export async function cancelOrder(
     where: { id: orderId },
     select: {
       id: true,
+      orderNumber: true,
+      totalAmountPoisha: true,
+      guestName: true,
       currentStatus: true,
       items: { select: { variantId: true, quantity: true } },
+      shippingAddress: { select: { recipientName: true } },
     },
   });
 
@@ -1013,6 +1137,19 @@ export async function cancelOrder(
   });
 
   const dto = await getOrderById(order.id);
+
+  /**
+   * The customer knows they cancelled — they just did it. The shop does not,
+   * and a cancellation is a stock movement and a lost sale that someone should
+   * hear about the same minute rather than discover at the end of the day.
+   */
+  void notifyTelegram(
+    `❌ <b>Order cancelled</b> ${tgEscape(order.orderNumber)}\n` +
+      `${tgEscape(order.shippingAddress?.recipientName ?? order.guestName ?? 'Customer')} · ` +
+      `${tgEscape(formatTaka(order.totalAmountPoisha))}` +
+      (options.reason ? `\n${tgEscape(options.reason)}` : ''),
+  );
+
   return dto!;
 }
 

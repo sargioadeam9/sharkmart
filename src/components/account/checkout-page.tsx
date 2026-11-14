@@ -114,6 +114,16 @@ export function CheckoutPage() {
   const [couponCode, setCouponCode] = useState('');
   const [notes, setNotes] = useState('');
 
+  /**
+   * Where the receipt goes.
+   *
+   * Optional, and never part of the address: an address is a place, this is a
+   * channel. Kept out of `addressForm` so saving an address to the profile does
+   * not start carrying an email field it has no column for.
+   */
+  const [contactEmail, setContactEmail] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+
   const [step, setStep] = useState<Step>('address');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -259,6 +269,18 @@ export function CheckoutPage() {
       return;
     }
 
+    /**
+     * The email is optional, but a typo in one is worse than no email at all —
+     * the customer waits for a receipt that is never coming. Checked here so the
+     * mistake is caught on the step the field is on, not as a 422 after the
+     * order button has been pressed.
+     */
+    const email = contactEmail.trim();
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+      setEmailError(tu('invalidEmail'));
+      return;
+    }
+
     setSubmitting(true);
     try {
       /**
@@ -310,6 +332,7 @@ export function CheckoutPage() {
           paymentMethod,
           ...(couponCode.trim() ? { couponCode: couponCode.trim() } : {}),
           ...(notes.trim() ? { notes: notes.trim() } : {}),
+          ...(email ? { contactEmail: email } : {}),
           ...(!signedIn && inlineAddress ? { guestPhone: inlineAddress.phone } : {}),
         },
         idempotencyKey,
@@ -572,7 +595,7 @@ export function CheckoutPage() {
 
                 <div className="acct-actions">
                   <button type="button" className="btn line" onClick={goBack}>
-                    â† {tu('previous')}
+                    ← {tu('previous')}
                   </button>
                   <button type="button" className="btn red" onClick={goNext}>
                     {tu('next')} â†’
@@ -620,7 +643,7 @@ export function CheckoutPage() {
 
                 <div className="acct-actions">
                   <button type="button" className="btn line" onClick={goBack}>
-                    â† {tu('previous')}
+                    ← {tu('previous')}
                   </button>
                   <button type="button" className="btn red" onClick={goNext}>
                     {tu('next')} â†’
@@ -721,6 +744,21 @@ export function CheckoutPage() {
 
                   <div className="acct-divider" />
 
+                  <Field
+                    label={tu('contactEmail')}
+                    value={contactEmail}
+                    onChange={(value) => {
+                      setContactEmail(value);
+                      if (emailError) setEmailError(null);
+                    }}
+                    type="email"
+                    inputMode="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    hint={tu('contactEmailHint')}
+                    error={emailError ?? undefined}
+                  />
+
                   <TextAreaField
                     label={tu('orderNotes')}
                     value={notes}
@@ -734,7 +772,7 @@ export function CheckoutPage() {
 
               <div className="acct-actions">
                 <button type="button" className="btn line" onClick={goBack}>
-                  â† {tu('previous')}
+                  ← {tu('previous')}
                 </button>
                 <button
                   type="button"

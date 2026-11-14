@@ -87,7 +87,10 @@ create the first real super admin another way.
 | `JWT_REFRESH_SECRET` | yes | Same, different value |
 | `INTERNAL_API_TOKEN` | yes | Server-to-server calls from Next. Must match the web value |
 | `REDIS_URL` | no | Without it, caching and rate limits are per-process |
-| `SMTP_*`, `SMS_GATEWAY_*` | no | Read by `tools/dispatch-notifications.mjs`; see *Limitations* |
+| `RESEND_API_KEY`, `MAIL_FROM` | no | Outbound email. Without them mail is recorded but not sent — the row says why |
+| `MAIL_REPLY_TO` | no | Where a customer's reply lands |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | no | Instant order alerts and the daily summary |
+| `SMS_GATEWAY_URL`, `SMS_GATEWAY_API_KEY` | no | Read by `tools/dispatch-notifications.mjs` |
 
 ### `.env.local` (storefront)
 
@@ -111,9 +114,28 @@ create the first real super admin another way.
 | `npm run db:seed` | server | Base seed — categories, brands, settings |
 | `npm run db:seed:catalog` | server | Base + 168 demo products |
 | `npm run prisma:migrate` | server | `prisma migrate dev` (development only) |
+| `node tools/dispatch-notifications.mjs --send` | root | Drains the campaign queue (SMS + email). Run from cron |
+| `node tools/notify-daily.mjs` | root | Sends the day's takings to Telegram |
 
-`db:seed` is **create-only** for settings: it fills in keys that have no row and
-never overwrites a value an operator chose.
+`db:seed` is **create-only** for settings and for the email templates: it fills in
+keys that have no row and never overwrites wording or a value an operator chose.
+
+### Notifications
+
+Transactional mail (password reset, order confirmation, status change) and
+Telegram alerts are sent inline by the API. Campaigns stay queued and are drained
+by the script. Two cron lines make the whole thing reliable:
+
+```cron
+# retry anything that failed to send
+*/5 * * * * cd /path/to/app && node tools/dispatch-notifications.mjs --send --limit 100
+# the day's takings, 22:00 Dhaka (16:00 UTC)
+0 16 * * * cd /path/to/app && node tools/notify-daily.mjs
+```
+
+Secrets live in `server/.env`, never in the settings table — that table is in
+every database dump and readable by any admin. The panel shows the switches, the
+addresses and a **Send test** button for each channel.
 
 ---
 
@@ -178,12 +200,13 @@ These are known and deliberate, not bugs waiting to be discovered:
 - **A manual till discount is capped at 50% of the bill.** Anything larger is a
   pricing decision and belongs in the coupon module, where it is dated and
   auditable.
-- **No mail transport, so the reset link never leaves the building.** The
-  `/forgot-password` → `/reset-password` flow is complete and tested end to end,
-  but without SMTP the token is only returned as `devResetToken` outside
-  production. In a live install the customer sees "check your messages" and
-  nothing arrives — wire `tools/dispatch-notifications.mjs` to a provider before
-  going live, or tell customers to phone. The Help page says both.
+- **Email needs a verified Resend domain.** The transport is wired, but `MAIL_FROM`
+  must be on a domain with SPF/DKIM records added in Resend, or every send comes
+  back 403 and the row records "The domain is not verified". `onboarding@resend.dev`
+  works only for sending to your own address.
+- **Nothing sends SMS unless a gateway is configured.** `SMS_GATEWAY_URL` is a
+  generic contract, not a provider integration: the body shape must match whatever
+  gateway is on the other end.
 - **No profit reporting.** `Product` has no cost field, so margin is not
   computable. Revenue minus expenses is shown as a cash view, labelled as such.
 - **Reviews are never seeded.** `ratingAvg`/`reviewCount` carry the reference

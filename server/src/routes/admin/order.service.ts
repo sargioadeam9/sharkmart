@@ -43,6 +43,15 @@
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../config/database.js';
 import { withAudit, diffChanges } from '../../services/audit.service.js';
+import { getSettings } from '../../services/settings.service.js';
+import {
+  formatTaka,
+  notifyEmail,
+  notifyTelegram,
+  statusLabel,
+  tgEscape,
+  type Lang,
+} from '../../services/notify/index.js';
 import { HttpError, notFound } from '../../middleware/errorHandler.js';
 import {
   canTransition,
@@ -284,7 +293,7 @@ export async function changeOrderStatus(
   input: OrderStatusInput,
   actor: Actor,
 ): Promise<AdminOrderDetail> {
-  await withAudit(
+  const outcome = await withAudit(
     (result: { from: string; to: string }) => ({
       userId: actor.userId,
       action: 'order.status_change',
@@ -300,7 +309,15 @@ export async function changeOrderStatus(
           id: true,
           orderNumber: true,
           currentStatus: true,
+          contactEmail: true,
+          userId: true,
+          guestName: true,
+          guestPhone: true,
+          totalAmountPoisha: true,
           items: { select: { variantId: true, quantity: true } },
+          shippingAddress: {
+            select: { recipientName: true, phone: true, address: true, area: true, district: true },
+          },
         },
       });
 
@@ -341,11 +358,98 @@ export async function changeOrderStatus(
         }
       }
 
-      return { from, to };
+      return {
+        from,
+        to,
+        notify: {
+          orderNumber: order.orderNumber,
+          userId: order.userId,
+          contactEmail: order.contactEmail,
+          customerName: order.shippingAddress?.recipientName ?? order.guestName ?? 'Customer',
+          customerPhone: order.shippingAddress?.phone ?? order.guestPhone ?? '',
+          address: [order.shippingAddress?.address, order.shippingAddress?.area, order.shippingAddress?.district]
+            .filter(Boolean)
+            .join(', '),
+          totalPoisha: order.totalAmountPoisha,
+        },
+      };
     },
   );
 
+  /**
+   * The customer is told after the transaction commits, never inside it: an
+   * email that throws must not roll back a status change the operator has
+   * already seen succeed on screen.
+   */
+  announceStatusChange(outcome.notify, outcome.to, input.note);
+
   return getAdminOrder(id);
+}
+
+/**
+ * "Your order shipped" — the message a customer actually wants.
+ *
+ * PENDING is excluded: it is the state an order is born in, so there is nothing
+ * to announce. CANCELLED gets its own template because "your order is now
+ * Cancelled" is not a status update, it is news.
+ */
+function announceStatusChange(
+  order: {
+    orderNumber: string;
+    userId: string | null;
+    contactEmail: string | null;
+    customerName: string;
+    customerPhone: string;
+    address: string;
+    totalPoisha: number;
+  },
+  to: string,
+  note?: string | null,
+): void {
+  if (to === 'PENDING') return;
+
+  void (async () => {
+    try {
+      const settings = await getSettings();
+      if (settings['notify.onStatusChange'] === 'false') return;
+
+      const account = order.userId
+        ? await prisma.user.findUnique({
+            where: { id: order.userId },
+            select: { email: true, language: true },
+          })
+        : null;
+
+      const lang: Lang = account?.language === 'en' ? 'en' : 'bn';
+      const address = order.contactEmail ?? account?.email ?? null;
+
+      if (address) {
+        await notifyEmail({
+          type: to === 'CANCELLED' ? 'order_cancelled' : 'order_status',
+          template: to === 'CANCELLED' ? 'order_cancelled' : 'order_status',
+          lang,
+          to: address,
+          recipientId: order.userId,
+          vars: {
+            customerName: order.customerName,
+            orderNumber: order.orderNumber,
+            statusLabel: statusLabel(to, lang),
+            statusNote: note ? `<p>${note}</p>` : '',
+            total: formatTaka(order.totalPoisha),
+          },
+          raw: ['statusNote'],
+        });
+      }
+
+      await notifyTelegram(
+        `📦 <b>${tgEscape(statusLabel(to, 'en'))}</b> ${tgEscape(order.orderNumber)}\n` +
+          `${tgEscape(order.customerName)} · ${tgEscape(formatTaka(order.totalPoisha))}` +
+          (note ? `\n${tgEscape(note)}` : ''),
+      );
+    } catch (error) {
+      console.error('[order] status notify failed', error instanceof Error ? error.message : error);
+    }
+  })();
 }
 
 /**

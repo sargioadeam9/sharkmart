@@ -32,8 +32,8 @@ import { cached, invalidateTag, TTL } from './cache.js';
 import { withAudit } from './audit.service.js';
 import { BRAND_FALLBACK as BRAND, DELIVERY_DEFAULTS } from '../config/store-defaults.js';
 
-export type SettingGroup = 'general' | 'contact' | 'commerce' | 'branding';
-export type SettingType = 'string' | 'int' | 'email' | 'url' | 'text';
+export type SettingGroup = 'general' | 'contact' | 'commerce' | 'branding' | 'notifications';
+export type SettingType = 'string' | 'int' | 'email' | 'url' | 'text' | 'boolean';
 
 export interface SettingDef {
   key: string;
@@ -205,6 +205,62 @@ export const SETTINGS: readonly SettingDef[] = [
     hintEn: 'A path or an absolute URL. There is no upload storage in this project.',
     hintBn: 'পাথ বা পূর্ণ URL। এই প্রজেক্টে ফাইল আপলোড স্টোরেজ নেই।',
   },
+
+  // ── Notifications (Phase 12) ──────────────────────────────────────────────
+  //
+  // Only the non-secret half lives here. `RESEND_API_KEY` and
+  // `TELEGRAM_BOT_TOKEN` are in `.env`, because every ADMIN can read this table
+  // through `GET /admin/settings` and every database dump carries it.
+  {
+    key: 'notify.emailEnabled',
+    group: 'notifications',
+    type: 'boolean',
+    default: 'true',
+    labelEn: 'Send email',
+    labelBn: 'ইমেইল পাঠান',
+    hintEn: 'Off stops every outbound email. Rows are still recorded, marked with the reason.',
+    hintBn: 'বন্ধ করলে কোনো ইমেইল যাবে না। তবে প্রতিটি বার্তার রেকর্ড থাকবে, কারণসহ।',
+  },
+  {
+    key: 'notify.adminEmail',
+    group: 'notifications',
+    type: 'email',
+    default: '',
+    labelEn: 'Admin alert address',
+    labelBn: 'অ্যাডমিন অ্যালার্ট ঠিকানা',
+    hintEn: 'Receives "new order" alerts. Leave blank to use the support address above.',
+    hintBn: 'নতুন অর্ডারের খবর এখানে যাবে। খালি রাখলে উপরের সাপোর্ট ঠিকানায় যাবে।',
+  },
+  {
+    key: 'notify.onStatusChange',
+    group: 'notifications',
+    type: 'boolean',
+    default: 'true',
+    labelEn: 'Email on status change',
+    labelBn: 'স্ট্যাটাস বদলালে ইমেইল',
+    hintEn: 'Tell the customer when an order is confirmed, shipped, delivered or cancelled.',
+    hintBn: 'অর্ডার নিশ্চিত, পাঠানো, ডেলিভারি বা বাতিল হলে গ্রাহককে জানানো হবে।',
+  },
+  {
+    key: 'notify.telegramEnabled',
+    group: 'notifications',
+    type: 'boolean',
+    default: 'true',
+    labelEn: 'Send Telegram alerts',
+    labelBn: 'টেলিগ্রাম অ্যালার্ট পাঠান',
+    hintEn: 'Needs TELEGRAM_BOT_TOKEN in the server environment.',
+    hintBn: 'সার্ভারের পরিবেশে TELEGRAM_BOT_TOKEN থাকতে হবে।',
+  },
+  {
+    key: 'notify.telegramChatId',
+    group: 'notifications',
+    type: 'string',
+    default: '',
+    labelEn: 'Telegram chat id',
+    labelBn: 'টেলিগ্রাম চ্যাট আইডি',
+    hintEn: 'Send the bot one message, then read the id from api.telegram.org/bot<token>/getUpdates.',
+    hintBn: 'বটকে একটি বার্তা পাঠান, তারপর api.telegram.org/bot<token>/getUpdates থেকে আইডি নিন।',
+  },
 ];
 
 const BY_KEY = new Map(SETTINGS.map((def) => [def.key, def]));
@@ -327,7 +383,7 @@ export async function settingsForAdmin(): Promise<SettingsGroupPayload[]> {
     .catch(() => []);
   const present = new Set(rows.map((row) => row.key));
 
-  const groups: SettingGroup[] = ['general', 'contact', 'commerce', 'branding'];
+  const groups: SettingGroup[] = ['general', 'contact', 'commerce', 'branding', 'notifications'];
   return groups.map((group) => ({
     group,
     items: SETTINGS.filter((def) => def.group === group).map((def) => ({
@@ -383,7 +439,27 @@ export function validatePatch(patch: Record<string, string>): SettingsValidation
       continue;
     }
 
+    /**
+     * A switch, stored as the string 'true' or 'false'.
+     *
+     * Validated rather than free text: the notification switches are read with
+     * `value !== 'false'`, so an operator who types "off" and saves would see a
+     * success message and an unchanged behaviour. A select cannot produce that.
+     */
+    if (def.type === 'boolean') {
+      if (value !== 'true' && value !== 'false') {
+        errors.push({ key, message: 'must be true or false' });
+      }
+      continue;
+    }
+
     if (def.type === 'email') {
+      /**
+       * An optional address may be cleared. `notify.adminEmail` defaults to
+       * empty — "no separate admin inbox, use the support address" is a valid
+       * configuration, not an error.
+       */
+      if (value.length === 0 && def.default === '') continue;
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) {
         errors.push({ key, message: 'must be a valid email address' });
       }
@@ -400,7 +476,12 @@ export function validatePatch(patch: Record<string, string>): SettingsValidation
       continue;
     }
 
-    if (value.length === 0) {
+    /**
+     * A setting may be blank when its own default is blank — "no Telegram chat
+     * id" is a state the shop is allowed to be in, and rejecting it would make
+     * the field impossible to clear once set.
+     */
+    if (value.length === 0 && def.default !== '') {
       errors.push({ key, message: 'cannot be empty' });
       continue;
     }

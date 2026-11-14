@@ -11,6 +11,7 @@
 
 import { HttpError } from '../middleware/errorHandler.js';
 import { prisma } from '../config/database.js';
+import { notifyEmail, shopUrl } from './notify/index.js';
 import {
   DUMMY_HASH,
   hashPassword,
@@ -224,7 +225,7 @@ export async function requestPasswordReset(
     where: {
       OR: [{ email: identifier.toLowerCase() }, { phone: identifier }],
     },
-    select: { id: true, isActive: true },
+    select: { id: true, isActive: true, name: true, email: true, language: true },
   });
 
   if (!user || !user.isActive) {
@@ -253,6 +254,35 @@ export async function requestPasswordReset(
       },
     }),
   ]);
+
+  /**
+   * The email is sent **without being awaited**, and that is a security
+   * decision, not laziness.
+   *
+   * This endpoint answers 200 with the same body whether or not the account
+   * exists. If the real-account path waited ~400ms for Resend and the unknown
+   * path returned in 20ms, the response time would answer the question the body
+   * refuses to — a timing oracle that hands back the enumeration the whole
+   * design exists to prevent. Firing and forgetting keeps both paths the same
+   * length; the row is written either way, and the queue drainer retries it.
+   */
+  if (user.email) {
+    void (async () => {
+      const resetUrl = await shopUrl(`/reset-password?token=${encodeURIComponent(rawToken)}`);
+      await notifyEmail({
+        type: 'password_reset',
+        template: 'password_reset',
+        lang: user.language === 'bn' ? 'bn' : 'en',
+        to: user.email,
+        recipientId: user.id,
+        vars: {
+          customerName: user.name,
+          resetUrl,
+          expiresMinutes: '30',
+        },
+      });
+    })();
+  }
 
   return { rawToken, userId: user.id };
 }
